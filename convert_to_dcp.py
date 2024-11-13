@@ -255,7 +255,6 @@ def create_protocol_ids(dcp_spreadsheet, dcp_flat):
         dcp_flat = dcp_flat.merge(protocol_df,  how='left',on=list(protocol_df.columns.values[:-1]))
     return dcp_flat
 
-
 def collapse_values(series):
     return "||".join(series.unique().astype(str))
 
@@ -280,7 +279,6 @@ def add_analysis_file(dcp_spreadsheet, collection_id, dataset_id):
         .agg(collapse_values)\
         .reset_index()
     return dcp_spreadsheet
-
 
 def export_to_excel(dcp_spreadsheet, collection_id, dataset_id):
     dcp_headers = get_dcp_headers()
@@ -310,7 +308,7 @@ if __name__ == "__main__":
     sample_metadata = edit_hardy_scale(sample_metadata)
     sample_metadata = edit_sampled_site(sample_metadata)
     sample_metadata = edit_alignment_software(sample_metadata)
-    # sample_metadata = edit_cell_enrichment(sample_metadata)
+    # sample_metadata = edit_cell_enrichment(sample_metadata) # not yet functional
     sample_metadata = edit_dev_stage(sample_metadata)
 
     # Rename df columns
