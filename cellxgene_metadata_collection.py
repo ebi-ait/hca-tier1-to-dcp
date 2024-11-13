@@ -66,9 +66,13 @@ def extract_and_save_metadata(adata, collection_id, dataset_id):
     tier1_in_object = [key for key in adata.obs.keys() if key in tier1_list]
 
     # Save essential metadata
-    pd.DataFrame(adata.obs[tier1_in_object].drop_duplicates()).set_index('library_id')\
-        .to_csv(f'metadata/{collection_id}_{dataset_id}_metadata.csv')
-
+    if 'library_id' in adata.obs:
+        pd.DataFrame(adata.obs[tier1_in_object].drop_duplicates()).set_index('library_id')\
+            .to_csv(f'metadata/{collection_id}_{dataset_id}_metadata.csv')
+    else:
+        print("No library_id information. Will save tier 1 based on donor_id.\n")
+        pd.DataFrame(adata.obs[tier1_in_object].drop_duplicates()).set_index('donor_id')\
+            .to_csv(f'metadata/{collection_id}_{dataset_id}_metadata.csv')
     # Save full cell observations
     pd.DataFrame(adata.obs).to_csv(f'metadata/{collection_id}_{dataset_id}_cell_obs.csv')
 
@@ -101,7 +105,7 @@ def main():
     if len(dataset_df.index) == 1:
         dataset_ix = 0
     else:
-        dataset_ix = input("Please select the index of the dataset to be converted:\n")
+        dataset_ix = int(input("Please select the index of the dataset to be converted:\n"))
     if isinstance(dataset_ix, int) and dataset_ix in dataset_df.index:
         dataset_id = dataset_df.loc[dataset_ix, 'dataset_id']
     else:
@@ -132,7 +136,12 @@ def main():
     # Extract metadata from the AnnData file
     adata = sc.read_h5ad(mx_file, backed='r')
     extract_and_save_metadata(adata, collection_id, dataset_id)
-
+    if 'sequencing_platform' not in adata.obs:
+        print("No sequencer info.")
+        if 'doi' in coll_report:
+            print(f"See doi.org/{coll_report['doi']} for more.")
+        else:
+            print(f"See {collection['collection_url']} for more.")
 
 if __name__ == "__main__":
     main()
