@@ -2,6 +2,7 @@ import argparse
 import os
 import io
 import re
+import sys
 import requests
 from requests.exceptions import ConnectionError
 
@@ -17,7 +18,7 @@ def define_parser():
     parser.add_argument("--collection", "-c", action="store",
                         dest="collection_id", type=str, required=True, help="Collection id")
     parser.add_argument("--dataset", "-d", action="store",
-                        dest="dataset_id", type=str, required=True, help="Dataset id")
+                        dest="dataset_id", type=str, required=False, help="Dataset id")
     return parser
 
 
@@ -291,7 +292,16 @@ def export_to_excel(dcp_spreadsheet, collection_id, dataset_id):
 if __name__ == "__main__":
     args = define_parser().parse_args()
     collection_id = args.collection_id
-    dataset_id = args.dataset_id
+    if args.dataset_id is not None:
+        dataset_id = args.dataset_id
+    else:
+        dataset_ids = {file.split("_")[1] for file in os.listdir('metadata') if file.startswith(collection_id)}
+        if len(dataset_ids) == 1:
+            dataset_id = list(dataset_ids)[0]
+        else:
+            print("Please specify the dataset_id. There are available files for:")
+            print('\n'.join(dataset_ids))
+            sys.exit()
 
     sample_metadata = pd.read_csv(f"metadata/{collection_id}_{dataset_id}_metadata.csv")
     study_metadata = read_study(collection_id, dataset_id)
