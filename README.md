@@ -1,6 +1,7 @@
 # HCA - Tier 1 to DCP
 Convert Human Cell Atlas Tier 1 metadata extracted out of an anndata object of a published CELLxGENE dataset,into [HCA DCP metadata schema](https://github.com/HumanCellAtlas/metadata-schema/tree/master/json_schema) ingestible [spreadsheet](https://github.com/ebi-ait/geo_to_hca/tree/master/template).
 
+## Algorithm
 This convertion is done in 3 steps.
 1. Pull data from CxG [cellxgene_metadata_collection.py](cellxgene_metadata_collection.py)
     1. Given a collection_id
@@ -13,13 +14,13 @@ This convertion is done in 3 steps.
     1. Download latest hca_template.xlsx from [ebi-ait/geo_to_hca](https://github.com/ebi-ait/geo_to_hca/raw/master/template/hca_template.xlsx), using the [mapping](tier1_mapping.py) the spreadsheet fields are renamed & converted to dcp metadata
     1. Based on the field programmatic name, the dcp spreadsheet is populated
     1. Exported into an xlsx file
-1. Compare previously wrangled spreadsheet vs tier 1 **TODO**
+1. *TODO* Compare previously wrangled spreadsheet vs tier 1 
 
 ## Usage
 To run scripts you can run:
 ```bash
 # python3 -m pip install -r requirements.txt
-python3 cellxgene_metadata_collection.py -c \<CxG collection_id\> -t \<ingest_token\>
+python3 cellxgene_metadata_collection.py -c <CxG collection_id> -t <ingest_token>
 python3 convert_to_dcp.py -c \<CxG collection_id\> -d \<CxG dataset_id\> 
 ```
 
