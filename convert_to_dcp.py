@@ -303,7 +303,12 @@ if __name__ == "__main__":
             print('\n'.join(dataset_ids))
             sys.exit()
 
-    sample_metadata = pd.read_csv(f"metadata/{collection_id}_{dataset_id}_metadata.csv")
+    try:
+        sample_metadata_path = f"metadata/{collection_id}_{dataset_id}_metadata.csv"
+        sample_metadata = pd.read_csv(sample_metadata_path)
+    except FileNotFoundError:
+        print(f"File not found: {sample_metadata_path}")
+
     study_metadata = read_study(collection_id, dataset_id)
     dcp_spreadsheet = get_dcp_spreadsheet()
 
