@@ -5,6 +5,7 @@ from os.path import isfile, getsize, exists
 import pandas as pd
 import requests
 import scanpy as sc
+
 from tier1_mapping import tier1, tier1_list
 
 
@@ -13,6 +14,9 @@ def define_parser():
     parser = argparse.ArgumentParser(description="Parser for the arguments")
     parser.add_argument("--collection", "-c", action="store",
                         dest="collection_id", type=str, required=True, help="Collection ID")
+    parser.add_argument("--ingest_token", '-t', action="store",
+                        dest='token', type=str, required=False, 
+                        help="Ingest token to query for existing projects with same DOI")
     return parser
 
 
@@ -87,6 +91,24 @@ def extract_and_save_metadata(adata, collection_id, dataset_id):
         print("The following optional fields are not present in the anndata obs:")
         print(missing_recom_fields)
 
+def doi_search_ingest(doi, token):
+    query = [{
+        "field": "content.publications.doi",
+        "operator": "IS",
+        "value": doi
+    }]
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': "Bearer " + token
+    }
+    projects = requests.request("POST", 'https://api.ingest.archive.data.humancellatlas.org/projects/query?operator=AND', 
+                                headers=headers, json=query).json()
+    if '_embedded' in projects:
+        links = [proj['uuid']['uuid'] + '\t' + proj['_links']['self']['href'] for proj in projects['_embedded']['projects']]
+        print(f'Project(s) in ingest with doi {doi}:\n' + '\n'.join(links))
+    else:
+        print(f'DOI: {doi} was not found in ingest')
+    return
 
 def main():
     parser = define_parser()
@@ -99,10 +121,14 @@ def main():
 
     # Generate and save collection report
     coll_report = generate_collection_report(collection)
+    if args.token is not None:
+        doi_search_ingest(coll_report['doi'], args.token)
+
     dataset_df = pd.DataFrame(collection['datasets'])[['dataset_id', 'cell_count', 'title']]
     print(dataset_df)
 
     if len(dataset_df.index) == 1:
+        print("Converting the unique dataset in collection.")
         dataset_ix = 0
     else:
         dataset_ix = int(input("Please select the index of the dataset to be converted:\n"))
