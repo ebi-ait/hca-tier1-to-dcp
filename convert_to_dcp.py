@@ -295,11 +295,11 @@ if __name__ == "__main__":
     if args.dataset_id is not None:
         dataset_id = args.dataset_id
     else:
-        dataset_ids = {file.split("_")[1] for file in os.listdir('metadata') if file.startswith(collection_id)}
-        if len(dataset_ids) == 1:
-            dataset_id = list(dataset_ids)[0]
+        dataset_ids = [file.split("_")[1] for file in os.listdir('metadata') if file.startswith(collection_id)]
+        if len(set(dataset_ids)) == 1:
+            dataset_id = dataset_ids[0]
         else:
-            print("Please specify the dataset_id. There are available files for:")
+            print("Please specify the -d dataset_id. There are available files for:")
             print('\n'.join(dataset_ids))
             sys.exit()
 
@@ -351,6 +351,5 @@ if __name__ == "__main__":
             dcp_spreadsheet[tab] = dcp_spreadsheet[tab].drop_duplicates()
     dcp_spreadsheet = add_analysis_file(dcp_spreadsheet, collection_id, dataset_id)
 
-    export_to_excel(dcp_spreadsheet, args.collection_id, args.dataset_id)
-
+    export_to_excel(dcp_spreadsheet, collection_id, dataset_id)
 

@@ -20,7 +20,7 @@ This convertion is done in 3 steps.
 Tested in python3.9. To run scripts you can run:
 ```bash
 python3 -m pip install -r requirements.txt
-python3 cellxgene_metadata_collection.py -c <CxG collection_id> -t <ingest_token>
+python3 cellxgene_metadata_collection.py -c <CxG collection_id> -t <ingest-token>
 python3 convert_to_dcp.py -c \<CxG collection_id\> -d \<CxG dataset_id\> 
 ```
 
@@ -29,6 +29,6 @@ python3 convert_to_dcp.py -c \<CxG collection_id\> -d \<CxG dataset_id\>
 - `--collection_id` or `-c`: CxG collection_id of the project. 
     - i.e. `e5f58829-1a66-40b5-a624-9046778e74f5`
 #### Optional
-- `--ingest_token` or `-t`: Token of ingest for collecting DOI info from [ingest](https://contribute.data.humancellatlas.org/)
+- `--ingest-token` or `-t`: Token of ingest for collecting DOI info from [ingest](https://contribute.data.humancellatlas.org/)
 - `--dataset` or `-d`: Select the CxG dataset_id to download and convert.
     - i.e. `6ec405bb-4727-4c6d-ab4e-01fe489af7ea`

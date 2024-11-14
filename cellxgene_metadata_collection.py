@@ -14,7 +14,7 @@ def define_parser():
     parser = argparse.ArgumentParser(description="Parser for the arguments")
     parser.add_argument("--collection", "-c", action="store",
                         dest="collection_id", type=str, required=True, help="Collection ID")
-    parser.add_argument("--ingest_token", '-t', action="store",
+    parser.add_argument("--ingest-token", '-t', action="store",
                         dest='token', type=str, required=False,
                         help="Ingest token to query for existing projects with same DOI")
     return parser
@@ -139,8 +139,7 @@ def doi_search_ingest(doi, token):
 
 
 def main():
-    parser = define_parser()
-    args = parser.parse_args()
+    args = define_parser().parse_args()
     collection_id = args.collection_id
 
     # Query collection data
