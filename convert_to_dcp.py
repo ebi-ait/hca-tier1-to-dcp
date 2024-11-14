@@ -60,6 +60,9 @@ def get_dcp_spreadsheet(local_path=None):
     except FileNotFoundError:
         print(f"Local file path not found: {local_path}")
         return {}
+    except ConnectionError:
+        print(f"Could not connect to {hca_template_url}. Use provide local_path instead.")
+        return {}
 
 def get_dcp_headers(local_path=None):
     # if no internet connection, provide local path
@@ -72,6 +75,7 @@ def get_dcp_headers(local_path=None):
         return {}
     except ConnectionError:
         print(f"Could not connect to {hca_template_url}. Use provide local_path instead.")
+        return {}
     for tab in dcp_headers:
         dcp_headers[tab].rename(columns=dcp_headers[tab].iloc[3], inplace= True)
     return dcp_headers
@@ -284,7 +288,8 @@ def populate_spreadsheet(dcp_spreadsheet, dcp_flat):
     for tab in dcp_spreadsheet:
         keys_union = [key for key in dcp_spreadsheet[tab].keys() if key in dcp_flat.keys()]
         # if entity of tab is not described in spreadsheet, skip tab
-        if keys_union and (tab.lower().replace(" ", "_") not in [key.split('.')[0] for key in keys_union]):
+        keys_union_tabs = [key.split('.')[0].capitalize().replace("_", " ") for key in keys_union]
+        if not keys_union or (tab not in keys_union_tabs):
             continue
         # collapse arrays in duplicated columns
         if any(dcp_flat[keys_union].columns.duplicated()):
@@ -323,8 +328,8 @@ def add_analysis_file(dcp_spreadsheet, collection_id, dataset_id):
         .reset_index()
     return dcp_spreadsheet
 
-def export_to_excel(dcp_spreadsheet, collection_id, dataset_id):
-    dcp_headers = get_dcp_headers()
+def export_to_excel(dcp_spreadsheet, collection_id, dataset_id, local_template):
+    dcp_headers = get_dcp_headers(local_template)
     output_path = f"metadata/{collection_id}_{dataset_id}_dcp.xlsx"
     with pd.ExcelWriter(output_path) as writer:
         for tab_name, data in dcp_spreadsheet.items():
@@ -335,6 +340,7 @@ def main():
     args = define_parser().parse_args()
     collection_id = args.collection_id
     dataset_id = get_dataset_id(args)
+    local_template = args.local_template
 
     sample_metadata = read_sample_metadata(collection_id, dataset_id)
     study_metadata = read_study_metadata(collection_id, dataset_id)
@@ -355,7 +361,7 @@ def main():
     dcp_flat = sample_metadata.rename(columns=tier1_to_dcp)
     
     # Generate spreadsheet
-    dcp_spreadsheet = get_dcp_spreadsheet(args.local_template)
+    dcp_spreadsheet = get_dcp_spreadsheet(local_template)
 
     dcp_spreadsheet = add_doi(study_metadata, dcp_spreadsheet)
     dcp_spreadsheet = add_title(study_metadata, dcp_spreadsheet)
@@ -367,7 +373,7 @@ def main():
     dcp_spreadsheet = add_institute(sample_metadata, dcp_spreadsheet)
     dcp_spreadsheet = add_analysis_file(dcp_spreadsheet, collection_id, dataset_id)
 
-    export_to_excel(dcp_spreadsheet, collection_id, dataset_id)
+    export_to_excel(dcp_spreadsheet, collection_id, dataset_id, local_template)
 
 if __name__ == "__main__":
     main()
