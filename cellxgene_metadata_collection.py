@@ -125,8 +125,10 @@ def doi_search_ingest(doi, token):
         'Content-Type': 'application/json',
         'Authorization': "Bearer " + token
     }
-    projects = requests.request("POST", 'https://api.ingest.archive.data.humancellatlas.org/projects/query?operator=AND',
-                                headers=headers, json=query, timeout=10).json()
+    response = requests.request("POST", 'https://api.ingest.archive.data.humancellatlas.org/projects/query?operator=AND',
+                                headers=headers, json=query, timeout=10)
+    response.raise_for_status()
+    projects = response.json()
     if '_embedded' in projects:
         links = [proj['uuid']['uuid'] + '\t' + proj['_links']['self']['href']
                  for proj in projects['_embedded']['projects']]
