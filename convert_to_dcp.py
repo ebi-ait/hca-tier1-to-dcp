@@ -19,10 +19,29 @@ def define_parser():
                         dest="collection_id", type=str, required=True, help="Collection id")
     parser.add_argument("--dataset", "-d", action="store",
                         dest="dataset_id", type=str, required=False, help="Dataset id")
+    parser.add_argument("--local_template", "-l", action="store",
+                        dest="local_template", type=str, required=False, help="Local path of the HCA template")
     return parser
 
+def get_dataset_id(args, ):
+    if args.dataset_id is not None:
+        return args.dataset_id
+    dataset_ids = [file.split("_")[1] for file in os.listdir('metadata') if file.startswith(args.collection_id)]
+    if len(set(dataset_ids)) == 1:
+        return dataset_ids[0]
+    print("Please specify the -d dataset_id. There are available files for:")
+    print('\n'.join(dataset_ids))
+    sys.exit()
 
-def read_study(collection_id, dataset_id):
+def read_sample_metadata(collection_id, dataset_id):
+    try:
+        sample_metadata_path = f"metadata/{collection_id}_{dataset_id}_metadata.csv"
+        return pd.read_csv(sample_metadata_path)
+    except FileNotFoundError:
+        print(f"File not found: {sample_metadata_path}")
+        return pd.DataFrame()
+
+def read_study_metadata(collection_id, dataset_id):
     try:
         metadata_path = f"metadata/{collection_id}_{dataset_id}_study_metadata.csv"
         metadata = pd.read_csv(metadata_path, header=None).T
@@ -31,7 +50,6 @@ def read_study(collection_id, dataset_id):
     except FileNotFoundError:
         print(f"File not found: {metadata_path}")
         return pd.DataFrame()
-
 
 def get_dcp_spreadsheet(local_path=None):
     # if no internet connection, provide local path
@@ -48,10 +66,12 @@ def get_dcp_headers(local_path=None):
     hca_template_url = 'https://github.com/ebi-ait/geo_to_hca/raw/master/template/hca_template.xlsx'
     path = local_path if local_path else hca_template_url
     try:
-        dcp_headers = pd.read_excel(hca_template_url, sheet_name=None, header=None)
+        dcp_headers = pd.read_excel(path, sheet_name=None, header=None)
     except FileNotFoundError:
-        print(f"Local file path not found: {local_path}")
+        print(f"Local file path not found: {path}")
         return {}
+    except ConnectionError:
+        print(f"Could not connect to {hca_template_url}. Use provide local_path instead.")
     for tab in dcp_headers:
         dcp_headers[tab].rename(columns=dcp_headers[tab].iloc[3], inplace= True)
     return dcp_headers
@@ -68,8 +88,8 @@ def add_title(study_metadata, dcp_spreadsheet):
     if 'title' in study_metadata:
         if len(set(study_metadata['title'])) != 1:
             print(f"We have multiple titles {set(study_metadata['title'])}")
-        titles = pd.DataFrame({'project.project_title'})
-        dcp_spreadsheet['Project'] = pd.concat([dcp_spreadsheet['Project'], titles])
+        titles = pd.DataFrame({'project.project_core.project_title': study_metadata['title']})
+        dcp_spreadsheet['Project'] = pd.concat([dcp_spreadsheet['Project'], titles]).fillna('')
     return dcp_spreadsheet
 
 def add_institute(sample_metadata, dcp_spreadsheet):
@@ -133,6 +153,11 @@ def edit_sex(sample_metadata):
         sample_metadata['donor_organism.sex'] = sample_metadata['sex_ontology_term_id'].apply(ols_label)
         if not sample_metadata['donor_organism.sex'].isin(['female', 'male']).all():
             print(f"Unsupported sex value {sample_metadata.loc['sex_ontology_term_id', ~sample_metadata['donor_organism.sex'].isin(['female', 'male'])]}")
+    return sample_metadata
+
+def edit_ethnicity(sample_metadata):
+    if 'self_reported_ethnicity_ontology_term_id' in sample_metadata:
+        sample_metadata.loc[sample_metadata['self_reported_ethnicity_ontology_term_id'] == 'unknown', 'self_reported_ethnicity_ontology_term_id'] = nan
     return sample_metadata
 
 def edit_sample_source(sample_metadata):
@@ -201,7 +226,6 @@ def edit_cell_enrichment(sample_metadata):
 def dev_label(ontology):
     start_id = ['start, days post fertilization', 'start, months post birth', 'start, years post birth']
     end_id = ['end, days post fertilization', 'end, months post birth', 'end, years post birth']
-    print(f'Starting ontology {ontology}')
     result = ols_label(ontology, ontology= 'HsapDv', only_label=False)
     if not 'annotation' in result:
         print(f'Ontology {ontology} does not have annotation')
@@ -246,7 +270,7 @@ def edit_dev_stage(sample_metadata):
 
 def create_protocol_ids(dcp_spreadsheet, dcp_flat):
     protocols = [key.lower().replace(' ', '_') for key in dcp_spreadsheet if 'protocol' in key]
-
+    
     for protocol in protocols:
         if dcp_flat.filter(like=protocol).empty:
             continue
@@ -256,26 +280,44 @@ def create_protocol_ids(dcp_spreadsheet, dcp_flat):
         dcp_flat = dcp_flat.merge(protocol_df,  how='left',on=list(protocol_df.columns.values[:-1]))
     return dcp_flat
 
+def populate_spreadsheet(dcp_spreadsheet, dcp_flat):
+    for tab in dcp_spreadsheet:
+        keys_union = [key for key in dcp_spreadsheet[tab].keys() if key in dcp_flat.keys()]
+        # if entity of tab is not described in spreadsheet, skip tab
+        if keys_union and (tab.lower().replace(" ", "_") not in [key.split('.')[0] for key in keys_union]):
+            continue
+        # collapse arrays in duplicated columns
+        if any(dcp_flat[keys_union].columns.duplicated()):
+            for dub_cols in set(dcp_flat[keys_union].columns[dcp_flat[keys_union].columns.duplicated()]):
+                df = dcp_flat[dub_cols]
+                dcp_flat.drop(columns=dub_cols, inplace=True)
+                dcp_flat[dub_cols] = df[dub_cols].apply(lambda x: '||'.join(x.dropna().astype(str)),axis=1)
+        # merge the two dataframes
+        dcp_spreadsheet[tab] = pd.concat([dcp_spreadsheet[tab],dcp_flat[keys_union]]).fillna('')
+        dcp_spreadsheet[tab] = dcp_spreadsheet[tab].dropna(how='all').drop_duplicates()
+        if tab == 'Project':
+            dcp_spreadsheet[tab] = dcp_spreadsheet[tab].drop_duplicates()
+    return dcp_spreadsheet
+
 def collapse_values(series):
     return "||".join(series.unique().astype(str))
 
 def add_analysis_file(dcp_spreadsheet, collection_id, dataset_id):
     # We chould have 1 only Analysis file with all the CS merged
-    dcp_spreadsheet['Analysis file']['analysis_file.file_core.file_name'] = f'{collection_id}_{dataset_id}.h5ad'
-    dcp_spreadsheet['Analysis file']['analysis_file.file_core.content_description.text'] = 'count matrix'
-    dcp_spreadsheet['Analysis file']['analysis_file.file_core.file_source'] = 'Contributor' # maybe add CxG
-    dcp_spreadsheet['Analysis file']['analysis_file.file_core.format'] = 'h5ad'
-    adata_protocol_ids = {
-        'Library preparation protocol': 'library_preparation_protocol.protocol_core.protocol_id',
-        'Sequencing protocol': 'sequencing_protocol.protocol_core.protocol_id',
-        'Analysis protocol': 'analysis_protocol.protocol_core.protocol_id'
-    }
-    for tab, id in adata_protocol_ids.items():
-        dcp_spreadsheet['Analysis file'][id] = \
-        collapse_values(\
-            dcp_spreadsheet[tab][id]
-        )
+    analysis_file_metadata = {
+        'analysis_file.file_core.file_name': f'{collection_id}_{dataset_id}.h5ad',
+        'analysis_file.file_core.content_description.text': 'count matrix',
+        'analysis_file.file_core.file_source': 'Contributor',
+        'analysis_file.file_core.format': 'h5ad',
+        'sequencing_protocol.protocol_core.protocol_id': dcp_spreadsheet['Sequencing protocol']['sequencing_protocol.protocol_core.protocol_id']
+        }
+    
+    for key in dcp_spreadsheet['Analysis file']:
+        if key in analysis_file_metadata:
+            dcp_spreadsheet['Analysis file'][key] = analysis_file_metadata[key]
+    
     dcp_spreadsheet['Analysis file'] = dcp_spreadsheet['Analysis file']\
+        .fillna('')\
         .groupby('analysis_file.file_core.file_name')\
         .agg(collapse_values)\
         .reset_index()
@@ -289,36 +331,19 @@ def export_to_excel(dcp_spreadsheet, collection_id, dataset_id):
             if not data.empty:
                 pd.concat([dcp_headers[tab_name], data], ignore_index=True).to_excel(writer, sheet_name=tab_name, index=False, header=False)
 
-if __name__ == "__main__":
+def main():
     args = define_parser().parse_args()
     collection_id = args.collection_id
-    if args.dataset_id is not None:
-        dataset_id = args.dataset_id
-    else:
-        dataset_ids = [file.split("_")[1] for file in os.listdir('metadata') if file.startswith(collection_id)]
-        if len(set(dataset_ids)) == 1:
-            dataset_id = dataset_ids[0]
-        else:
-            print("Please specify the -d dataset_id. There are available files for:")
-            print('\n'.join(dataset_ids))
-            sys.exit()
+    dataset_id = get_dataset_id(args)
 
-    try:
-        sample_metadata_path = f"metadata/{collection_id}_{dataset_id}_metadata.csv"
-        sample_metadata = pd.read_csv(sample_metadata_path)
-    except FileNotFoundError:
-        print(f"File not found: {sample_metadata_path}")
-
-    study_metadata = read_study(collection_id, dataset_id)
-    dcp_spreadsheet = get_dcp_spreadsheet()
-
-    dcp_spreadsheet = add_doi(study_metadata, dcp_spreadsheet)
-    dcp_spreadsheet = add_title(study_metadata, dcp_spreadsheet)
-    dcp_spreadsheet = add_institute(sample_metadata, dcp_spreadsheet)
-
+    sample_metadata = read_sample_metadata(collection_id, dataset_id)
+    study_metadata = read_study_metadata(collection_id, dataset_id)
+    
+    # Edit conditionally mapped fields
     sample_metadata = edit_collection_relative(sample_metadata)
     sample_metadata = edit_ncbitaxon(sample_metadata)
     sample_metadata = edit_sex(sample_metadata)
+    sample_metadata = edit_ethnicity(sample_metadata)
     sample_metadata = edit_sample_source(sample_metadata)
     sample_metadata = edit_hardy_scale(sample_metadata)
     sample_metadata = edit_sampled_site(sample_metadata)
@@ -326,30 +351,23 @@ if __name__ == "__main__":
     # sample_metadata = edit_cell_enrichment(sample_metadata) # not yet functional
     sample_metadata = edit_dev_stage(sample_metadata)
 
-    # Rename df columns
+    # Rename directly mapped fields
     dcp_flat = sample_metadata.rename(columns=tier1_to_dcp)
+    
+    # Generate spreadsheet
+    dcp_spreadsheet = get_dcp_spreadsheet(args.local_template)
+
+    dcp_spreadsheet = add_doi(study_metadata, dcp_spreadsheet)
+    dcp_spreadsheet = add_title(study_metadata, dcp_spreadsheet)
+    
     dcp_flat = create_protocol_ids(dcp_spreadsheet, dcp_flat)
 
-    # Generate spreadsheet
-    for tab in dcp_spreadsheet:
-        keys_union = [key for key in dcp_spreadsheet[tab].keys() if key in dcp_flat.keys()]
-        # if entity of tab is not described in spreadsheet, skip tab
-        if keys_union and (tab.lower().replace(" ", "_") not in [key.split('.')[0] for key in keys_union]):
-            continue
-        # collapse arrays in duplicated columns
-        if any(dcp_flat[keys_union].columns.duplicated()):
-            for dub_cols in set(dcp_flat[keys_union].columns[dcp_flat[keys_union].columns.duplicated()]):
-                df = dcp_flat[dub_cols]
-                dcp_flat.drop(columns=dub_cols, inplace=True)
-                dcp_flat[dub_cols] = df[dub_cols].apply(lambda x: '||'.join(x.dropna().astype(str)),axis=1)
-
-        # merge the two dataframes
-        dcp_spreadsheet[tab] = pd.concat([dcp_spreadsheet[tab],dcp_flat[keys_union]])
-        dcp_spreadsheet[tab] = dcp_spreadsheet[tab].dropna(how='all').drop_duplicates()
-
-        if tab == 'Project':
-            dcp_spreadsheet[tab] = dcp_spreadsheet[tab].drop_duplicates()
+    # Populate spreadsheet
+    dcp_spreadsheet = populate_spreadsheet(dcp_spreadsheet, dcp_flat)
+    dcp_spreadsheet = add_institute(sample_metadata, dcp_spreadsheet)
     dcp_spreadsheet = add_analysis_file(dcp_spreadsheet, collection_id, dataset_id)
 
     export_to_excel(dcp_spreadsheet, collection_id, dataset_id)
 
+if __name__ == "__main__":
+    main()
