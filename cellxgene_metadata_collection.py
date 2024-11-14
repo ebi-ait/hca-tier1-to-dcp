@@ -1,6 +1,6 @@
 import argparse
 import os
-from os.path import isfile, getsize, exists
+from os.path import isfile, getsize
 
 import pandas as pd
 import requests
@@ -15,7 +15,7 @@ def define_parser():
     parser.add_argument("--collection", "-c", action="store",
                         dest="collection_id", type=str, required=True, help="Collection ID")
     parser.add_argument("--ingest_token", '-t', action="store",
-                        dest='token', type=str, required=False, 
+                        dest='token', type=str, required=False,
                         help="Ingest token to query for existing projects with same DOI")
     return parser
 
@@ -44,10 +44,26 @@ def generate_collection_report(collection):
         coll_report[field] = value
     return coll_report
 
+def selection_of_dataset(collection):
+    dataset_df = pd.DataFrame(collection['datasets'])[
+        ['dataset_id', 'cell_count', 'title']]
+    print(dataset_df)
+    
+    if len(dataset_df.index) == 1:
+        print("Converting the unique dataset in collection.")
+        dataset_ix = 0
+    else:
+        dataset_ix = input("Please select the index of the dataset to be converted:\n")
+        if not isinstance(dataset_ix, int) and not dataset_ix.isdigit():
+            raise ValueError("Please type a valid integer as index of the dataframe.")
+        if int(dataset_ix) not in dataset_df.index:
+            raise IndexError("Please use a valid index for the dataframe.")
+    dataset_id = dataset_df.loc[int(dataset_ix), 'dataset_id']
+    return dataset_id
 
 def download_h5ad_file(h5ad_url, output_file):
     """Downloads the H5AD file if not already present or if size differs."""
-    with requests.get(h5ad_url, stream=True) as res:
+    with requests.get(h5ad_url, stream=True, timeout=10) as res:
         res.raise_for_status()
         filesize = int(res.headers['Content-Length'])
         if not isfile(output_file):
@@ -56,13 +72,17 @@ def download_h5ad_file(h5ad_url, output_file):
                 for chunk in res.iter_content(chunk_size=1024 * 1024):
                     df.write(chunk)
                     total_bytes_received += len(chunk)
-                    percent_of_total_upload = float('{:.1f}'.format(total_bytes_received / filesize * 100))
-                    print(f'\033[1m\033[38;5;10m{percent_of_total_upload}% downloaded {output_file}\033[0m\r', end='')
+                    percent_of_total_upload = float('{:.1f}'.format(
+                        total_bytes_received / filesize * 100))
+                    print(
+                        f'\033[1m\033[38;5;10m{percent_of_total_upload}% downloaded {output_file}\033[0m\r', end='')
         elif getsize(output_file) != filesize:
-            print("Filename " + output_file + " exists, but size of local and online H5AD differs.")
+            print("Filename " + output_file +
+                  " exists, but size of local and online H5AD differs.")
             print("Please check if the local file is corrupted, rename it, and retry.")
         else:
-            print("Filename " + output_file + " exists and is has same size as online.")
+            print("Filename " + output_file +
+                  " exists and is has same size as online.")
 
 
 def extract_and_save_metadata(adata, collection_id, dataset_id):
@@ -74,15 +94,18 @@ def extract_and_save_metadata(adata, collection_id, dataset_id):
         pd.DataFrame(adata.obs[tier1_in_object].drop_duplicates()).set_index('library_id')\
             .to_csv(f'metadata/{collection_id}_{dataset_id}_metadata.csv')
     else:
-        print("No library_id information. Will save tier 1 based on donor_id.\n")
+        print("No library_id information. Saving tier 1 with donor_id index.\n")
         pd.DataFrame(adata.obs[tier1_in_object].drop_duplicates()).set_index('donor_id')\
             .to_csv(f'metadata/{collection_id}_{dataset_id}_metadata.csv')
     # Save full cell observations
-    pd.DataFrame(adata.obs).to_csv(f'metadata/{collection_id}_{dataset_id}_cell_obs.csv')
+    pd.DataFrame(adata.obs).to_csv(
+        f'metadata/{collection_id}_{dataset_id}_cell_obs.csv')
 
     # Check for missing fields
-    missing_must_fields = [must for must in tier1['obs']['MUST'] if must not in adata.obs.keys()]
-    missing_recom_fields = [rec for rec in tier1['obs']['RECOMMENDED'] if rec not in adata.obs.keys()]
+    missing_must_fields = [must for must in tier1['obs']
+                           ['MUST'] if must not in adata.obs.keys()]
+    missing_recom_fields = [rec for rec in tier1['obs']
+                            ['RECOMMENDED'] if rec not in adata.obs.keys()]
 
     if missing_must_fields:
         print("The following required fields are not present in the anndata obs:")
@@ -90,6 +113,7 @@ def extract_and_save_metadata(adata, collection_id, dataset_id):
     if missing_recom_fields:
         print("The following optional fields are not present in the anndata obs:")
         print(missing_recom_fields)
+
 
 def doi_search_ingest(doi, token):
     query = [{
@@ -101,14 +125,16 @@ def doi_search_ingest(doi, token):
         'Content-Type': 'application/json',
         'Authorization': "Bearer " + token
     }
-    projects = requests.request("POST", 'https://api.ingest.archive.data.humancellatlas.org/projects/query?operator=AND', 
-                                headers=headers, json=query).json()
+    projects = requests.request("POST", 'https://api.ingest.archive.data.humancellatlas.org/projects/query?operator=AND',
+                                headers=headers, json=query, timeout=10).json()
     if '_embedded' in projects:
-        links = [proj['uuid']['uuid'] + '\t' + proj['_links']['self']['href'] for proj in projects['_embedded']['projects']]
+        links = [proj['uuid']['uuid'] + '\t' + proj['_links']['self']['href']
+                 for proj in projects['_embedded']['projects']]
         print(f'Project(s) in ingest with doi {doi}:\n' + '\n'.join(links))
     else:
         print(f'DOI: {doi} was not found in ingest')
     return
+
 
 def main():
     parser = define_parser()
@@ -117,31 +143,20 @@ def main():
 
     # Query collection data
     collection = get_collection_data(collection_id)
-    collection['protocols'] = [link['link_url'] for link in collection['links'] if link['link_type'] == 'PROTOCOL']
+    collection['protocols'] = [link['link_url']
+                               for link in collection['links'] if link['link_type'] == 'PROTOCOL']
 
     # Generate and save collection report
     coll_report = generate_collection_report(collection)
-    if args.token is not None:
-        doi_search_ingest(coll_report['doi'], args.token)
-
-    dataset_df = pd.DataFrame(collection['datasets'])[['dataset_id', 'cell_count', 'title']]
-    print(dataset_df)
-
-    if len(dataset_df.index) == 1:
-        print("Converting the unique dataset in collection.")
-        dataset_ix = 0
-    else:
-        dataset_ix = int(input("Please select the index of the dataset to be converted:\n"))
-    if isinstance(dataset_ix, int) and dataset_ix in dataset_df.index:
-        dataset_id = dataset_df.loc[dataset_ix, 'dataset_id']
-    else:
-        print("Please type a valid index of the dataframe.")
-        return
+    dataset_id = selection_of_dataset(collection)
 
     os.makedirs('metadata', exist_ok=True)
     pd.DataFrame(coll_report, index=[0]).transpose()\
         .rename({'name': 'title', 'contact_name': 'study_pi'})\
         .to_csv(f'metadata/{collection_id}_{dataset_id}_study_metadata.csv', header=None)
+
+    if args.token is not None:
+        doi_search_ingest(coll_report['doi'], args.token)
 
     # Download the H5AD file
     mx_file = f'h5ads/{collection_id}_{dataset_id}.h5ad'
@@ -150,14 +165,14 @@ def main():
     h5ad_url = None
     for dataset in collection['datasets']:
         if dataset['dataset_id'] == dataset_id:
-            h5ad_url = [asset['url'] for asset in dataset['assets'] if asset['filetype'] == 'H5AD'][0]
+            h5ad_url = [asset['url'] for asset in dataset['assets']
+                        if asset['filetype'] == 'H5AD'][0]
             break
 
     if h5ad_url:
         download_h5ad_file(h5ad_url, mx_file)
     else:
         print("H5AD URL not found for the selected dataset.")
-        return
 
     # Extract metadata from the AnnData file
     adata = sc.read_h5ad(mx_file, backed='r')
@@ -168,6 +183,7 @@ def main():
             print(f"See doi.org/{coll_report['doi']} for more.")
         else:
             print(f"See {collection['collection_url']} for more.")
+
 
 if __name__ == "__main__":
     main()
