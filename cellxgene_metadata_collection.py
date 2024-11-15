@@ -47,10 +47,11 @@ def generate_collection_report(collection):
 def selection_of_dataset(collection):
     dataset_df = pd.DataFrame(collection['datasets'])[
         ['dataset_id', 'cell_count', 'title']]
+    print(f"{bold_start}SELECT DATASET:{bold_end}")
     print(dataset_df)
     
     if len(dataset_df.index) == 1:
-        print("Converting the unique dataset in collection.")
+        print(f"Converting the unique dataset in collection.")
         dataset_ix = 0
     else:
         dataset_ix = input("Please select the index of the dataset to be converted:\n")
@@ -77,12 +78,10 @@ def download_h5ad_file(h5ad_url, output_file):
                     print(
                         f'\033[1m\033[38;5;10m{percent_of_total_upload}% downloaded {output_file}\033[0m\r', end='')
         elif getsize(output_file) != filesize:
-            print("Filename " + output_file +
-                  " exists, but size of local and online H5AD differs.")
+            print("Local " + output_file + " and remote file has different size.")
             print("Please check if the local file is corrupted, rename it, and retry.")
         else:
-            print("Filename " + output_file +
-                  " exists and is has same size as online.")
+            print("Local " + output_file + " and remote file, has same size.")
 
 
 def extract_and_save_metadata(adata, collection_id, dataset_id):
@@ -108,14 +107,12 @@ def extract_and_save_metadata(adata, collection_id, dataset_id):
                             ['RECOMMENDED'] if rec not in adata.obs.keys()]
 
     if missing_must_fields:
-        print("The following required fields are not present in the anndata obs:")
-        print(missing_must_fields)
+        print(f"The following REQUIRED fields are NOT present in the anndata obs: {','.join(missing_must_fields)}")
     if missing_recom_fields:
-        print("The following optional fields are not present in the anndata obs:")
-        print(missing_recom_fields)
-
+        print(f"The following OPTIONAL fields are NOT present in the anndata obs: {','.join(missing_recom_fields)}")
 
 def doi_search_ingest(doi, token):
+    print(f"{bold_start}CHECK DOI IN INGEST:{bold_end}")
     query = [{
         "field": "content.publications.doi",
         "operator": "IS",
@@ -129,6 +126,7 @@ def doi_search_ingest(doi, token):
                                 headers=headers, json=query, timeout=10)
     response.raise_for_status()
     projects = response.json()
+    azul_api = 'https://service.azul.data.humancellatlas.org/index/projects/'
     if '_embedded' in projects:
         links = [proj['uuid']['uuid'] + '\t' + proj['_links']['self']['href']
                  for proj in projects['_embedded']['projects']]
@@ -136,7 +134,6 @@ def doi_search_ingest(doi, token):
     else:
         print(f'DOI: {doi} was not found in ingest')
     return
-
 
 def main():
     args = define_parser().parse_args()
@@ -156,6 +153,7 @@ def main():
         .rename({'name': 'title', 'contact_name': 'study_pi'})\
         .to_csv(f'metadata/{collection_id}_{dataset_id}_study_metadata.csv', header=None)
 
+    # Check if doi exists in ingest
     if args.token is not None:
         doi_search_ingest(coll_report['doi'], args.token)
 
@@ -185,6 +183,8 @@ def main():
         else:
             print(f"See {collection['collection_url']} for more.")
 
+bold_start = '\033[1m'
+bold_end = '\033[0;0m'
 
 if __name__ == "__main__":
     main()
