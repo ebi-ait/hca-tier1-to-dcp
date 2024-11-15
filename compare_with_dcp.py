@@ -4,6 +4,7 @@ import sys
 import json
 
 import pandas as pd
+from tier1_mapping import entity_types, all_entities
 
 # Open cellxgene spreadsheet
 # Open DCP spreadsheet
@@ -75,18 +76,39 @@ def export_report_json(collection_id, dataset_id, report_dict):
     with open(f'compare_report/{collection_id}_{dataset_id}_compare.json', 'w', encoding='UTF-8') as json_file:
                     json.dump(report_dict, json_file)
 
+def init_report_dict():
+    report_dict = {}
+    report_dict['ids'] = {'n': {}, 'values': {}}
+    report_dict['tabs'] = {'excess': {}, 'n': {}, 'intersect': []}
+    os.makedirs('compare_report', exist_ok=True)
+    return report_dict
+
+def compare_n_tabs(tier1_spreadsheet, wrangled_spreadsheet, report_dict):
+    print(f"{BOLD_START}COMPARE OF TABS:{BOLD_END}")
+    wrangled_excess_tabs = [tab for tab in set(wrangled_spreadsheet) if tab not in set(tier1_spreadsheet)]
+    tier1_excess_tabs = [tab for tab in set(tier1_spreadsheet) if tab not in set(wrangled_spreadsheet)]
+    if not tier1_excess_tabs and not wrangled_excess_tabs:
+        intersect_tabs = list(tier1_spreadsheet)
+    elif len(tier1_spreadsheet) > len(wrangled_spreadsheet):
+        intersect_tabs = [tab for tab in set(tier1_spreadsheet) if tab in set(wrangled_spreadsheet)]
+        print(f"{BOLD_START}WARNING{BOLD_END}: More tabs in Tier 1.\n\t" + '\n\t'.join(tier1_excess_tabs))
+    else:
+        intersect_tabs = [tab for tab in set(wrangled_spreadsheet) if tab in set(tier1_spreadsheet)]
+        print(f"More tabs in DCP.\n\t {'; '.join(wrangled_excess_tabs)}")
+    
+    report_dict['tabs']['n'] = {'tier1':len(tier1_spreadsheet), 'wranlged': len(wrangled_spreadsheet)}
+    report_dict['tabs']['excess'] = {'tier1': tier1_excess_tabs, 'wrangled': wrangled_excess_tabs}
+    report_dict['tabs']['intersect'] = intersect_tabs
+    return report_dict
+
+
 def main():
     args = define_parser().parse_args()
     collection_id = args.collection_id
     dataset_id = get_dataset_id(args)
     wrangled_path = args.wrangled_path
 
-    bold_start = '\033[1m'
-    bold_end = '\033[0;0m'
-    report_dict = {}
-    report_dict['ids'] = {'n': {}, 'values': {}}
-    report_dict['tabs'] = {'excess': {}, 'n': {}, 'intersect': []}
-    os.makedirs('compare_report', exist_ok=True)
+    report_dict = init_report_dict()
 
     # Open cellxgene spreadsheet
     tier1_spreadsheet = open_tier1_spreadsheet(collection_id, dataset_id)
@@ -94,36 +116,20 @@ def main():
     wrangled_spreadsheet = open_wrangled_spreadsheet(wrangled_path)
 
     # Compare number of tabs, use intersection
-    if set(tier1_spreadsheet) == set(wrangled_spreadsheet):
-        tier1_excess_tabs = [] 
-        wrangled_excess_tabs = []
-        intersect_tabs = list(tier1_spreadsheet)
-        print("All good on tabs side.")
-    elif len(tier1_spreadsheet) > len(wrangled_spreadsheet):
-        tier1_excess_tabs = [tab for tab in set(tier1_spreadsheet) if tab not in set(wrangled_spreadsheet)]
-        wrangled_excess_tabs = []
-        intersect_tabs = [tab for tab in set(tier1_spreadsheet) if tab in set(wrangled_spreadsheet)]
-        print("More tabs in Tier 1.\n\t" + '\n\t'.join(tier1_excess_tabs))
-    else:
-        tier1_excess_tabs = []
-        wrangled_excess_tabs = [tab for tab in set(wrangled_spreadsheet) if tab not in set(tier1_spreadsheet)]
-        intersect_tabs = [tab for tab in set(wrangled_spreadsheet) if tab in set(tier1_spreadsheet)]
-        print("{bold_start}WARNING{bold_end}: More tabs in DCP.\n\t" + ';'.join(wrangled_excess_tabs))
-
-    report_dict['tabs']['n'] = {'tier1':len(tier1_spreadsheet), 'wranlged': len(wrangled_spreadsheet)}
-    report_dict['tabs']['excess'] = {'tier1': tier1_excess_tabs, 'wrangled': wrangled_excess_tabs}
-    report_dict['tabs']['intersect'] = intersect_tabs
+    report_dict = compare_n_tabs(tier1_spreadsheet, wrangled_spreadsheet, report_dict)
 
     # compare number and values of ids
-    for tab in intersect_tabs:
-        print(f"{bold_start}Comparing tab {tab} {bold_end}")
-        if tab.startswith("Project") or tab == 'Analysis file' or tab == 'Sequence file':
-            # skip those tabs since this info is not entirely recorded in the CxG collection
+    for tab in report_dict['tabs']['intersect']:
+        if tab in entity_types['project'] + entity_types['file']:
+            # skip project or file tabs since info is not fully recorded in the CxG collection
             continue
+        print(f"{BOLD_START}Comparing tab {tab} {BOLD_END}")
         # find id field
         tab_id = get_tab_id(tab, tier1_spreadsheet)
+        # compare tab id
         if tab_id != get_tab_id(tab, wrangled_spreadsheet):
-            print(f"Id field doesn't match across spreadsheets for {tab}:\n\tTier1 {get_tab_id(tab, tier1_spreadsheet)} vs Wrangled {get_tab_id(tab, wrangled_spreadsheet)}")
+            print(f"Id field doesn't match across spreadsheets for {tab}:\n\t" + 
+                  f"Tier1 {get_tab_id(tab, tier1_spreadsheet)} vs Wrangled {get_tab_id(tab, wrangled_spreadsheet)}")
             continue
 
         # compare Number and Values of ids per tab
@@ -135,8 +141,8 @@ def main():
         report_dict['ids']['n'][tab] = {'tier1': n_ids['tier1'], 'wrangled': n_ids['wrangled']}
 
         if n_ids['tier1'] != n_ids['wrangled']:
-            print(f"{bold_start}WARNING{bold_end}: Not equal number of {tab}\n\tTier1 {n_ids['tier1']} vs Wrangled {n_ids['wrangled']}")
-            if input("Continue anyway? (yes/no)\n") in ['no', 'n', 'NO', 'No']:
+            print(f"{BOLD_START}WARNING{BOLD_END}: Not equal number of {tab}\n\tTier1 {n_ids['tier1']} vs Wrangled {n_ids['wrangled']}")
+            if input("Continue anyway? (yes/no)") in ['no', 'n', 'NO', 'No']:
                 export_report_json(collection_id, dataset_id, report_dict)
                 sys.exit()
         
@@ -148,10 +154,13 @@ def main():
         report_dict['ids']['values'][tab] = {'tier1': v_ids['tier1'], 'wrangled': v_ids['wrangled']}
 
         if intersect_ids != v_ids['tier1']:
-            print(f"{bold_start}WARNING{bold_end}: Values of {tab_id} not identical across spreadsheets\n\t"+
+            print(f"{BOLD_START}WARNING{BOLD_END}: Values of {tab_id} not identical across spreadsheets\n\t"+
                   f"Tier 1 {','.join(sorted(v_ids['tier1']))}\n\tWrangled {','.join(sorted(v_ids['wrangled']))}")
 
     export_report_json(collection_id, dataset_id, report_dict)
+
+BOLD_START = '\033[1m'
+BOLD_END = '\033[0;0m'
 
 if __name__ == "__main__":
     main()
