@@ -9,10 +9,10 @@ import pandas as pd
 # Open DCP spreadsheet
     # provide file locally
     # if DOI, if unique ingest project/ submission, pull with api
-# Compare number of tabs, use union
+# Compare number of tabs, use intersection
 # Open each common tab 
     # compare number of entites per tab
-    # compare ids per tab, for union
+    # compare ids per tab, for intersection
         # search for Tier 1 ID in DCP name, description, accession
     # compare values of common IDs
 
@@ -82,7 +82,7 @@ def main():
     wrangled_path = args.wrangled_path
     report_dict = {}
     report_dict['ids'] = {'n': {}, 'values': {}}
-    report_dict['tabs'] = {'excess': {}, 'n': {}, 'union': []}
+    report_dict['tabs'] = {'excess': {}, 'n': {}, 'intersect': []}
     os.makedirs('compare_report', exist_ok=True)
 
     # Open cellxgene spreadsheet
@@ -90,29 +90,29 @@ def main():
     # Open DCP spreadsheet
     wrangled_spreadsheet = open_wrangled_spreadsheet(wrangled_path)
 
-    # Compare number of tabs, use union
+    # Compare number of tabs, use intersection
     if set(tier1_spreadsheet) == set(wrangled_spreadsheet):
         tier1_excess_tabs = [] 
         wrangled_excess_tabs = []
-        union_tabs = list(tier1_spreadsheet)
+        intersect_tabs = list(tier1_spreadsheet)
         print("All good on tabs side.")
     elif len(tier1_spreadsheet) > len(wrangled_spreadsheet):
         tier1_excess_tabs = [tab for tab in set(tier1_spreadsheet) if tab not in set(wrangled_spreadsheet)]
         wrangled_excess_tabs = []
-        union_tabs = [tab for tab in set(tier1_spreadsheet) if tab in set(wrangled_spreadsheet)]
+        intersect_tabs = [tab for tab in set(tier1_spreadsheet) if tab in set(wrangled_spreadsheet)]
         print("More tabs in Tier 1.\n\t" + '\n\t'.join(tier1_excess_tabs))
     else:
         tier1_excess_tabs = []
         wrangled_excess_tabs = [tab for tab in set(wrangled_spreadsheet) if tab not in set(tier1_spreadsheet)]
-        union_tabs = [tab for tab in set(wrangled_spreadsheet) if tab in set(tier1_spreadsheet)]
+        intersect_tabs = [tab for tab in set(wrangled_spreadsheet) if tab in set(tier1_spreadsheet)]
         print("More tabs in DCP.\n\t" + '\n\t'.join(wrangled_excess_tabs))
 
     report_dict['tabs']['n'] = {'tier1':len(tier1_spreadsheet), 'wranlged': len(wrangled_spreadsheet)}
     report_dict['tabs']['excess'] = {'tier1': tier1_excess_tabs, 'wrangled': wrangled_excess_tabs}
-    report_dict['tabs']['union'] = union_tabs
+    report_dict['tabs']['intersect'] = intersect_tabs
 
     # compare number and values of ids
-    for tab in union_tabs:
+    for tab in intersect_tabs:
         print(f"\n\nComparing tab {tab}")
         if tab.startswith("Project") or tab == 'Analysis file' or tab == 'Sequence file':
             # skip those tabs since this info is not entirely recorded in the CxG collection
@@ -125,7 +125,7 @@ def main():
 
         # compare Number and Values of ids per tab
         report_dict['ids']['n'][tab] = {}
-        # Numbers
+        # Number of ids
         n_ids = {}
         n_ids['tier1'] = get_number_of_field(tab, tier1_spreadsheet, tab_id)
         n_ids['wrangled'] = get_number_of_field(tab, wrangled_spreadsheet, tab_id)
@@ -137,14 +137,14 @@ def main():
                 export_report_json(collection_id, dataset_id, report_dict)
                 sys.exit()
         
-        # Values of ids
+        # Value of ids
         v_ids = {}
         v_ids['tier1'] = get_values_of_field(tab, tier1_spreadsheet, tab_id)
         v_ids['wrangled'] = get_values_of_field(tab, wrangled_spreadsheet, tab_id)
-        union_ids = [t for t in v_ids['tier1'] if t in v_ids['wrangled']]
+        intersect_ids = [t for t in v_ids['tier1'] if t in v_ids['wrangled']]
         report_dict['ids']['values'][tab] = {'tier1': v_ids['tier1'], 'wrangled': v_ids['wrangled']}
 
-        if union_ids != v_ids['tier1']:
+        if intersect_ids != v_ids['tier1']:
             print(f"WARNING: Values of {tab_id} not identical across spreadsheets\n\t"+
                   f"Tier 1 {','.join(sorted(v_ids['tier1']))}\n\tWrangled {','.join(sorted(v_ids['wrangled']))}")
 
