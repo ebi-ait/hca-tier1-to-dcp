@@ -131,3 +131,87 @@ protocol_ids = {
         'dcp_fields': ['enrichment_protocol.markers', 'enrichment_protocol.protocol_core.protocol_id']
     }
 }
+
+
+entity_types = {
+    "project":
+    [
+        "Project",
+        "Project - Contributors",
+        "Project - Publications",
+        "Project - Funders"
+    ],
+    "biomaterial":
+    [
+        "Donor organism",
+        "Specimen from organism",
+        "Cell suspension",
+        "Organoid",
+        "Imaged specimen",
+        "Cell line"
+    ],
+    "file":
+    [
+        "Supplementary file",
+        "Sequence file",
+        "Analysis file",
+        "Image file"
+    ],
+    "protocol":
+    [
+        "Collection protocol",
+        "Treatment protocol",
+        "Dissociation protocol",
+        "Differentiation protocol",
+        "Enrichment protocol",
+        "Aggregate generation protocol",
+        "Ipsc induction protocol",
+        "Imaging preparation protocol",
+        "Imaging protocol",
+        "Library preparation protocol",
+        "Sequencing protocol",
+        "Analysis protocol",
+        "Additional reagents",
+        "Imaging protocol - Channel",
+        "Imaging protocol - Probe"
+    ],
+    "module":
+    [
+        "Familial relationship",
+        "Project - hca bionetworks"
+    ]
+}
+
+all_entities = [
+    "Project",
+    "Project - Contributors",
+    "Project - Publications",
+    "Project - Funders"
+    "Donor organism",
+    "Specimen from organism",
+    "Cell suspension",
+    "Organoid",
+    "Imaged specimen",
+    "Cell line"
+    "Supplementary file",
+    "Sequence file",
+    "Analysis file",
+    "Image file"
+    "Collection protocol",
+    "Treatment protocol",
+    "Dissociation protocol",
+    "Differentiation protocol",
+    "Enrichment protocol",
+    "Aggregate generation protocol",
+    "Ipsc induction protocol",
+    "Imaging preparation protocol",
+    "Imaging protocol",
+    "Library preparation protocol",
+    "Sequencing protocol",
+    "Analysis protocol",
+    "Additional reagents",
+    "Imaging protocol - Channel",
+    "Imaging protocol - Probe"
+    "Familial relationship",
+    "Project - hca bionetworks"
+]
