@@ -47,7 +47,7 @@ def generate_collection_report(collection):
 def selection_of_dataset(collection):
     dataset_df = pd.DataFrame(collection['datasets'])[
         ['dataset_id', 'cell_count', 'title']]
-    print(f"{bold_start}SELECT DATASET:{bold_end}")
+    print(f"{BOLD_START}SELECT DATASET:{BOLD_END}")
     print(dataset_df)
     
     if len(dataset_df.index) == 1:
@@ -112,7 +112,7 @@ def extract_and_save_metadata(adata, collection_id, dataset_id):
         print(f"The following OPTIONAL fields are NOT present in the anndata obs: {','.join(missing_recom_fields)}")
 
 def doi_search_ingest(doi, token):
-    print(f"{bold_start}CHECK DOI IN INGEST:{bold_end}")
+    print(f"{BOLD_START}CHECK DOI IN INGEST:{BOLD_END}")
     query = [{
         "field": "content.publications.doi",
         "operator": "IS",
@@ -183,8 +183,8 @@ def main():
         else:
             print(f"See {collection['collection_url']} for more.")
 
-bold_start = '\033[1m'
-bold_end = '\033[0;0m'
+BOLD_START = '\033[1m'
+BOLD_END = '\033[0;0m'
 
 if __name__ == "__main__":
     main()
