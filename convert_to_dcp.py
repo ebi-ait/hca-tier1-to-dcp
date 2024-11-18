@@ -308,6 +308,13 @@ def create_protocol_ids(dcp_spreadsheet, dcp_flat):
         dcp_flat = dcp_flat.merge(protocol_df,  how='left',on=list(protocol_df.columns.values[:-1]))
     return dcp_flat
 
+def fill_ontology_terms(dcp_flat):
+    ont_fields = [col for col in dcp_flat.columns if col.endswith('ontology')]
+    for field in ont_fields:
+        dcp_flat[field.replace("ontology","text")] = dcp_flat[field].apply(ols_label)
+        dcp_flat[field.replace("ontology","ontology_label")] = dcp_flat[field].apply(ols_label)
+    return dcp_flat
+
 def populate_spreadsheet(dcp_spreadsheet, dcp_flat):
     for tab in dcp_spreadsheet:
         keys_union = [key for key in dcp_spreadsheet[tab].keys() if key in dcp_flat.keys()]
@@ -389,6 +396,7 @@ def main():
     # Rename directly mapped fields
     print(f'\nConverted {"; ".join([col for col in sample_metadata if col in tier1_to_dcp])}')
     dcp_flat = sample_metadata.rename(columns=tier1_to_dcp)
+    dcp_flat = fill_ontology_terms(dcp_flat)
     
     # Generate spreadsheet
     dcp_spreadsheet = get_dcp_template(local_template)
