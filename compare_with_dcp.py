@@ -69,8 +69,8 @@ def get_tab_id(tab, spreadsheet):
 def check_tab_id(tab, wrangled_spreadsheet, tier1_spreadsheet):
     tab_id = get_tab_id(tab, tier1_spreadsheet)
     if tab_id != get_tab_id(tab, wrangled_spreadsheet):
-        print(f"Id field doesn't match across spreadsheets for {tab}:\n\t" + 
-                f"Tier1 {get_tab_id(tab, tier1_spreadsheet)} vs Wrangled {get_tab_id(tab, wrangled_spreadsheet)}")
+        print(f"Id field doesn't match across spreadsheets for {tab}:\n\t" +
+              f"Tier1 {get_tab_id(tab, tier1_spreadsheet)} vs Wrangled {get_tab_id(tab, wrangled_spreadsheet)}")
         return True
     return False
 
@@ -135,7 +135,7 @@ def compare_v_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet):
     
     if intersect_ids != v_ids['tier1']:
         print(f"{BOLD_START}WARNING{BOLD_END}: Values of {tab_id} not identical across spreadsheets\n\t"+
-              f"Tier 1 {','.join(sorted(v_ids['tier1']))}\n\tWrangled {', '.join(sorted(v_ids['wrangled']))}")
+              f"Tier 1 {', '.join(sorted(v_ids['tier1']))}\n\tWrangled {', '.join(sorted(v_ids['wrangled']))}")
     
     return report_dict
 
