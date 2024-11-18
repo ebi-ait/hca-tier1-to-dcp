@@ -7,7 +7,7 @@ import requests
 import pandas as pd
 from numpy import nan
 
-from tier1_mapping import tier1_to_dcp, lib_prep_cheatsheet
+from tier1_mapping import tier1_to_dcp, lib_prep_cheatsheet, collection_dict
 
 
 def define_parser():
@@ -106,11 +106,15 @@ def add_institute(sample_metadata, dcp_spreadsheet):
 def ols_label(ontology_id, only_label=True, ontology=None):
     if not re.match(r"\w+:\d+", ontology_id):
         return ontology_id
+    if ontology_id is nan:
+        return ontology_id
     ontology_name = ontology if ontology else ontology_id.split(":")[0].lower()
     ontology_term = ontology_id.replace(":", "_")
+    url = f'https://www.ebi.ac.uk/ols4/api/ontologies/{ontology_name}/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252F{ontology_term}'
+    if ontology_name == 'efo':
+        url = f'https://www.ebi.ac.uk/ols4/api/ontologies/{ontology_name}/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252F{ontology_term}'
     try:
-        response = requests.get(f'https://www.ebi.ac.uk/ols4/api/ontologies/{ontology_name}/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252F{ontology_term}', 
-                                timeout=10)
+        response = requests.get(url, timeout=10)
         results = response.json()
     except ConnectionError as e:
         print(e)
@@ -127,7 +131,26 @@ def edit_collection_relative(sample_metadata):
         time_units_pattern = r'(hour|day|week|month|year)'
         sample_metadata['specimen_from_organism.biomaterial_core.timecourse.unit.text'] = \
             sample_metadata['sample_collection_relative_time_point'].str.extract(time_units_pattern, expand=False)
-        print('`sample_collection_relative_time_point`', end='; ')
+        print('`sample_collection_relative_time_point`', end='; ', flush=True)
+    return sample_metadata
+
+def collection_user_select(x):
+    sample_id = x['sample_id']
+    collection_method = x['sample_collection_method']
+    tissue = ols_label(x['tissue_ontology_term_id'])
+    options = '\n'.join([str(i) + ': '+ ols_label(term) for i, term in enumerate(collection_dict[x['sample_collection_method']])])
+    n = input(f"Please specify the collection method `{collection_method}` matching for sample {sample_id} from {tissue}." + \
+        f"Available options:\n{options}\n")
+    if not n.isdigit() or int(n) not in range(len(collection_dict[x['sample_collection_method']])):
+        raise TypeError(f"Please use a value from {list(range(len(collection_dict[x['sample_collection_method']])))}")
+    return collection_dict[x['sample_collection_method']][int(n)]
+
+def edit_collection_method(sample_metadata, collection_dict):
+    if 'sample_collection_method' in sample_metadata:
+        sample_metadata['collection_protocol.method.ontology'] = sample_metadata\
+        .apply(lambda x: collection_dict[x['sample_collection_method']] \
+            if isinstance(collection_dict[x['sample_collection_method']],str) else collection_user_select(x), axis=1)
+        print('`sample_collection_method`', end='; ', flush=True)
     return sample_metadata
 
 def tissue_type_taxon(sample_metadata, tissue_type, tissue_type_dcp):
@@ -149,7 +172,7 @@ def edit_ncbitaxon(sample_metadata):
                 if tissue_type in sample_metadata['tissue_type'].values:
                     sample_metadata = tissue_type_taxon(sample_metadata, tissue_type, tissue_type_dcp)
         biomaterials = [col.split('.')[0] for col in sample_metadata if col.endswith("biomaterial_core.ncbi_taxon_id")]
-        print(f'`ncbitaxon` for {", ".join(biomaterials)}', end='; ')
+        print(f'`ncbitaxon` for {", ".join(biomaterials)}', end='; ', flush=True)
     return sample_metadata
 
 def edit_sex(sample_metadata):
@@ -165,13 +188,15 @@ def edit_sex(sample_metadata):
             unsupported_sex = sample_metadata.loc[~bool_sex_values, 'sex_ontology_term_id']
             print(f"Unsupported sex value {', '.join(unsupported_sex)}")
             return sample_metadata
-        print('`sex`', end='; ')
+        print('`sex`', end='; ', flush=True)
     return sample_metadata
 
 def edit_ethnicity(sample_metadata):
     if 'self_reported_ethnicity_ontology_term_id' in sample_metadata:
         sample_metadata.loc[sample_metadata['self_reported_ethnicity_ontology_term_id'] == 'unknown', 'self_reported_ethnicity_ontology_term_id'] = nan
-    print('`ethnicity`', end='; ')
+        if sample_metadata['self_reported_ethnicity_ontology_term_id'].isna().all():
+            del sample_metadata['self_reported_ethnicity_ontology_term_id']
+    print('`ethnicity`', end='; ', flush=True)
     return sample_metadata
 
 def edit_sample_source(sample_metadata):
@@ -183,7 +208,7 @@ def edit_sample_source(sample_metadata):
             print(f"Conflicting metadata {sample_metadata.loc[conflict_1, ['sample_source', 'manner_of_death']]}")
             print(f"Conflicting metadata {sample_metadata.loc[conflict_2, ['sample_source', 'manner_of_death']]}")
             return sample_metadata
-        print('`sample_source`', end='; ')
+        print('`sample_source`', end='; ', flush=True)
     return sample_metadata
 
 def edit_hardy_scale(sample_metadata):
@@ -194,7 +219,7 @@ def edit_hardy_scale(sample_metadata):
     if 'manner_of_death' in sample_metadata:
         sample_metadata['donor_organism.is_living'] = sample_metadata['manner_of_death'].replace(manner_of_death_is_living_dict)
         sample_metadata['donor_organism.death.hardy_scale'] = sample_metadata.apply(lambda x: x['manner_of_death'] if x['manner_of_death'] in hardy_scale else nan, axis=1)
-        print('`hardy_scale`', end='; ')
+        print('`hardy_scale`', end='; ', flush=True)
     return sample_metadata
 
 def sampled_site_to_known_diseases(row):
@@ -217,7 +242,9 @@ def edit_sampled_site(sample_metadata):
     
         sample_metadata[['specimen_from_organism.diseases.ontology', 'specimen_from_organism.adjacent_diseases.ontology']] = \
             sample_metadata.apply(sampled_site_to_known_diseases, axis=1, result_type='expand')
-        print('`sampled_site`', end='; ')
+        if sample_metadata['specimen_from_organism.adjacent_diseases.ontology'].isna().all():
+            del sample_metadata['specimen_from_organism.adjacent_diseases.ontology']
+        print('`sampled_site`', end='; ', flush=True)
     return sample_metadata
 
 def edit_alignment_software(sample_metadata):
@@ -229,7 +256,7 @@ def edit_alignment_software(sample_metadata):
         no_version = ~sample_metadata['alignment_software'].str.match(r'.*v?[\d\.]+')
         sample_metadata.loc[no_version, 'analysis_protocol.alignment_software'] = \
                 sample_metadata.loc[no_version, 'alignment_software']
-        print('`alignment_software`', end='; ')
+        print('`alignment_software`', end='; ', flush=True)
     return sample_metadata
 
 def edit_cell_enrichment(sample_metadata):
@@ -239,7 +266,7 @@ def edit_cell_enrichment(sample_metadata):
         sample_metadata['enrichment_protocol.markers'] = sample_metadata['cell_enrichment_cell_type'].apply(ols_label)
         sample_metadata['cell_suspension.selected_cell_types.ontology'] = sample_metadata['cell_enrichment_cell_type']
         sample_metadata['cell_suspension.selected_cell_types.ontology_label'] = sample_metadata['cell_enrichment_cell_type'].apply(ols_label)
-        print('`cell_enrichment`', end='; ')
+        print('`cell_enrichment`', end='; ', flush=True)
     return sample_metadata
 
 def dev_label(ontology):
@@ -285,14 +312,14 @@ def edit_dev_stage(sample_metadata):
             sample_metadata['development_stage_ontology_term_id']\
                 .apply(lambda x: dev_to_age_dict[x] if x in dev_to_age_dict.keys() else dev_label(x))\
                 .str.split(' ', expand=True)
-        print('`development_stage`', end='; ')
+        print('`development_stage`', end='; ', flush=True)
     return sample_metadata
 
 def edit_lib_prep_protocol(sample_metadata):
     cheatsheet = pd.DataFrame(lib_prep_cheatsheet, 
                               index=lib_prep_cheatsheet['assay_ontology_term_id'])
     if sample_metadata['assay_ontology_term_id'].isin(cheatsheet.index).any():
-        print('`lib_prep fields`', end='; ')
+        print('`lib_prep fields`', end='; ', flush=True)
         return sample_metadata.merge(cheatsheet, how='left', on='assay_ontology_term_id')
     return sample_metadata
 
@@ -311,6 +338,7 @@ def create_protocol_ids(dcp_spreadsheet, dcp_flat):
 def fill_ontology_terms(dcp_flat):
     ont_fields = [col for col in dcp_flat.columns if col.endswith('ontology')]
     for field in ont_fields:
+        print(field, end='; ', flush=True)
         dcp_flat[field.replace("ontology","text")] = dcp_flat[field].apply(ols_label)
         dcp_flat[field.replace("ontology","ontology_label")] = dcp_flat[field].apply(ols_label)
     return dcp_flat
@@ -392,10 +420,14 @@ def main():
     sample_metadata = edit_lib_prep_protocol(sample_metadata)
     # sample_metadata = edit_cell_enrichment(sample_metadata) # not yet functional
     sample_metadata = edit_dev_stage(sample_metadata)
+    sample_metadata = edit_collection_method(sample_metadata, collection_dict)
 
     # Rename directly mapped fields
     print(f'\nConverted {"; ".join([col for col in sample_metadata if col in tier1_to_dcp])}')
     dcp_flat = sample_metadata.rename(columns=tier1_to_dcp)
+    
+    # Add ontology labels
+    print('Pull ontology labels from fields:')
     dcp_flat = fill_ontology_terms(dcp_flat)
     
     # Generate spreadsheet
