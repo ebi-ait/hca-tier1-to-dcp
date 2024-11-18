@@ -1,10 +1,8 @@
 import argparse
 import os
-import io
 import re
 import sys
 import requests
-from requests.exceptions import ConnectionError
 
 import pandas as pd
 from numpy import nan
@@ -36,6 +34,7 @@ def get_dataset_id(args):
 def read_sample_metadata(collection_id, dataset_id):
     try:
         sample_metadata_path = f"metadata/{collection_id}_{dataset_id}_metadata.csv"
+        print(f"Tier 1 obs spreadsheet found in {sample_metadata_path}")
         return pd.read_csv(sample_metadata_path)
     except FileNotFoundError:
         print(f"File not found: {sample_metadata_path}")
@@ -46,12 +45,13 @@ def read_study_metadata(collection_id, dataset_id):
         metadata_path = f"metadata/{collection_id}_{dataset_id}_study_metadata.csv"
         metadata = pd.read_csv(metadata_path, header=None).T
         metadata.columns = metadata.iloc[0]
+        print(f"Tier 1 uns spreadsheet found in {metadata_path}")
         return metadata.drop(0, axis=0)
     except FileNotFoundError:
         print(f"File not found: {metadata_path}")
         return pd.DataFrame()
 
-def get_dcp_spreadsheet(local_path=None):
+def get_dcp_template(local_path=None):
     # if no internet connection, provide local path
     hca_template_url = 'https://github.com/ebi-ait/geo_to_hca/raw/master/template/hca_template.xlsx'
     path = local_path if local_path else hca_template_url
@@ -61,7 +61,7 @@ def get_dcp_spreadsheet(local_path=None):
         print(f"Local file path not found: {local_path}")
         return {}
     except ConnectionError:
-        print(f"Could not connect to {hca_template_url}. Use provide local_path instead.")
+        print(f"Could not connect to {hca_template_url}. Please provide local_path instead.")
         return {}
 
 def get_dcp_headers(local_path=None):
@@ -127,6 +127,7 @@ def edit_collection_relative(sample_metadata):
         time_units_pattern = r'(hour|day|week|month|year)'
         sample_metadata['specimen_from_organism.biomaterial_core.timecourse.unit.text'] = \
             sample_metadata['sample_collection_relative_time_point'].str.extract(time_units_pattern, expand=False)
+        print('`sample_collection_relative_time_point`', end='; ')
     return sample_metadata
 
 def tissue_type_taxon(sample_metadata, tissue_type, tissue_type_dcp):
@@ -140,7 +141,6 @@ def edit_ncbitaxon(sample_metadata):
         'cell culture': 'cell_line.biomaterial_core.ncbi_taxon_id',
         'organoid': 'organoid.biomaterial_core.ncbi_taxon_id'
     }
-
     if 'organism_ontology_term_id' in sample_metadata:
         sample_metadata['donor_organism.biomaterial_core.ncbi_taxon_id'] = sample_metadata['organism_ontology_term_id'].str.removeprefix('NCBITaxon:')
         sample_metadata['specimen_from_organism.biomaterial_core.ncbi_taxon_id'] = sample_metadata['organism_ontology_term_id'].str.removeprefix('NCBITaxon:')
@@ -148,6 +148,8 @@ def edit_ncbitaxon(sample_metadata):
             for tissue_type in tissue_type_dcp:
                 if tissue_type in sample_metadata['tissue_type'].values:
                     sample_metadata = tissue_type_taxon(sample_metadata, tissue_type, tissue_type_dcp)
+        biomaterials = [col.split('.')[0] for col in sample_metadata if col.endswith("biomaterial_core.ncbi_taxon_id")]
+        print(f'`ncbitaxon` for {", ".join(biomaterials)}', end='; ')
     return sample_metadata
 
 def edit_sex(sample_metadata):
@@ -162,11 +164,14 @@ def edit_sex(sample_metadata):
         if not bool_sex_values.all():
             unsupported_sex = sample_metadata.loc[~bool_sex_values, 'sex_ontology_term_id']
             print(f"Unsupported sex value {', '.join(unsupported_sex)}")
+            return sample_metadata
+        print('`sex`', end='; ')
     return sample_metadata
 
 def edit_ethnicity(sample_metadata):
     if 'self_reported_ethnicity_ontology_term_id' in sample_metadata:
         sample_metadata.loc[sample_metadata['self_reported_ethnicity_ontology_term_id'] == 'unknown', 'self_reported_ethnicity_ontology_term_id'] = nan
+    print('`ethnicity`', end='; ')
     return sample_metadata
 
 def edit_sample_source(sample_metadata):
@@ -177,6 +182,8 @@ def edit_sample_source(sample_metadata):
         if any(conflict_1) or any(conflict_2):
             print(f"Conflicting metadata {sample_metadata.loc[conflict_1, ['sample_source', 'manner_of_death']]}")
             print(f"Conflicting metadata {sample_metadata.loc[conflict_2, ['sample_source', 'manner_of_death']]}")
+            return sample_metadata
+        print('`sample_source`', end='; ')
     return sample_metadata
 
 def edit_hardy_scale(sample_metadata):
@@ -187,6 +194,7 @@ def edit_hardy_scale(sample_metadata):
     if 'manner_of_death' in sample_metadata:
         sample_metadata['donor_organism.is_living'] = sample_metadata['manner_of_death'].replace(manner_of_death_is_living_dict)
         sample_metadata['donor_organism.death.hardy_scale'] = sample_metadata.apply(lambda x: x['manner_of_death'] if x['manner_of_death'] in hardy_scale else nan, axis=1)
+        print('`hardy_scale`', end='; ')
     return sample_metadata
 
 def sampled_site_to_known_diseases(row):
@@ -209,6 +217,7 @@ def edit_sampled_site(sample_metadata):
     
         sample_metadata[['specimen_from_organism.diseases.ontology', 'specimen_from_organism.adjacent_diseases.ontology']] = \
             sample_metadata.apply(sampled_site_to_known_diseases, axis=1, result_type='expand')
+        print('`sampled_site`', end='; ')
     return sample_metadata
 
 def edit_alignment_software(sample_metadata):
@@ -220,6 +229,7 @@ def edit_alignment_software(sample_metadata):
         no_version = ~sample_metadata['alignment_software'].str.match(r'.*v?[\d\.]+')
         sample_metadata.loc[no_version, 'analysis_protocol.alignment_software'] = \
                 sample_metadata.loc[no_version, 'alignment_software']
+        print('`alignment_software`', end='; ')
     return sample_metadata
 
 def edit_cell_enrichment(sample_metadata):
@@ -229,6 +239,7 @@ def edit_cell_enrichment(sample_metadata):
         sample_metadata['enrichment_protocol.markers'] = sample_metadata['cell_enrichment_cell_type'].apply(ols_label)
         sample_metadata['cell_suspension.selected_cell_types.ontology'] = sample_metadata['cell_enrichment_cell_type']
         sample_metadata['cell_suspension.selected_cell_types.ontology_label'] = sample_metadata['cell_enrichment_cell_type'].apply(ols_label)
+        print('`cell_enrichment`', end='; ')
     return sample_metadata
 
 def dev_label(ontology):
@@ -274,12 +285,14 @@ def edit_dev_stage(sample_metadata):
             sample_metadata['development_stage_ontology_term_id']\
                 .apply(lambda x: dev_to_age_dict[x] if x in dev_to_age_dict.keys() else dev_label(x))\
                 .str.split(' ', expand=True)
+        print('`development_stage`', end='; ')
     return sample_metadata
 
 def edit_lib_prep_protocol(sample_metadata):
     cheatsheet = pd.DataFrame(lib_prep_cheatsheet, 
                               index=lib_prep_cheatsheet['assay_ontology_term_id'])
     if sample_metadata['assay_ontology_term_id'].isin(cheatsheet.index).any():
+        print('`lib_prep fields`', end='; ')
         return sample_metadata.merge(cheatsheet, how='left', on='assay_ontology_term_id')
     return sample_metadata
 
@@ -337,6 +350,7 @@ def add_analysis_file(dcp_spreadsheet, collection_id, dataset_id):
         .groupby('analysis_file.file_core.file_name')\
         .agg(collapse_values)\
         .reset_index()
+    print('Added `Analysis file` info')
     return dcp_spreadsheet
 
 def export_to_excel(dcp_spreadsheet, collection_id, dataset_id, local_template):
@@ -346,6 +360,7 @@ def export_to_excel(dcp_spreadsheet, collection_id, dataset_id, local_template):
         for tab_name, data in dcp_spreadsheet.items():
             if not data.empty:
                 pd.concat([dcp_headers[tab_name], data], ignore_index=True).to_excel(writer, sheet_name=tab_name, index=False, header=False)
+    print(f'Exported to {output_path}')
 
 def main():
     args = define_parser().parse_args()
@@ -353,10 +368,12 @@ def main():
     dataset_id = get_dataset_id(args)
     local_template = args.local_template
 
+    print(f"{BOLD_START}READING FILES{BOLD_END}")
     sample_metadata = read_sample_metadata(collection_id, dataset_id)
     study_metadata = read_study_metadata(collection_id, dataset_id)
     
     # Edit conditionally mapped fields
+    print(f"{BOLD_START}CONVERTING METADATA{BOLD_END}")
     sample_metadata = edit_collection_relative(sample_metadata)
     sample_metadata = edit_ncbitaxon(sample_metadata)
     sample_metadata = edit_sex(sample_metadata)
@@ -370,10 +387,11 @@ def main():
     sample_metadata = edit_dev_stage(sample_metadata)
 
     # Rename directly mapped fields
+    print(f'\nConverted {"; ".join([col for col in sample_metadata if col in tier1_to_dcp])}')
     dcp_flat = sample_metadata.rename(columns=tier1_to_dcp)
     
     # Generate spreadsheet
-    dcp_spreadsheet = get_dcp_spreadsheet(local_template)
+    dcp_spreadsheet = get_dcp_template(local_template)
 
     dcp_spreadsheet = add_doi(study_metadata, dcp_spreadsheet)
     dcp_spreadsheet = add_title(study_metadata, dcp_spreadsheet)
@@ -381,11 +399,16 @@ def main():
     dcp_flat = create_protocol_ids(dcp_spreadsheet, dcp_flat)
 
     # Populate spreadsheet
+    print(f"{BOLD_START}POPULATING SPREADSHEET{BOLD_END}")
     dcp_spreadsheet = populate_spreadsheet(dcp_spreadsheet, dcp_flat)
     dcp_spreadsheet = add_institute(sample_metadata, dcp_spreadsheet)
     dcp_spreadsheet = add_analysis_file(dcp_spreadsheet, collection_id, dataset_id)
 
+    print(f"{BOLD_START}EXPORTING SPREADSHEET{BOLD_END}")
     export_to_excel(dcp_spreadsheet, collection_id, dataset_id, local_template)
+
+BOLD_START = '\033[1m'
+BOLD_END = '\033[0;0m'
 
 if __name__ == "__main__":
     main()
