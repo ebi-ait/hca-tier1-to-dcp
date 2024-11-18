@@ -64,6 +64,7 @@ def selection_of_dataset(collection):
 
 def download_h5ad_file(h5ad_url, output_file):
     """Downloads the H5AD file if not already present or if size differs."""
+    print(f"{BOLD_START}DOWNLOAD ANNDATA:{BOLD_END}")
     with requests.get(h5ad_url, stream=True, timeout=10) as res:
         res.raise_for_status()
         filesize = int(res.headers['Content-Length'])
@@ -86,6 +87,7 @@ def download_h5ad_file(h5ad_url, output_file):
 
 def extract_and_save_metadata(adata, collection_id, dataset_id):
     """Extracts and saves metadata from the AnnData object."""
+    print(f"{BOLD_START}EXTRACT METADATA:{BOLD_END}")
     tier1_in_object = [key for key in adata.obs.keys() if key in tier1_list]
 
     # Save essential metadata
@@ -112,7 +114,6 @@ def extract_and_save_metadata(adata, collection_id, dataset_id):
         print(f"The following OPTIONAL fields are NOT present in the anndata obs: {','.join(missing_recom_fields)}")
 
 def doi_search_ingest(doi, token):
-    print(f"{BOLD_START}CHECK DOI IN INGEST:{BOLD_END}")
     query = [{
         "field": "content.publications.doi",
         "operator": "IS",
@@ -126,14 +127,21 @@ def doi_search_ingest(doi, token):
                                 headers=headers, json=query, timeout=10)
     response.raise_for_status()
     projects = response.json()
-    azul_api = 'https://service.azul.data.humancellatlas.org/index/projects/'
     if '_embedded' in projects:
-        links = [proj['uuid']['uuid'] + '\t' + proj['_links']['self']['href']
+        links = [proj['uuid']['uuid'] + '\t' + proj['_links']['self']['href'] + \
+                 '\t' + uuid_search_azul(proj['uuid']['uuid'])
                  for proj in projects['_embedded']['projects']]
         print(f'Project(s) in ingest with doi {doi}:\n' + '\n'.join(links))
     else:
         print(f'DOI: {doi} was not found in ingest')
     return
+
+def uuid_search_azul(uuid):
+    azul_api = 'https://service.azul.data.humancellatlas.org/index/projects/'
+    response = requests.get(azul_api + uuid)
+    if response.ok:
+        return 'https://explore.data.humancellatlas/projects/' + uuid
+    return response.json()['Message']
 
 def main():
     args = define_parser().parse_args()
@@ -152,10 +160,6 @@ def main():
     pd.DataFrame(coll_report, index=[0]).transpose()\
         .rename({'name': 'title', 'contact_name': 'study_pi'})\
         .to_csv(f'metadata/{collection_id}_{dataset_id}_study_metadata.csv', header=None)
-
-    # Check if doi exists in ingest
-    if args.token is not None:
-        doi_search_ingest(coll_report['doi'], args.token)
 
     # Download the H5AD file
     mx_file = f'h5ads/{collection_id}_{dataset_id}.h5ad'
@@ -176,12 +180,17 @@ def main():
     # Extract metadata from the AnnData file
     adata = sc.read_h5ad(mx_file, backed='r')
     extract_and_save_metadata(adata, collection_id, dataset_id)
+
+    print(f"{BOLD_START}ADDITIONAL INFO:{BOLD_END}")
+    # Check if doi exists in ingest
+    if args.token is not None:
+        doi_search_ingest(coll_report['doi'], args.token)
+
     if 'sequencing_platform' not in adata.obs:
-        print("No sequencer info.")
         if 'doi' in coll_report:
-            print(f"See doi.org/{coll_report['doi']} for more.")
+            print(f"No sequencer info. See doi.org/{coll_report['doi']} for more.")
         else:
-            print(f"See {collection['collection_url']} for more.")
+            print(f"No sequencer info. See {collection['collection_url']} for more.")
 
 BOLD_START = '\033[1m'
 BOLD_END = '\033[0;0m'
