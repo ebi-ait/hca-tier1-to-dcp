@@ -157,9 +157,11 @@ def edit_sex(sample_metadata):
     # }
     if 'sex_ontology_term_id' in sample_metadata:
         sample_metadata['donor_organism.sex'] = sample_metadata['sex_ontology_term_id'].apply(ols_label)
-        if not sample_metadata['donor_organism.sex'].isin(['female', 'male']).all():
-            unsupported_sex = sample_metadata.loc[~sample_metadata['donor_organism.sex'].isin(['female', 'male']), 'sex_ontology_term_id']
-            print(f"Unsupported sex value {}")
+        allowed_sex_values = ['female', 'male', 'mixed', 'unknown']
+        bool_sex_values = sample_metadata['donor_organism.sex'].isin(allowed_sex_values)
+        if not bool_sex_values.all():
+            unsupported_sex = sample_metadata.loc[~bool_sex_values, 'sex_ontology_term_id']
+            print(f"Unsupported sex value {', '.join(unsupported_sex)}")
     return sample_metadata
 
 def edit_ethnicity(sample_metadata):
