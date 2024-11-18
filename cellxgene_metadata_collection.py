@@ -14,6 +14,8 @@ def define_parser():
     parser = argparse.ArgumentParser(description="Parser for the arguments")
     parser.add_argument("--collection", "-c", action="store",
                         dest="collection_id", type=str, required=True, help="Collection ID")
+    parser.add_argument("--dataset", "-d", action="store",
+                        dest="dataset_id", type=str, required=False, help="Dataset id")
     parser.add_argument("--ingest-token", '-t', action="store",
                         dest='token', type=str, required=False,
                         help="Ingest token to query for existing projects with same DOI")
@@ -44,9 +46,15 @@ def generate_collection_report(collection):
         coll_report[field] = value
     return coll_report
 
-def selection_of_dataset(collection):
+def selection_of_dataset(args):
+    collection = get_collection_data(args.collection_id)
     dataset_df = pd.DataFrame(collection['datasets'])[
         ['dataset_id', 'cell_count', 'title']]
+
+    if args.dataset_id is not None and args.dataset_id in dataset_df['dataset_id'].values:
+        print(f"Preselected dataset:")
+        print(dataset_df[dataset_df['dataset_id'] == args.dataset_id])
+        return args.dataset_id
     print(f"{BOLD_START}SELECT DATASET:{BOLD_END}")
     print(dataset_df)
     
@@ -154,8 +162,8 @@ def main():
 
     # Generate and save collection report
     coll_report = generate_collection_report(collection)
-    dataset_id = selection_of_dataset(collection)
-
+    dataset_id = selection_of_dataset(args)
+    
     os.makedirs('metadata', exist_ok=True)
     pd.DataFrame(coll_report, index=[0]).transpose()\
         .rename({'name': 'title', 'contact_name': 'study_pi'})\
