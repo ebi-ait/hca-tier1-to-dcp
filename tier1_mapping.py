@@ -238,12 +238,12 @@ lib_prep_cheatsheet = {
 }
 
 collection_dict = {"brush": ['EFO:0010741', 'EFO:0011029'],
-                    "scraping": 'EFO:0009122',
-                    "biopsy": 'EFO:0009120',
-                    "surgical resection": 'EFO:0009744',
-                    "blood draw": 'EFO:0009121',
-                    "body fluid": ['EFO:0030020', 'EFO:0009123', 'EFO:0700013', 
-                                    'OBI:0600044', 'EFO:0010960', 'EFO:0030079'],
-                    "other": ['EFO:0009292', 'EFO:0009627', 'EFO:0010728', 'EFO:0003856', 
-                            'EFO:0009807', 'EFO:0009808', 'EFO:0010173', 'EFO:0009124', 
-                            'EFO:0010174', 'EFO:0700009', 'EFO:0010727']}
+                   "scraping": 'EFO:0009122',
+                   "biopsy": 'EFO:0009120',
+                   "surgical resection": 'EFO:0009744',
+                   "blood draw": 'EFO:0009121',
+                   "body fluid": ['EFO:0030020', 'EFO:0009123', 'EFO:0700013', 
+                                  'OBI:0600044', 'EFO:0010960', 'EFO:0030079'],
+                   "other": ['EFO:0009292', 'EFO:0009627', 'EFO:0010728', 'EFO:0003856', 
+                             'EFO:0009807', 'EFO:0009808', 'EFO:0010173', 'EFO:0009124', 
+                             'EFO:0010174', 'EFO:0700009', 'EFO:0010727']}

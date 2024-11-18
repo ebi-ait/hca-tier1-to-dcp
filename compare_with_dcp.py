@@ -88,6 +88,7 @@ def init_report_dict():
     report_dict = {}
     report_dict['ids'] = {'n': {}, 'values': {}}
     report_dict['tabs'] = {'excess': {}, 'n': {}, 'intersect': []}
+    report_dict['values'] = {}
     os.makedirs('compare_report', exist_ok=True)
     return report_dict
 
@@ -139,6 +140,33 @@ def compare_v_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet):
     
     return report_dict
 
+def compare_filled_fields(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet):
+    tier1_cols = tier1_spreadsheet[tab].dropna(axis='columns').columns
+    wrang_cols = wrangled_spreadsheet[tab].dropna(axis='columns').columns
+    tier1_excess_fields = [col for col in tier1_cols if col not in wrang_cols]
+    wrang_excess_fields = [col for col in wrang_cols if col not in tier1_cols]
+    fields_intersect = [col for col in wrang_cols if col in tier1_cols]
+    report_dict['values'][tab] = {'excess': {'tier1': tier1_excess_fields, 'wrang': wrang_excess_fields}, 'intersect': fields_intersect}
+
+    if tier1_excess_fields:
+        print(f"In tab {tab} we have more metadata in Tier 1:\n\t{', '.join(tier1_excess_fields)}")
+    tab_id = get_tab_id(tab, tier1_spreadsheet)
+    if tab in entity_types['biomaterial']:
+        if not all([id in wrangled_spreadsheet[tab][tab_id] for id in tier1_spreadsheet[tab][tab_id]]):
+            print(f"{BOLD_START}WARNING{BOLD_END}: Cannot compare entities with not identical ID values")
+            return report_dict
+        comp_tier1 = tier1_spreadsheet[tab][fields_intersect].set_index(fields_intersect[0]).sort_index()
+        comp_wrang = wrangled_spreadsheet[tab][fields_intersect].set_index(fields_intersect[0]).sort_index()
+    else:
+        comp_tier1 = tier1_spreadsheet[tab][fields_intersect].drop(columns=get_tab_id(tab, tier1_spreadsheet))
+        comp_wrang = wrangled_spreadsheet[tab][fields_intersect].drop(columns=get_tab_id(tab, wrangled_spreadsheet))
+    comp_df = comp_tier1.compare(comp_wrang,result_names= ('tier1', 'wrangled'), align_axis=1)
+    report_dict['values'][tab]['values_diff'] = {}
+    for field in comp_df.columns.levels[0]:
+        report_dict['values'][tab]['values_diff'][field] = comp_df[field].to_dict(orient='index')
+    if not comp_df.empty:
+        print(f'{tab}: {len(comp_df.columns.levels[0])} fields from {len(comp_df.index)} ids, have different values.')
+    return report_dict
 
 def main():
     args = define_parser().parse_args()
@@ -157,20 +185,32 @@ def main():
     report_dict = compare_n_tabs(tier1_spreadsheet, wrangled_spreadsheet, report_dict)
 
     # compare number and values of ids for intersect tabs
+    print(f"{BOLD_START}COMPARE IDs:{BOLD_END}")
     for tab in all_entities:
         if tab not in report_dict['tabs']['intersect'] or tab in entity_types['project'] + entity_types['file']:
             # skip project or file tabs since info is not fully recorded in the CxG collection
             continue
-        print(f"{BOLD_START}Comparing tab {tab}{BOLD_END}")
-
+            
         # check tab id
         if check_tab_id(tab, wrangled_spreadsheet, tier1_spreadsheet):
             continue
-
+        
         # compare Number and Values of ids per tab
-        report_dict = compare_n_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet, collection_id, dataset_id)        
+        report_dict = compare_n_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet, collection_id, dataset_id)
         # Value of ids
+        if tab in entity_types['protocol']:
+            # for protocol we don't care about matching IDs with tier 1
+            continue
+        print(f"{BOLD_START}Comparing {tab} IDs:{BOLD_END}")
         report_dict = compare_v_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet)
+
+    # compare values
+    print(f"{BOLD_START}COMPARE VALUES:{BOLD_END}")
+    for tab in all_entities:
+        if tab not in report_dict['tabs']['intersect'] or tab in entity_types['project'] + entity_types['file']:
+            continue
+        print(f"{BOLD_START}Comparing {tab} values:{BOLD_END}")
+        report_dict = compare_filled_fields(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet)
 
     export_report_json(collection_id, dataset_id, report_dict)
 
