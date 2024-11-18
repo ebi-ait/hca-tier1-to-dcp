@@ -63,8 +63,16 @@ def get_tab_id(tab, spreadsheet):
     id_field = spreadsheet[tab].columns[spreadsheet[tab].columns.isin(id_fields)].tolist()
     if len(id_field) > 1:
         print("More ID fields than expected: " + id_fields)
-        return
+        return False
     return id_field[0]
+
+def check_tab_id(tab, wrangled_spreadsheet, tier1_spreadsheet):
+    tab_id = get_tab_id(tab, tier1_spreadsheet)
+    if tab_id != get_tab_id(tab, wrangled_spreadsheet):
+        print(f"Id field doesn't match across spreadsheets for {tab}:\n\t" + 
+                f"Tier1 {get_tab_id(tab, tier1_spreadsheet)} vs Wrangled {get_tab_id(tab, wrangled_spreadsheet)}")
+        return True
+    return False
 
 def get_number_of_field(tab, spreadsheet, field):
     return len(spreadsheet[tab][field])
@@ -84,7 +92,7 @@ def init_report_dict():
     return report_dict
 
 def compare_n_tabs(tier1_spreadsheet, wrangled_spreadsheet, report_dict):
-    print(f"{BOLD_START}COMPARE OF TABS:{BOLD_END}")
+    print(f"{BOLD_START}COMPARE TABS:{BOLD_END}")
     wrangled_excess_tabs = [tab for tab in set(wrangled_spreadsheet) if tab not in set(tier1_spreadsheet)]
     tier1_excess_tabs = [tab for tab in set(tier1_spreadsheet) if tab not in set(wrangled_spreadsheet)]
     if not tier1_excess_tabs and not wrangled_excess_tabs:
@@ -101,6 +109,36 @@ def compare_n_tabs(tier1_spreadsheet, wrangled_spreadsheet, report_dict):
     report_dict['tabs']['intersect'] = intersect_tabs
     return report_dict
 
+def compare_n_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet, collection_id, dataset_id):
+    n_ids = {}
+    
+    tab_id = get_tab_id(tab, tier1_spreadsheet)
+    n_ids['tier1'] = get_number_of_field(tab, tier1_spreadsheet, tab_id)
+    n_ids['wrangled'] = get_number_of_field(tab, wrangled_spreadsheet, tab_id)
+    report_dict['ids']['n'][tab] = {'tier1': n_ids['tier1'], 'wrangled': n_ids['wrangled']}
+    
+    if n_ids['tier1'] != n_ids['wrangled']:
+        print(f"{BOLD_START}WARNING{BOLD_END}: Not equal number of {tab}\n\tTier1 {n_ids['tier1']} vs Wrangled {n_ids['wrangled']}")
+        if input("Continue anyway? (yes/no)") in ['no', 'n', 'NO', 'No']:
+            export_report_json(collection_id, dataset_id, report_dict)
+            sys.exit()
+    return report_dict
+
+def compare_v_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet):
+    v_ids = {}
+    
+    tab_id = get_tab_id(tab, tier1_spreadsheet)
+    v_ids['tier1'] = get_values_of_field(tab, tier1_spreadsheet, tab_id)
+    v_ids['wrangled'] = get_values_of_field(tab, wrangled_spreadsheet, tab_id)
+    intersect_ids = [t for t in v_ids['tier1'] if t in v_ids['wrangled']]
+    report_dict['ids']['values'][tab] = {'tier1': v_ids['tier1'], 'wrangled': v_ids['wrangled']}
+    
+    if intersect_ids != v_ids['tier1']:
+        print(f"{BOLD_START}WARNING{BOLD_END}: Values of {tab_id} not identical across spreadsheets\n\t"+
+              f"Tier 1 {','.join(sorted(v_ids['tier1']))}\n\tWrangled {', '.join(sorted(v_ids['wrangled']))}")
+    
+    return report_dict
+
 
 def main():
     args = define_parser().parse_args()
@@ -115,47 +153,24 @@ def main():
     # Open DCP spreadsheet
     wrangled_spreadsheet = open_wrangled_spreadsheet(wrangled_path)
 
-    # Compare number of tabs, use intersection
+    # Compare number of tabs
     report_dict = compare_n_tabs(tier1_spreadsheet, wrangled_spreadsheet, report_dict)
 
-    # compare number and values of ids
-    for tab in report_dict['tabs']['intersect']:
-        if tab in entity_types['project'] + entity_types['file']:
+    # compare number and values of ids for intersect tabs
+    for tab in all_entities:
+        if tab not in report_dict['tabs']['intersect'] or tab in entity_types['project'] + entity_types['file']:
             # skip project or file tabs since info is not fully recorded in the CxG collection
             continue
-        print(f"{BOLD_START}Comparing tab {tab} {BOLD_END}")
-        # find id field
-        tab_id = get_tab_id(tab, tier1_spreadsheet)
-        # compare tab id
-        if tab_id != get_tab_id(tab, wrangled_spreadsheet):
-            print(f"Id field doesn't match across spreadsheets for {tab}:\n\t" + 
-                  f"Tier1 {get_tab_id(tab, tier1_spreadsheet)} vs Wrangled {get_tab_id(tab, wrangled_spreadsheet)}")
+        print(f"{BOLD_START}Comparing tab {tab}{BOLD_END}")
+
+        # check tab id
+        if check_tab_id(tab, wrangled_spreadsheet, tier1_spreadsheet):
             continue
 
         # compare Number and Values of ids per tab
-        report_dict['ids']['n'][tab] = {}
-        # Number of ids
-        n_ids = {}
-        n_ids['tier1'] = get_number_of_field(tab, tier1_spreadsheet, tab_id)
-        n_ids['wrangled'] = get_number_of_field(tab, wrangled_spreadsheet, tab_id)
-        report_dict['ids']['n'][tab] = {'tier1': n_ids['tier1'], 'wrangled': n_ids['wrangled']}
-
-        if n_ids['tier1'] != n_ids['wrangled']:
-            print(f"{BOLD_START}WARNING{BOLD_END}: Not equal number of {tab}\n\tTier1 {n_ids['tier1']} vs Wrangled {n_ids['wrangled']}")
-            if input("Continue anyway? (yes/no)") in ['no', 'n', 'NO', 'No']:
-                export_report_json(collection_id, dataset_id, report_dict)
-                sys.exit()
-        
+        report_dict = compare_n_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet, collection_id, dataset_id)        
         # Value of ids
-        v_ids = {}
-        v_ids['tier1'] = get_values_of_field(tab, tier1_spreadsheet, tab_id)
-        v_ids['wrangled'] = get_values_of_field(tab, wrangled_spreadsheet, tab_id)
-        intersect_ids = [t for t in v_ids['tier1'] if t in v_ids['wrangled']]
-        report_dict['ids']['values'][tab] = {'tier1': v_ids['tier1'], 'wrangled': v_ids['wrangled']}
-
-        if intersect_ids != v_ids['tier1']:
-            print(f"{BOLD_START}WARNING{BOLD_END}: Values of {tab_id} not identical across spreadsheets\n\t"+
-                  f"Tier 1 {','.join(sorted(v_ids['tier1']))}\n\tWrangled {','.join(sorted(v_ids['wrangled']))}")
+        report_dict = compare_v_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet)
 
     export_report_json(collection_id, dataset_id, report_dict)
 
