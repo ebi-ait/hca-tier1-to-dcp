@@ -93,7 +93,7 @@ def add_title(study_metadata, dcp_spreadsheet):
         if len(set(study_metadata['title'])) != 1:
             print(f"We have multiple titles {set(study_metadata['title'])}")
         titles = pd.DataFrame({'project.project_core.project_title': study_metadata['title']})
-        dcp_spreadsheet['Project'] = pd.concat([dcp_spreadsheet['Project'], titles]).fillna('')
+        dcp_spreadsheet['Project'] = pd.concat([dcp_spreadsheet['Project'], titles])
     return dcp_spreadsheet
 
 def add_institute(sample_metadata, dcp_spreadsheet):
@@ -309,7 +309,7 @@ def populate_spreadsheet(dcp_spreadsheet, dcp_flat):
                 dcp_flat.drop(columns=dub_cols, inplace=True)
                 dcp_flat[dub_cols] = df[dub_cols].apply(lambda x: '||'.join(x.dropna().astype(str)),axis=1)
         # merge the two dataframes
-        dcp_spreadsheet[tab] = pd.concat([dcp_spreadsheet[tab],dcp_flat[keys_union]]).fillna('')
+        dcp_spreadsheet[tab] = pd.concat([dcp_spreadsheet[tab],dcp_flat[keys_union]])
         dcp_spreadsheet[tab] = dcp_spreadsheet[tab].dropna(how='all').drop_duplicates()
         if tab == 'Project':
             dcp_spreadsheet[tab] = dcp_spreadsheet[tab].drop_duplicates()
