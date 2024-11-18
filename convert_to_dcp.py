@@ -9,7 +9,7 @@ from requests.exceptions import ConnectionError
 import pandas as pd
 from numpy import nan
 
-from tier1_mapping import tier1_to_dcp
+from tier1_mapping import tier1_to_dcp, lib_prep_cheatsheet
 
 
 def define_parser():
@@ -23,7 +23,7 @@ def define_parser():
                         dest="local_template", type=str, required=False, help="Local path of the HCA template")
     return parser
 
-def get_dataset_id(args, ):
+def get_dataset_id(args):
     if args.dataset_id is not None:
         return args.dataset_id
     dataset_ids = [file.split("_")[1] for file in os.listdir('metadata') if file.startswith(args.collection_id)]
@@ -108,11 +108,13 @@ def ols_label(ontology_id, only_label=True, ontology=None):
         return ontology_id
     ontology_name = ontology if ontology else ontology_id.split(":")[0].lower()
     ontology_term = ontology_id.replace(":", "_")
-    response = requests.get(f'https://www.ebi.ac.uk/ols4/api/ontologies/{ontology_name}/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252F{ontology_term}')
     try:
+        response = requests.get(f'https://www.ebi.ac.uk/ols4/api/ontologies/{ontology_name}/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252F{ontology_term}', 
+                                timeout=10)
         results = response.json()
     except ConnectionError as e:
         print(e)
+        return ontology_id
     return results['label'] if only_label else results
 
 ## Edit sample_metadata
@@ -143,7 +145,7 @@ def edit_ncbitaxon(sample_metadata):
         sample_metadata['donor_organism.biomaterial_core.ncbi_taxon_id'] = sample_metadata['organism_ontology_term_id'].str.removeprefix('NCBITaxon:')
         sample_metadata['specimen_from_organism.biomaterial_core.ncbi_taxon_id'] = sample_metadata['organism_ontology_term_id'].str.removeprefix('NCBITaxon:')
         if 'tissue_type' in sample_metadata:
-            for tissue_type in tissue_type_dcp.keys():
+            for tissue_type in tissue_type_dcp:
                 if tissue_type in sample_metadata['tissue_type'].values:
                     sample_metadata = tissue_type_taxon(sample_metadata, tissue_type, tissue_type_dcp)
     return sample_metadata
@@ -156,7 +158,8 @@ def edit_sex(sample_metadata):
     if 'sex_ontology_term_id' in sample_metadata:
         sample_metadata['donor_organism.sex'] = sample_metadata['sex_ontology_term_id'].apply(ols_label)
         if not sample_metadata['donor_organism.sex'].isin(['female', 'male']).all():
-            print(f"Unsupported sex value {sample_metadata.loc['sex_ontology_term_id', ~sample_metadata['donor_organism.sex'].isin(['female', 'male'])]}")
+            unsupported_sex = sample_metadata.loc[~sample_metadata['donor_organism.sex'].isin(['female', 'male']), 'sex_ontology_term_id']
+            print(f"Unsupported sex value {}")
     return sample_metadata
 
 def edit_ethnicity(sample_metadata):
@@ -178,7 +181,7 @@ def edit_hardy_scale(sample_metadata):
     hardy_scale = [0, 1, 2, 3, 4, '0', '1', '2', '3', '4']
     manner_of_death_is_living_dict = {n: 'no' for n in hardy_scale}
     manner_of_death_is_living_dict.update({'unknown': 'no', 'not applicable': 'yes'})
-
+    
     if 'manner_of_death' in sample_metadata:
         sample_metadata['donor_organism.is_living'] = sample_metadata['manner_of_death'].replace(manner_of_death_is_living_dict)
         sample_metadata['donor_organism.death.hardy_scale'] = sample_metadata.apply(lambda x: x['manner_of_death'] if x['manner_of_death'] in hardy_scale else nan, axis=1)
@@ -201,7 +204,7 @@ def edit_sampled_site(sample_metadata):
         # if sampled_site_condition is adjacent, we fill adjacent_diseases with disease_ontology_term_id
         # if diseased: known_diseases = disease_ontology_term_id and adjacent = nan
         # if healthy: known_diseases = disease_ontology_term_id or PATO:0000461 and adjacent = nan
-
+    
         sample_metadata[['specimen_from_organism.diseases.ontology', 'specimen_from_organism.adjacent_diseases.ontology']] = \
             sample_metadata.apply(sampled_site_to_known_diseases, axis=1, result_type='expand')
     return sample_metadata
@@ -225,7 +228,6 @@ def edit_cell_enrichment(sample_metadata):
         sample_metadata['cell_suspension.selected_cell_types.ontology'] = sample_metadata['cell_enrichment_cell_type']
         sample_metadata['cell_suspension.selected_cell_types.ontology_label'] = sample_metadata['cell_enrichment_cell_type'].apply(ols_label)
     return sample_metadata
-
 
 def dev_label(ontology):
     start_id = ['start, days post fertilization', 'start, months post birth', 'start, years post birth']
@@ -264,12 +266,19 @@ def edit_dev_stage(sample_metadata):
         'HsapDv:0000242': '70-79 year',
         'HsapDv:0000243': '80-89 year'
     }
-
+    
     if 'development_stage_ontology_term_id' in sample_metadata:
         sample_metadata[['donor_organism.organism_age', 'donor_organism.organism_age_unit.text']] = \
             sample_metadata['development_stage_ontology_term_id']\
                 .apply(lambda x: dev_to_age_dict[x] if x in dev_to_age_dict.keys() else dev_label(x))\
                 .str.split(' ', expand=True)
+    return sample_metadata
+
+def edit_lib_prep_protocol(sample_metadata):
+    cheatsheet = pd.DataFrame(lib_prep_cheatsheet, 
+                              index=lib_prep_cheatsheet['assay_ontology_term_id'])
+    if sample_metadata['assay_ontology_term_id'].isin(cheatsheet.index).any():
+        return sample_metadata.merge(cheatsheet, how='left', on='assay_ontology_term_id')
     return sample_metadata
 
 def create_protocol_ids(dcp_spreadsheet, dcp_flat):
@@ -354,6 +363,7 @@ def main():
     sample_metadata = edit_hardy_scale(sample_metadata)
     sample_metadata = edit_sampled_site(sample_metadata)
     sample_metadata = edit_alignment_software(sample_metadata)
+    sample_metadata = edit_lib_prep_protocol(sample_metadata)
     # sample_metadata = edit_cell_enrichment(sample_metadata) # not yet functional
     sample_metadata = edit_dev_stage(sample_metadata)
 

@@ -186,7 +186,7 @@ all_entities = [
     "Project",
     "Project - Contributors",
     "Project - Publications",
-    "Project - Funders"
+    "Project - Funders",
     "Donor organism",
     "Specimen from organism",
     "Cell suspension",
@@ -196,7 +196,7 @@ all_entities = [
     "Supplementary file",
     "Sequence file",
     "Analysis file",
-    "Image file"
+    "Image file",
     "Collection protocol",
     "Treatment protocol",
     "Dissociation protocol",
@@ -211,7 +211,28 @@ all_entities = [
     "Analysis protocol",
     "Additional reagents",
     "Imaging protocol - Channel",
-    "Imaging protocol - Probe"
+    "Imaging protocol - Probe",
     "Familial relationship",
     "Project - hca bionetworks"
 ]
+
+lib_prep_cheatsheet = {
+    'assay_ontology_term_id': ['EFO:0009899', 'EFO:0009922'],
+    'library_preparation_protocol.cell_barcode.barcode_read': ['Read 1', 'Read 1'],
+    'library_preparation_protocol.cell_barcode.barcode_offset': [0, 0],
+    'library_preparation_protocol.cell_barcode.barcode_length': [16, 16],
+    'library_preparation_protocol.input_nucleic_acid_molecule.text': ['polyA RNA', 'polyA RNA'],
+    'library_preparation_protocol.input_nucleic_acid_molecule.ontology': ['OBI:0000869', 'OBI:0000869'],
+    'library_preparation_protocol.input_nucleic_acid_molecule.ontology_label': ['polyA RNA extract', 'polyA RNA extract'],
+    'library_preparation_protocol.library_construction_method.text': ["10x 3' v2", "10x 3' v3"], 
+    'library_preparation_protocol.library_construction_method.ontology_label': ["10x 3' v2", "10x 3' v3"],
+    'library_preparation_protocol.primer': ['poly-dT', 'poly-dT'],
+    'library_preparation_protocol.strand': ['first', 'first'],
+    'library_preparation_protocol.umi_barcode.barcode_read': ['Read 1', 'Read 1'],
+    'library_preparation_protocol.umi_barcode.barcode_offset': [16, 16],
+    'library_preparation_protocol.umi_barcode.barcode_length': [10, 12],
+    'sequencing_protocol.paired_end': ['no', 'no'],
+    'sequencing_protocol.method.text': ['tag based single cell RNA sequencing', 'tag based single cell RNA sequencing'],
+    'sequencing_protocol.method.ontology': ['EFO:0008440', 'EFO:0008440'],
+    'sequencing_protocol.method.ontology_label': 'tag based single cell RNA sequencing'
+}
