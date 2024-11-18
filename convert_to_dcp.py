@@ -96,11 +96,24 @@ def add_title(study_metadata, dcp_spreadsheet):
         dcp_spreadsheet['Project'] = pd.concat([dcp_spreadsheet['Project'], titles])
     return dcp_spreadsheet
 
-def add_institute(sample_metadata, dcp_spreadsheet):
-    # TODO add institute per sample after sample identification
-    if 'institute' in sample_metadata.columns and len(set(sample_metadata['institute'])) == 1:
-        dcp_spreadsheet['Cell suspension']['process.process_core.location'] = sample_metadata['institute'].iloc[0]
+def add_process_locations(sample_metadata, dcp_spreadsheet):
+    if 'institute' in sample_metadata:
+        dcp_spreadsheet['Cell suspension'] = process_site_type(sample_metadata, dcp_spreadsheet, 'institute')
+    if 'sample_collection_site' in sample_metadata:
+        dcp_spreadsheet['Specimen from organism'] = process_site_type(sample_metadata, dcp_spreadsheet, 'sample_collection_site')
     return dcp_spreadsheet
+
+def process_site_type(sample_metadata, dcp_spreadsheet, site_type):
+    biomat_dcp = {'institute': 'Cell suspension',
+                   'sample_collection_site': 'Specimen from organism'}
+    biomat_tier1 = {'institute': 'library_id',
+                   'sample_collection_site': 'sample_id'}
+    return dcp_spreadsheet[biomat_dcp[site_type]].\
+        merge(sample_metadata[[biomat_tier1[site_type], site_type]].drop_duplicates(), \
+              how='left', right_on=biomat_tier1[site_type], \
+              left_on=f'{biomat_dcp[site_type].lower().replace(" ", "_")}.biomaterial_core.biomaterial_id').\
+        drop(columns=[biomat_tier1[site_type], 'process.process_core.location']).\
+        rename(columns={site_type: 'process.process_core.location'})
 
 # Get the ontology label instead of ontology id from OLS4
 def ols_label(ontology_id, only_label=True, ontology=None):
@@ -341,6 +354,7 @@ def fill_ontology_terms(dcp_flat):
         print(field, end='; ', flush=True)
         dcp_flat[field.replace("ontology","text")] = dcp_flat[field].apply(ols_label)
         dcp_flat[field.replace("ontology","ontology_label")] = dcp_flat[field].apply(ols_label)
+    print('\t')
     return dcp_flat
 
 def populate_spreadsheet(dcp_spreadsheet, dcp_flat):
@@ -441,7 +455,7 @@ def main():
     # Populate spreadsheet
     print(f"{BOLD_START}POPULATING SPREADSHEET{BOLD_END}")
     dcp_spreadsheet = populate_spreadsheet(dcp_spreadsheet, dcp_flat)
-    dcp_spreadsheet = add_institute(sample_metadata, dcp_spreadsheet)
+    dcp_spreadsheet = add_process_locations(sample_metadata, dcp_spreadsheet)
     dcp_spreadsheet = add_analysis_file(dcp_spreadsheet, collection_id, dataset_id)
 
     print(f"{BOLD_START}EXPORTING SPREADSHEET{BOLD_END}")
