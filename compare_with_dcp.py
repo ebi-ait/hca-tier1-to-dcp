@@ -1,5 +1,6 @@
 import argparse
 import os
+import re
 import sys
 import json
 
@@ -78,7 +79,7 @@ def get_number_of_field(tab, spreadsheet, field):
     return len(spreadsheet[tab][field])
 
 def get_values_of_field(tab, spreadsheet, field):
-    return spreadsheet[tab][field].tolist()
+    return set(spreadsheet[tab][field].tolist())
 
 def export_report_json(collection_id, dataset_id, report_dict):
     with open(f'compare_report/{collection_id}_{dataset_id}_compare.json', 'w', encoding='UTF-8') as json_file:
@@ -135,7 +136,7 @@ def compare_v_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet):
     report_dict['ids']['values'][tab] = {'tier1': v_ids['tier1'], 'wrangled': v_ids['wrangled']}
     
     if intersect_ids != v_ids['tier1']:
-        print(f"{BOLD_START}WARNING{BOLD_END}: Values of {tab_id} not identical across spreadsheets\n\t"+
+        print(f"{BOLD_START}WARNING{BOLD_END}: {tab_id} IDs not identical between spreadsheets\n\t"+
               f"Tier 1 {', '.join(sorted(v_ids['tier1']))}\n\tWrangled {', '.join(sorted(v_ids['wrangled']))}")
     
     return report_dict
@@ -151,21 +152,33 @@ def compare_filled_fields(tab, report_dict, tier1_spreadsheet, wrangled_spreadsh
     if tier1_excess_fields:
         print(f"In tab {tab} we have more metadata in Tier 1:\n\t{', '.join(tier1_excess_fields)}")
     tab_id = get_tab_id(tab, tier1_spreadsheet)
+    # get clean dfs (identical IDs & columns) to compare
     if tab in entity_types['biomaterial']:
-        if not all([id in wrangled_spreadsheet[tab][tab_id] for id in tier1_spreadsheet[tab][tab_id]]):
-            print(f"{BOLD_START}WARNING{BOLD_END}: Cannot compare entities with not identical ID values")
+        if not all(id in wrangled_spreadsheet[tab][tab_id].values for id in tier1_spreadsheet[tab][tab_id]):
+            print(f"{BOLD_START}WARNING{BOLD_END}: Cannot compare entities with not identical IDs")
+            print(f"\tTier1 {tab} unmatched IDs: {report_dict['ids']['values'][tab]['tier1'] - report_dict['ids']['values'][tab]['wrangled']}")
+            print(f"\tWrangled {tab} unmatched IDs: {report_dict['ids']['values'][tab]['wrangled'] - report_dict['ids']['values'][tab]['tier1']}")
             return report_dict
         comp_tier1 = tier1_spreadsheet[tab][fields_intersect].set_index(fields_intersect[0]).sort_index()
         comp_wrang = wrangled_spreadsheet[tab][fields_intersect].set_index(fields_intersect[0]).sort_index()
     else:
+        # protocol IDs are not defined in tier 1, therefore, we can skip them
         comp_tier1 = tier1_spreadsheet[tab][fields_intersect].drop(columns=get_tab_id(tab, tier1_spreadsheet))
         comp_wrang = wrangled_spreadsheet[tab][fields_intersect].drop(columns=get_tab_id(tab, wrangled_spreadsheet))
     comp_df = comp_tier1.compare(comp_wrang,result_names= ('tier1', 'wrangled'), align_axis=1)
     report_dict['values'][tab]['values_diff'] = {}
+    linked_ids = [re.match(r'.*_core\..*_id',e).string for e in comp_df.columns.levels[0] if re.match(r'.*_core\..*_id',e)]
+    if linked_ids:
+        # drop protocol or input IDs to avoid duplication
+        comp_df = comp_df.drop(columns=linked_ids)
     for field in comp_df.columns.levels[0]:
         report_dict['values'][tab]['values_diff'][field] = comp_df[field].to_dict(orient='index')
+    drop_ont_col = [col for col in comp_df.columns.levels[0].tolist() if col.endswith('.ontology') or col.endswith('ontology_label')]
+    comp_df_slim = comp_df.drop(columns=drop_ont_col)
+    comp_df_slim.index.name = tab.lower().replace(' ', '_') + '_id'
     if not comp_df.empty:
         print(f'{tab}: {len(comp_df.columns.levels[0])} fields from {len(comp_df.index)} ids, have different values.')
+        print(comp_df_slim)
     return report_dict
 
 def main():
