@@ -161,7 +161,7 @@ def drop_external_ids(comp_df):
         comp_df.columns = comp_df.columns.remove_unused_levels()
     return comp_df
 
-def get_slim_comp_df(comp_df):
+def get_slim_comp_df(comp_df, tab):
     '''Drop ontology & ontology label fields and shorten id index'''
     drop_ont_col = [col for col in comp_df.columns.levels[0].tolist() if col.endswith('.ontology') or col.endswith('ontology_label')]
     comp_df_slim = comp_df.drop(columns=drop_ont_col)
@@ -201,7 +201,7 @@ def compare_filled_fields(tab, report_dict, tier1_spreadsheet, wrangled_spreadsh
 
     if not comp_df.empty:
         print(f'{tab}: {len(comp_df.columns.levels[0])} fields from {len(comp_df.index)} ids, have different values.')
-        print(get_slim_comp_df(comp_df))
+        print(get_slim_comp_df(comp_df, tab))
     return report_dict
 
 def main():
