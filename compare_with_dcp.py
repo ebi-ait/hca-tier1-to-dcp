@@ -10,7 +10,6 @@ from tier1_mapping import entity_types, all_entities
 # Open cellxgene spreadsheet
 # Open DCP spreadsheet
     # provide file locally
-    # if DOI, if unique ingest project/ submission, pull with api
 # Compare number of tabs, use intersection
 # Open each common tab 
     # compare number of entites per tab
@@ -21,15 +20,12 @@ from tier1_mapping import entity_types, all_entities
 def define_parser():
     """Defines and returns the argument parser."""
     parser = argparse.ArgumentParser(description="Parser for the arguments")
-    parser.add_argument("--collection", "-c", action="store",
+    parser.add_argument("--collection-id", "-c", action="store",
                         dest="collection_id", type=str, required=True, help="Collection ID")
-    parser.add_argument("--dataset", "-d", action="store",
-                        dest="dataset_id", type=str, required=False, help="Dataset id")
     parser.add_argument("--wrangled-path", "-w", action="store", 
-                        dest="wrangled_path", type=str, required=False, help="Path of previously wrangled project spreadsheet")
-    parser.add_argument("--ingest-token", '-t', action="store",
-                        dest='token', type=str, required=False,
-                        help="Ingest token to query for existing projects with same DOI")
+                        dest="wrangled_path", type=str, required=True, help="Path of previously wrangled project spreadsheet")
+    parser.add_argument("--dataset-id", "-d", action="store",
+                        dest="dataset_id", type=str, required=False, help="Dataset id")
     return parser
 
 def get_dataset_id(args):
@@ -127,13 +123,11 @@ def compare_n_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet, col
 
 def compare_v_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet):
     v_ids = {}
-    
     tab_id = get_tab_id(tab, tier1_spreadsheet)
     v_ids['tier1'] = get_values_of_field(tab, tier1_spreadsheet, tab_id)
     v_ids['wrangled'] = get_values_of_field(tab, wrangled_spreadsheet, tab_id)
     intersect_ids = [t for t in v_ids['tier1'] if t in v_ids['wrangled']]
     report_dict['ids']['values'][tab] = {'tier1': v_ids['tier1'], 'wrangled': v_ids['wrangled']}
-    
     if intersect_ids != v_ids['tier1']:
         print(f"{BOLD_START}WARNING{BOLD_END}: {tab_id} IDs not identical between spreadsheets\n\t"+
               f"Tier 1 {', '.join(sorted(v_ids['tier1']))}\n\tWrangled {', '.join(sorted(v_ids['wrangled']))}")
@@ -172,11 +166,9 @@ def compare_filled_fields(tab, report_dict, tier1_spreadsheet, wrangled_spreadsh
     report_dict = compare_filled_fields_stats(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet)
     tier1_excess_fields = report_dict['values'][tab]['excess']['tier1']
     fields_intersect = report_dict['values'][tab]['intersect']
-
     if tier1_excess_fields:
         print(f"In tab {tab} we have more metadata in Tier 1:\n\t{', '.join(tier1_excess_fields)}")
     tab_id = get_tab_id(tab, tier1_spreadsheet)
-
     # get clean dfs (identical IDs & columns) to compare
     if tab in entity_types['biomaterial']:
         if not all(id in wrangled_spreadsheet[tab][tab_id].values for id in tier1_spreadsheet[tab][tab_id]):
@@ -190,14 +182,11 @@ def compare_filled_fields(tab, report_dict, tier1_spreadsheet, wrangled_spreadsh
         # protocol IDs are not defined in tier 1, therefore, we can skip them
         comp_tier1 = tier1_spreadsheet[tab][fields_intersect].drop(columns=get_tab_id(tab, tier1_spreadsheet))
         comp_wrang = wrangled_spreadsheet[tab][fields_intersect].drop(columns=get_tab_id(tab, wrangled_spreadsheet))
-    
     comp_df = comp_tier1.compare(comp_wrang,result_names= ('tier1', 'wrangled'), align_axis=1)
     comp_df = drop_external_ids(comp_df)
-
     report_dict['values'][tab]['values_diff'] = {}
     for field in comp_df.columns.levels[0]:
         report_dict['values'][tab]['values_diff'][field] = comp_df[field].to_dict(orient='index')
-
     if not comp_df.empty:
         print(f'{tab}: {len(comp_df.columns.levels[0])} fields from {len(comp_df.index)} ids, have different values.')
         print(get_slim_comp_df(comp_df, tab))
@@ -215,7 +204,7 @@ def main():
     tier1_spreadsheet = open_tier1_spreadsheet(collection_id, dataset_id)
     # Open DCP spreadsheet
     wrangled_spreadsheet = open_wrangled_spreadsheet(wrangled_path)
-
+    
     # Compare number of tabs
     print(f"{BOLD_START}____COMPARE TABS____{BOLD_END}")
     report_dict = compare_n_tabs(tier1_spreadsheet, wrangled_spreadsheet, report_dict)

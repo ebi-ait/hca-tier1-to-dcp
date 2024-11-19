@@ -12,9 +12,9 @@ from tier1_mapping import tier1, tier1_list
 def define_parser():
     """Defines and returns the argument parser."""
     parser = argparse.ArgumentParser(description="Parser for the arguments")
-    parser.add_argument("--collection", "-c", action="store",
+    parser.add_argument("--collection-id", "-c", action="store",
                         dest="collection_id", type=str, required=True, help="Collection ID")
-    parser.add_argument("--dataset", "-d", action="store",
+    parser.add_argument("--dataset-id", "-d", action="store",
                         dest="dataset_id", type=str, required=False, help="Dataset id")
     parser.add_argument("--ingest-token", '-t', action="store",
                         dest='token', type=str, required=False,
