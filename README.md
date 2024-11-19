@@ -44,4 +44,11 @@ python3 compare_with_dcp.py -c <CxG collection_id> -d <CxG dataset_id> -w <previ
 - `--dataset` or `-d`: Select the CxG dataset_id to download and convert.
     - i.e. `6ec405bb-4727-4c6d-ab4e-01fe489af7ea`
 
-| table with optional and req per script | 
+#### Requirement of arguments per script
+| args | [collect](cellxgene_metadata_collection.py) | [convert](convert_to_dcp.py) | [compare](compare_with_dcp.py) |
+| ---- | ---------- | ---------- | ---------- | 
+| `--collection_id`, `-c` | required | required | required |
+| `--dataset_id`, `-d` | optional | optional | optional | 
+| `--wrangled_path`, `-w` | n/a | n/a | required |
+| `--ingest_token`, `-t` | optional | n/a | n/a |
+| `--local_template`, `-l` | n/a | optional | n/a | 

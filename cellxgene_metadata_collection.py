@@ -12,11 +12,11 @@ from tier1_mapping import tier1, tier1_list
 def define_parser():
     """Defines and returns the argument parser."""
     parser = argparse.ArgumentParser(description="Parser for the arguments")
-    parser.add_argument("--collection-id", "-c", action="store",
+    parser.add_argument("--collection_id", "-c", action="store",
                         dest="collection_id", type=str, required=True, help="Collection ID")
-    parser.add_argument("--dataset-id", "-d", action="store",
+    parser.add_argument("--dataset_id", "-d", action="store",
                         dest="dataset_id", type=str, required=False, help="Dataset id")
-    parser.add_argument("--ingest-token", '-t', action="store",
+    parser.add_argument("--ingest_token", '-t', action="store",
                         dest='token', type=str, required=False,
                         help="Ingest token to query for existing projects with same DOI")
     return parser

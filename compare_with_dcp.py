@@ -20,11 +20,11 @@ from tier1_mapping import entity_types, all_entities
 def define_parser():
     """Defines and returns the argument parser."""
     parser = argparse.ArgumentParser(description="Parser for the arguments")
-    parser.add_argument("--collection-id", "-c", action="store",
+    parser.add_argument("--collection_id", "-c", action="store",
                         dest="collection_id", type=str, required=True, help="Collection ID")
-    parser.add_argument("--wrangled-path", "-w", action="store", 
+    parser.add_argument("--wrangled_path", "-w", action="store", 
                         dest="wrangled_path", type=str, required=True, help="Path of previously wrangled project spreadsheet")
-    parser.add_argument("--dataset-id", "-d", action="store",
+    parser.add_argument("--dataset_id", "-d", action="store",
                         dest="dataset_id", type=str, required=False, help="Dataset id")
     return parser
 

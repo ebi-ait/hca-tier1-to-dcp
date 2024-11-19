@@ -13,9 +13,9 @@ from tier1_mapping import tier1_to_dcp, lib_prep_cheatsheet, collection_dict
 def define_parser():
     """Defines and returns the argument parser."""
     parser = argparse.ArgumentParser(description="Parser for the arguments")
-    parser.add_argument("--collection", "-c", action="store",
+    parser.add_argument("--collection_id", "-c", action="store",
                         dest="collection_id", type=str, required=True, help="Collection id")
-    parser.add_argument("--dataset", "-d", action="store",
+    parser.add_argument("--dataset_id", "-d", action="store",
                         dest="dataset_id", type=str, required=False, help="Dataset id")
     parser.add_argument("--local_template", "-l", action="store",
                         dest="local_template", type=str, required=False, help="Local path of the HCA template")
