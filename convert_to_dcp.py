@@ -336,6 +336,18 @@ def edit_lib_prep_protocol(sample_metadata):
         return sample_metadata.merge(cheatsheet, how='left', on='assay_ontology_term_id')
     return sample_metadata
 
+def edit_suspension_type(sample_metadata):
+    suspension_to_nucleic_acid = {'cell': 'single cell', 
+                                  'nucleus': 'single nucleus',
+                                  'na': 'bulk cell'}
+    if 'suspension_type' in sample_metadata:
+        sample_metadata['library_preparation_protocol.nucleic_acid_source'] = sample_metadata['suspension_type'].replace(suspension_to_nucleic_acid)
+        if any(sample_metadata['suspension_type'] == 'na'):
+            technologies = {ols_label(lib) for lib in sample_metadata.loc[sample_metadata['suspension_type'] == 'na', 'assay_ontology_term_id']}
+            print("Please check if the following technologies use `bulk cell` and not single cell or nucleus:\n" + \
+                  f"{'; '.join(technologies)}")
+    return sample_metadata
+
 def create_protocol_ids(dcp_spreadsheet, dcp_flat):
     protocols = [key.lower().replace(' ', '_') for key in dcp_spreadsheet if 'protocol' in key]
     

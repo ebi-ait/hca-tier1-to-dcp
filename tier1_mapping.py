@@ -28,7 +28,7 @@ tier1_to_dcp = {
     'tissue_ontology_term_id': 'specimen_from_organism.organ.ontology',
     'tissue_free_text': 'specimen_from_organism.organ_parts.text',
     'sample_preservation_method': 'specimen_from_organism.preservation_storage.storage_method',
-    'suspension_type': 'library_preparation_protocol.nucleic_acid_source',
+    # 'suspension_type': 'library_preparation_protocol.nucleic_acid_source',
     # 'cell_enrichment': 'enrichment_protocol.markers', # if CL ontology add CL label
     'cell_viability_percentage': 'cell_suspension.cell_morphology.percent_cell_viability',
     'cell_number_loaded': 'cell_suspension.estimated_cell_count',
