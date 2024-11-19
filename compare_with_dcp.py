@@ -168,11 +168,10 @@ def get_slim_comp_df(comp_df, tab):
     comp_df_slim.index.name = tab.lower().replace(' ', '_') + '_id'
     return comp_df_slim
 
-
 def compare_filled_fields(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet):
     report_dict = compare_filled_fields_stats(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet)
     tier1_excess_fields = report_dict['values'][tab]['excess']['tier1']
-    fields_intersect = tier1_excess_fields = report_dict['values'][tab]['intersect']
+    fields_intersect = report_dict['values'][tab]['intersect']
 
     if tier1_excess_fields:
         print(f"In tab {tab} we have more metadata in Tier 1:\n\t{', '.join(tier1_excess_fields)}")
