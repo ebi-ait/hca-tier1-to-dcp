@@ -78,7 +78,7 @@ def get_values_of_field(tab, spreadsheet, field):
     return spreadsheet[tab][field].tolist()
 
 def export_report_json(collection_id, dataset_id, report_dict):
-    with open(f'compare_report/{collection_id}_{dataset_id}_compare.json', 'w', encoding='UTF-8') as json_file:
+    with open(f'report_compare/{collection_id}_{dataset_id}_compare.json', 'w', encoding='UTF-8') as json_file:
                     json.dump(report_dict, json_file)
 
 def init_report_dict():
@@ -86,7 +86,7 @@ def init_report_dict():
     report_dict['ids'] = {'n': {}, 'values': {}}
     report_dict['tabs'] = {'excess': {}, 'n': {}, 'intersect': []}
     report_dict['values'] = {}
-    os.makedirs('compare_report', exist_ok=True)
+    os.makedirs('report_compare', exist_ok=True)
     return report_dict
 
 def compare_n_tabs(tier1_spreadsheet, wrangled_spreadsheet, report_dict):
