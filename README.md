@@ -5,7 +5,7 @@ Convert Human Cell Atlas Tier 1 metadata extracted out of an anndata object of a
 This convertion is done in 3 steps.
 1. Pull data from CxG [cellxgene_metadata_collection.py](cellxgene_metadata_collection.py)
     1. Given a collection_id, select dataset and download h5ad
-    1. Pull obs and uns layer into csv files in `metadata` dir with `<collection_id>_<dataset_id>` prefix in filename
+    1. Pull obs and uns layer into csv files in `metadata` dir with `<collection_id>_<dataset_id>` prefix in `_metadata.csv` and `_study_metadata.csv` filenames
     1. Test if DOI exists in [ingest](https://contribute.data.humancellatlas.org/) (ingest-token required)
 1. Convert to DCP spreadsheet [convert_to_dcp.py](convert_to_dcp.py)
     1. Given a collection_id & dataset_id pull metadata from metadata dir
@@ -36,7 +36,7 @@ python3 compare_with_dcp.py -c <CxG collection_id> -d <CxG dataset_id> -w <previ
 - `--collection_id` or `-c`: CxG collection_id of the project. 
     - i.e. `e5f58829-1a66-40b5-a624-9046778e74f5`
 - `--wrangled-path` or `-w`: Path of previously wrangled spreadsheet to compare with converted from tier 1 spreadsheet
-    - i.e. `metadata/scAgingHumanMaleSkin_metadata_03-08-2023.xlsx`
+    - i.e. [`metadata/scAgingHumanMaleSkin_metadata_03-08-2023.xlsx`](https://explore.data.humancellatlas.org/projects/10201832-7c73-4033-9b65-3ef13d81656a)
 - `--ingest-token` or `-t`: Token of ingest for collecting DOI info from [ingest](https://contribute.data.humancellatlas.org/)
 - `--dataset` or `-d`: Select the CxG dataset_id to download and convert.
     - i.e. `6ec405bb-4727-4c6d-ab4e-01fe489af7ea`
