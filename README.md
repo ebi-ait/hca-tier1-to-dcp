@@ -34,12 +34,13 @@ python3 compare_with_dcp.py -c <CxG collection_id> -d <CxG dataset_id> -w <previ
 
 ### Arguments
 - `--collection_id` or `-c`: CxG collection_id of the project. 
-    - i.e. `e5f58829-1a66-40b5-a624-9046778e74f5`
+    - i.e. `c353707f-09a4-4f12-92a0-cb741e57e5f0`, `dc3a5256-5c39-4a21-ac0c-4ede3e7b2323`, `20eea6c8-9d64-42c9-9b6f-c11b5249e0e9`
+- `--dataset` or `-d`: Select the CxG dataset_id to download and convert.
+    - i.e. `124744b8-4681-474a-9894-683896122708`, `0bae7ebf-eb54-46a6-be9a-3461cecefa4c`, `2e9d2f32-4cfb-49b5-b990-cbf4c241214e`
 - `--wrangled-path` or `-w`: Path of previously wrangled spreadsheet to compare with converted from tier 1 spreadsheet
     - i.e. [`metadata/scAgingHumanMaleSkin_metadata_03-08-2023.xlsx`](https://explore.data.humancellatlas.org/projects/10201832-7c73-4033-9b65-3ef13d81656a)
 - `--ingest-token` or `-t`: Token of ingest for collecting DOI info from [ingest](https://contribute.data.humancellatlas.org/)
-- `--dataset` or `-d`: Select the CxG dataset_id to download and convert.
-    - i.e. `6ec405bb-4727-4c6d-ab4e-01fe489af7ea`
+- `--local_template` or `-l`: Local instance of [hca_template.xlsx](https://github.com/ebi-ait/geo_to_hca/raw/master/template/hca_template.xlsx)
 
 #### Requirement of arguments per script
 | args | [collect](cellxgene_metadata_collection.py) | [convert](convert_to_dcp.py) | [compare](compare_with_dcp.py) |
