@@ -31,7 +31,8 @@ Tested in python3.9. To run scripts you can run:
 ```bash
 python3 -m pip install -r requirements.txt
 python3 cellxgene_metadata_collection.py -c <CxG collection_id> -t <ingest-token>
-python3 convert_to_dcp.py -c \<CxG collection_id\> -d \<CxG dataset_id\> 
+python3 convert_to_dcp.py -c <CxG collection_id> -d <CxG dataset_id>
+python3 compare_with_dcp.py -c <CxG collection_id> -d <CxG dataset_id> -w <previously wrangled spreadsheet path>
 ```
 
 ### Arguments
