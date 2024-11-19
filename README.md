@@ -4,15 +4,12 @@ Convert Human Cell Atlas Tier 1 metadata extracted out of an anndata object of a
 ## Algorithm
 This convertion is done in 3 steps.
 1. Pull data from CxG [cellxgene_metadata_collection.py](cellxgene_metadata_collection.py)
-    1. Given a collection_id
-    1. Select dataset
-    1. Download h5ad
-    1. Pull obs layer into a csv file in `metadata` dir to `<collection_id>_<dataset_id>_metadata.csv` filename
-    1. Pull uns layer into a csv file in `metadata` dir to `<collection_id>_<dataset_id>_study_metadata.csv` filename
+    1. Given a collection_id, select dataset and download h5ad
+    1. Pull obs and uns layer into csv files in `metadata` dir with `<collection_id>_<dataset_id>` prefix in filename
     1. Test if DOI exists in [ingest](https://contribute.data.humancellatlas.org/) (ingest-token required)
 1. Convert to DCP spreadsheet [convert_to_dcp.py](convert_to_dcp.py)
-    1. Given a collection_id & dataset_id pull metadata from metadata dir (optional if single dataset per collection exists in dir)
-    1. Download latest hca_template.xlsx from [ebi-ait/geo_to_hca](https://github.com/ebi-ait/geo_to_hca/raw/master/template/hca_template.xlsx), using the [mapping](tier1_mapping.py) the spreadsheet fields are renamed & converted to dcp metadata
+    1. Given a collection_id & dataset_id pull metadata from metadata dir
+    1. Based on [hca_template.xlsx](https://github.com/ebi-ait/geo_to_hca/raw/master/template/hca_template.xlsx), using the [mapping](tier1_mapping.py) convert to dcp flat metadata file with dcp programmatic fields
     1. Based on the field programmatic name, the dcp spreadsheet is populated
     1. Exported into an xlsx file in `metadata` dir to `<collection_id>_<dataset_id>_dcp.csv` filename
 1. Compare previously wrangled spreadsheet vs tier 1 [compare_with_dcp.py](compare_with_dcp.py)
