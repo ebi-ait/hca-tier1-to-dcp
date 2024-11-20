@@ -52,14 +52,14 @@ def selection_of_dataset(args):
         ['dataset_id', 'cell_count', 'title']]
 
     if args.dataset_id is not None and args.dataset_id in dataset_df['dataset_id'].values:
-        print(f"Preselected dataset:")
+        print(f"Pre-selected dataset:")
         print(dataset_df[dataset_df['dataset_id'] == args.dataset_id])
         return args.dataset_id
     print(f"{BOLD_START}SELECT DATASET:{BOLD_END}")
     print(dataset_df)
     
     if len(dataset_df.index) == 1:
-        print(f"Converting the unique dataset in collection.")
+        print("Selected unique dataset in collection.")
         dataset_ix = 0
     else:
         dataset_ix = input("Please select the index of the dataset to be converted:\n")
@@ -136,10 +136,17 @@ def doi_search_ingest(doi, token):
     response.raise_for_status()
     projects = response.json()
     if '_embedded' in projects:
-        links = [proj['uuid']['uuid'] + '\t' + proj['_links']['self']['href'] + \
-                 '\t' + uuid_search_azul(proj['uuid']['uuid'])
-                 for proj in projects['_embedded']['projects']]
-        print(f'Project(s) in ingest with doi {doi}:\n' + '\n'.join(links))
+        links = {proj['uuid']['uuid']: {'access': proj['data_use_restriction'] if 'data_use_restriction' in proj else 'NRES', 
+                                        'ingest': proj['_links']['self']['href'], 
+                                        'DCP': uuid_search_azul(proj['uuid']['uuid'])}
+                for proj in projects['_embedded']['projects']}
+        links_df = pd.DataFrame(links)
+        pd.set_option('display.max_colwidth', None)
+        print(f'Project(s) in ingest with doi {doi}:\n{links_df}')
+        pd.reset_option('display.max_colwidth')
+        ma_uuid = links_df.T[links_df.T['access'] != 'NRES'].index.tolist()
+        if any(ma_uuid):
+            print(f"{BOLD_START}WARNING:{BOLD_END}\n\tProject(s) {', '.join(ma_uuid)} are managed access.")
     else:
         print(f'DOI: {doi} was not found in ingest')
     return
