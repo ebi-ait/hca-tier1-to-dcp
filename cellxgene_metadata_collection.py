@@ -6,7 +6,7 @@ import pandas as pd
 import requests
 import scanpy as sc
 
-from tier1_mapping import tier1, tier1_list
+from helper_files.tier1_mapping import tier1, tier1_list
 
 
 def define_parser():

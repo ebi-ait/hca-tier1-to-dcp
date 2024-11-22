@@ -7,7 +7,7 @@ import requests
 import pandas as pd
 from numpy import nan
 
-from tier1_mapping import tier1_to_dcp, lib_prep_cheatsheet, collection_dict
+from helper_files.tier1_mapping import tier1_to_dcp, collection_dict
 
 
 def define_parser():
@@ -329,11 +329,11 @@ def edit_dev_stage(sample_metadata):
     return sample_metadata
 
 def edit_lib_prep_protocol(sample_metadata):
-    cheatsheet = pd.DataFrame(lib_prep_cheatsheet, 
-                              index=lib_prep_cheatsheet['assay_ontology_term_id'])
+    cheatsheet = pd.read_csv('helper_files/lib_prep_cheatsheet.csv', index_col='assay_ontology_term_id')
     if sample_metadata['assay_ontology_term_id'].isin(cheatsheet.index).any():
         print('`lib_prep fields`', end='; ', flush=True)
-        return sample_metadata.merge(cheatsheet, how='left', on='assay_ontology_term_id')
+        return sample_metadata.merge(cheatsheet.loc[sample_metadata['assay_ontology_term_id'].unique()].dropna(axis=1), 
+                                     how='left', on='assay_ontology_term_id')
     return sample_metadata
 
 def edit_suspension_type(sample_metadata):

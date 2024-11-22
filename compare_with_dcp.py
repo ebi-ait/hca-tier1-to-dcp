@@ -5,7 +5,7 @@ import sys
 import json
 
 import pandas as pd
-from tier1_mapping import entity_types, all_entities
+from helper_files.tier1_mapping import entity_types, all_entities
 
 # Open cellxgene spreadsheet
 # Open DCP spreadsheet
