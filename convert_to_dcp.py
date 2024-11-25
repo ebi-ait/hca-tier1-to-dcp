@@ -7,7 +7,7 @@ import requests
 import pandas as pd
 from numpy import nan
 
-from helper_files.tier1_mapping import tier1_to_dcp, collection_dict
+from helper_files.tier1_mapping import tier1_to_dcp, collection_dict, prot_def_field
 
 
 def define_parser():
@@ -213,7 +213,7 @@ def edit_ethnicity(sample_metadata):
     return sample_metadata
 
 def edit_sample_source(sample_metadata):
-    if 'sample_source' in sample_metadata:
+    if 'sample_source' in sample_metadata and 'manner_of_death' in sample_metadata:
         sample_metadata['specimen_from_organism.transplant_organ'] = sample_metadata.apply(lambda x: 'yes' if x['sample_source'] == 'organ_donor' else 'no', axis=1)
         conflict_1 = (sample_metadata['sample_source'] == 'postmortem donor') & (sample_metadata['manner_of_death'] == 'not applicable')
         conflict_2 = (sample_metadata['sample_source'] != 'postmortem donor') & (sample_metadata['manner_of_death'] != 'not applicable')
@@ -296,7 +296,7 @@ def dev_label(ontology):
         print(f'Ontology {ontology} does not have start annotation')
         return ontology
     elif len(start_key) > 1:
-        print(f'Multiple start IDs {start_key}. Selecting the smallest value {start_key[0]}')
+        print(f'\nMultiple start IDs {start_key}. Selecting the smallest value {start_key[0]}')
     unit_time = start_key[0].split(" ")[1].rstrip('s')
     age_range = [str(int(float(result['annotation'][start_key[0]][0])))]
     end_key = [key for key in result['annotation'].keys() if key in end_id]
@@ -358,7 +358,12 @@ def create_protocol_ids(dcp_spreadsheet, dcp_flat):
             continue
         protocol_df = dcp_flat.filter(like=protocol).replace('na', nan).dropna().drop_duplicates()
         protocol_id_col = protocol + '.protocol_core.protocol_id'
-        protocol_df[protocol_id_col] = [protocol + "_" + str(n + 1) for n in range(len(protocol_df))]
+        if protocol in prot_def_field and \
+           prot_def_field[protocol] in protocol_df and \
+           protocol_df[prot_def_field[protocol]].is_unique:
+            protocol_df[protocol_id_col] = [field.replace(" ", "_").replace("'","") + "_protocol" for field in protocol_df[prot_def_field[protocol]].values]
+        else:
+            protocol_df[protocol_id_col] = [protocol + "_" + str(n + 1) for n in range(len(protocol_df))]
         dcp_flat = dcp_flat.merge(protocol_df,  how='left',on=list(protocol_df.columns.values[:-1]))
     return dcp_flat
 

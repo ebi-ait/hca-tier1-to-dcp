@@ -97,39 +97,14 @@ tier1_list = ['title', 'study_pi',
               'self_reported_ethnicity_ontology_term_id', 
               'development_stage_ontology_term_id']
 """
-Dictionary with fields that could potentially generate a meaninigful protocol name like i.e. 10x_3_v2_protocol, biopsy_protocol etc.
+Dictionary with protocol name defining fields to generate a context meaningfull protocol namelike i.e. 10x_3_v2_protocol, biopsy_protocol etc.
 """
-protocol_ids = {
-    'Collection protocol':
-    {
-        'tier1_key': 'sample_collection_method',
-        'dcp_key': 'collection_protocol.method.text',
-        'dcp_fields': ['collection_protocol.method.text', 'collection_protocol.protocol_core.protocol_id']
-    },
-    'Library preparation protocol':
-    {
-        'tier1_key': 'assay_ontology_term_id',
-        'dcp_key': 'library_preparation_protocol.library_construction_method.ontology',
-        'dcp_fields': ['library_preparation_protocol.library_construction_method.ontology', 'library_preparation_protocol.protocol_core.protocol_id']
-    },
-    'Sequencing protocol':
-    {
-        'tier1_key': 'sequencing_platform',
-        'dcp_key': 'sequencing_protocol.instrument_manufacturer_model.ontology',
-        'dcp_fields': ['sequencing_protocol.instrument_manufacturer_model.ontology', 'sequencing_protocol.protocol_core.protocol_id']
-    },
-    'Analysis protocol':
-    {
-        'tier1_key': 'analysis_software',
-        'dcp_key': 'analysis_protocol.alignment_software_version',
-        'dcp_fields': ['analysis_protocol.alignment_software_version', 'analysis_protocol.protocol_core.protocol_id']
-    },
-    'Enrichment protocol':
-    {
-        'tier1_key': 'cell_enrichment',
-        'dcp_key': 'enrichment_protocol.markers',
-        'dcp_fields': ['enrichment_protocol.markers', 'enrichment_protocol.protocol_core.protocol_id']
-    }
+prot_def_field = {
+    'collection_protocol': 'collection_protocol.method.text',
+    'library_preparation_protocol': 'library_preparation_protocol.library_construction_method.text', 
+    'sequencing_protocol': 'sequencing_protocol.instrument_manufacturer_model.text',
+    'analysis_protocol': 'analysis_protocol.alignment_software',
+    'enrichment_protocol': 'enrichment_protocol.markers',
 }
 
 
