@@ -218,8 +218,8 @@ def edit_sample_source(sample_metadata):
         conflict_1 = (sample_metadata['sample_source'] == 'postmortem donor') & (sample_metadata['manner_of_death'] == 'not applicable')
         conflict_2 = (sample_metadata['sample_source'] != 'postmortem donor') & (sample_metadata['manner_of_death'] != 'not applicable')
         if any(conflict_1) or any(conflict_2):
-            print(f"Conflicting metadata {sample_metadata.loc[conflict_1, ['sample_source', 'manner_of_death']]}")
-            print(f"Conflicting metadata {sample_metadata.loc[conflict_2, ['sample_source', 'manner_of_death']]}")
+            print(f"Conflicting death metadata {sample_metadata.loc[conflict_1, ['sample_source', 'manner_of_death']]}")
+            print(f"Conflicting death metadata {sample_metadata.loc[conflict_2, ['sample_source', 'manner_of_death']]}")
             return sample_metadata
         print('`sample_source`', end='; ', flush=True)
     return sample_metadata
@@ -275,6 +275,8 @@ def edit_alignment_software(sample_metadata):
 def edit_cell_enrichment(sample_metadata):
     if 'cell_enrichment' in sample_metadata:
         # TODO keep + or - of enrichment and do only for not "na" values
+        if sample_metadata['cell_enrichment'] == "na":
+            return 
         sample_metadata['cell_enrichment_cell_type'] = sample_metadata['cell_enrichment'].str[:-1]
         sample_metadata['enrichment_protocol.markers'] = sample_metadata['cell_enrichment_cell_type'].apply(ols_label)
         sample_metadata['cell_suspension.selected_cell_types.ontology'] = sample_metadata['cell_enrichment_cell_type']

@@ -3,7 +3,7 @@ Convert Human Cell Atlas Tier 1 metadata extracted out of an anndata object of a
 
 ## Algorithm
 This convertion is done in 3 steps.
-1. Pull data from CxG [cellxgene_metadata_collection.py](cellxgene_metadata_collection.py)
+1. Pull data from CxG [collect_cellxgene_metadata.py](collect_cellxgene_metadata.py)
     1. Given a collection_id, select dataset and download h5ad
     1. Pull obs and uns layer into csv files in `metadata` dir with `<collection_id>_<dataset_id>` prefix in `_metadata.csv` and `_study_metadata.csv` filenames
     1. Test if DOI exists in [ingest](https://contribute.data.humancellatlas.org/) (ingest-token required)
@@ -27,7 +27,7 @@ This convertion is done in 3 steps.
 Tested in python3.9. To run scripts you can run:
 ```bash
 python3 -m pip install -r requirements.txt
-python3 cellxgene_metadata_collection.py -c <CxG collection_id> -t <ingest-token>
+python3 collect_cellxgene_metadata.py -c <CxG collection_id> -t <ingest-token>
 python3 convert_to_dcp.py -c <CxG collection_id> -d <CxG dataset_id>
 python3 compare_with_dcp.py -c <CxG collection_id> -d <CxG dataset_id> -w <previously wrangled spreadsheet path>
 ```
@@ -43,7 +43,7 @@ python3 compare_with_dcp.py -c <CxG collection_id> -d <CxG dataset_id> -w <previ
 - `--local_template` or `-l`: Local instance of [hca_template.xlsx](https://github.com/ebi-ait/geo_to_hca/raw/master/template/hca_template.xlsx)
 
 #### Requirement of arguments per script
-| args | [collect](cellxgene_metadata_collection.py) | [convert](convert_to_dcp.py) | [compare](compare_with_dcp.py) |
+| args | [collect](collect_cellxgene_metadata.py) | [convert](convert_to_dcp.py) | [compare](compare_with_dcp.py) |
 | ---- | ---------- | ---------- | ---------- | 
 | `--collection_id`, `-c` | required | required | required |
 | `--dataset_id`, `-d` | optional | optional | optional | 

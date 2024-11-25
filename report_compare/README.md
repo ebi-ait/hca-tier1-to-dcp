@@ -1,5 +1,5 @@
 # Description of report json structure
-
+# TODO: ADD EXPLANATION
 ```json
 {
     "ids": {
