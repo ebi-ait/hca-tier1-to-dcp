@@ -47,7 +47,6 @@ def open_tier1_spreadsheet(collection_id, dataset_id):
         sys.exit()
 
 def open_wrangled_spreadsheet(wranged_spreadsheet_path):
-    # TODO add more options, from ingest
     try:
         return pd.read_excel(wranged_spreadsheet_path, sheet_name=None, skiprows=[0, 1, 2, 4])
     except FileNotFoundError:
@@ -156,11 +155,18 @@ def drop_external_ids(comp_df):
     return comp_df
 
 def get_slim_comp_df(comp_df, tab):
-    '''Drop ontology & ontology label fields and shorten id index'''
-    drop_ont_col = [col for col in comp_df.columns.levels[0].tolist() if col.endswith('.ontology') or col.endswith('ontology_label')]
-    comp_df_slim = comp_df.drop(columns=drop_ont_col)
-    comp_df_slim.index.name = tab.lower().replace(' ', '_') + '_id'
-    return comp_df_slim
+    '''Drop ontology & ontology label fields if only all are different and shorten id index'''
+    drop_ont_col = []
+    for field in comp_df.columns.levels[0]:
+        if field.endswith('ontology') and \
+                field.replace('ontology', 'text') in comp_df and \
+                    field.replace('ontology', 'ontology_label') in comp_df:
+            drop_ont_col.extend([field, field.replace('ontology', 'ontology_label')])
+    comp_df.index.name = tab.lower().replace(' ', '_') + '_id'
+    if drop_ont_col:
+        comp_df_slim = comp_df.drop(columns=drop_ont_col)
+        return comp_df_slim
+    return comp_df
 
 def compare_filled_fields(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet):
     report_dict = compare_filled_fields_stats(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet)
@@ -188,7 +194,9 @@ def compare_filled_fields(tab, report_dict, tier1_spreadsheet, wrangled_spreadsh
     for field in comp_df.columns.levels[0]:
         report_dict['values'][tab]['values_diff'][field] = comp_df[field].to_dict(orient='index')
     if not comp_df.empty:
-        print(f'{tab}: {len(comp_df.columns.levels[0])} fields from {len(comp_df.index)} ids, have different values.')
+        ont_fields = sum(['ontology' in field for field in comp_df.columns.levels[0]])
+        print(f'{tab}: {len(comp_df.columns.levels[0])} fields from {len(comp_df.index)} ids, have different values.' + \
+              f'\t{ont_fields} ontology fields not shown here' if ont_fields == 2 else '')
         print(get_slim_comp_df(comp_df, tab))
     return report_dict
 
