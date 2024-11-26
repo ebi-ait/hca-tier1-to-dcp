@@ -6,8 +6,9 @@ import requests
 
 import pandas as pd
 from numpy import nan
+from packaging.version import parse as parse_version
 
-from helper_files.tier1_mapping import tier1_to_dcp, collection_dict, prot_def_field
+from helper_files.tier1_mapping import tier1_to_dcp, collection_dict, prot_def_field, tier1_enum
 
 
 def define_parser():
@@ -367,14 +368,94 @@ def create_protocol_ids(dcp_spreadsheet, dcp_flat):
         dcp_flat = dcp_flat.merge(protocol_df,  how='left',on=list(protocol_df.columns.values[:-1]))
     return dcp_flat
 
-def fill_ontology_terms(dcp_flat):
-    ont_fields = [col for col in dcp_flat.columns if col.endswith('ontology')]
+def not_text(col, dcp_flat):
+    return col.replace('ontology', 'text') not in dcp_flat
+
+def not_label(col, dcp_flat):
+    return col.replace('ontology', 'ontology_label') not in dcp_flat
+
+def fill_ontology_labels(dcp_flat):
+    ont_fields = [col for col in dcp_flat if col.endswith('ontology') and (not_text(col, dcp_flat) or not_label(col, dcp_flat))]
     for field in ont_fields:
         print(field, end='; ', flush=True)
-        dcp_flat[field.replace("ontology","text")] = dcp_flat[field].apply(ols_label)
-        dcp_flat[field.replace("ontology","ontology_label")] = dcp_flat[field].apply(ols_label)
+        if not_text(field, dcp_flat):
+            dcp_flat[field.replace("ontology","text")] = dcp_flat[field].apply(ols_label)
+        if not_label(field, dcp_flat):
+            dcp_flat[field.replace("ontology","ontology_label")] = dcp_flat[field].apply(ols_label)
     print('\t')
     return dcp_flat
+
+def get_xml_keys(schemas_url="https://schema.humancellatlas.org/"):
+    response = requests.get(schemas_url, timeout=10)
+    return [key.split('</Key>')[0] for key in response.text.split('<Key>')]
+
+def get_entity_schema(entity, xml_keys, schemas_url="https://schema.humancellatlas.org/"):
+    entity_keys = [key for key in xml_keys if key.split('/')[-1] == entity]
+    if not entity_keys:
+        return {}
+    entity_key_versions = [parse_version(key.split('/')[-2]) for key in entity_keys]
+    # use the latest version
+    key = entity_keys[entity_key_versions.index(max(entity_key_versions))]
+    response = requests.get(schemas_url + key, timeout=10)
+    return response.json()
+
+def get_enum_restriction(field, xml_keys, schemas_url="https://schema.humancellatlas.org/"):
+    key_schema = {}
+    i = 0
+    while i <= 4: 
+        key_schema = get_entity_schema(field.split('.')[i], xml_keys, schemas_url)
+        if not key_schema or not field.split('.')[-1] in key_schema['properties']:
+            i+=1
+            continue
+        if key_schema and 'enum' in key_schema['properties'][field.split('.')[-1]]:
+            return key_schema['properties'][field.split('.')[-1]]['enum']
+    print(f'Could not retrieve enum restriction for {field}')
+
+def get_ontology_restriction(field, xml_keys, schemas_url="https://schema.humancellatlas.org/"):
+    key_schema = {}
+    if len(field.split('.')) == 4:
+        key_schema = get_entity_schema(field.split('.')[1], xml_keys, schemas_url)
+    elif len(field.split('.')) == 3: 
+        key_schema = get_entity_schema(field.split('.')[0], xml_keys, schemas_url)
+    if key_schema and \
+       field.split('.')[1] in key_schema['properties'] and \
+       '$ref' in key_schema['properties'][field.split('.')[1]]:
+        ontology_response = requests.get(key_schema['properties'][field.split('.')[1]]['$ref'], timeout=10)
+        if 'ontology' in ontology_response.json()['properties']:
+            return [ont.replace('obo:','') for ont in ontology_response.json()['properties']['ontology']['graph_restriction']['ontologies']]
+    return
+
+def fill_ontology_ids(term, field, xml_keys, silent=False):
+    ontologies = get_ontology_restriction(field, xml_keys)
+    for ontology in ontologies:
+        request_query = 'https://www.ebi.ac.uk/ols4/api/search?q='
+        response = requests.get(request_query + f"{term.replace(' ', '+')}&ontology={ontology}", timeout=10).json()
+        if response["response"]["numFound"] == 0:
+            print(f"No ontology found for {term} in {ontology}")
+            continue
+        label = response["response"]["docs"][0]['label']
+        obo_id = response["response"]["docs"][0]['obo_id']
+        if not silent:
+            print(f"Selecting {label}/{obo_id} for {term}")
+        return obo_id
+
+def fill_missing_ontology_ids(dcp_flat):
+    # generalise with check if .text field is in dcp_flat & not .ontology and then fill that in
+    fields = [x for x in dcp_flat if x.endswith('text') and x.replace('text','ontology') not in dcp_flat]
+    xml_keys = get_xml_keys()
+    for field in fields:
+        print(field, end='; ', flush=True)
+        dcp_flat[field.replace('text','ontology')] = dcp_flat[field].apply(lambda x: fill_ontology_ids(x, field, xml_keys,silent=True))
+    return dcp_flat
+
+def check_enum_values(dcp_flat):
+    xml_keys = get_xml_keys()
+    for field in tier1_enum:
+        if field in dcp_flat:
+            enum = get_enum_restriction(field, xml_keys)
+            not_in_enum = [value for value in dcp_flat[field].unique() if value not in enum]
+            if not_in_enum:
+                print(f"{BOLD_START}WARNING:{BOLD_END}\n\tValue(s) `{', '.join(not_in_enum)}` are not valid in {field} schema", end='')
 
 def populate_spreadsheet(dcp_spreadsheet, dcp_flat):
     for tab in dcp_spreadsheet:
@@ -458,10 +539,13 @@ def main():
     # Rename directly mapped fields
     print(f'\nConverted {"; ".join([col for col in sample_metadata if col in tier1_to_dcp])}')
     dcp_flat = sample_metadata.rename(columns=tier1_to_dcp)
+    check_enum_values(dcp_flat)
     
-    # Add ontology labels
-    print('Pull ontology labels from fields:')
-    dcp_flat = fill_ontology_terms(dcp_flat)
+    # Add ontology id and labels
+    print('\nPull ontology ids from fields:')
+    dcp_flat = fill_missing_ontology_ids(dcp_flat)
+    print('\nPull ontology labels from fields:')
+    dcp_flat = fill_ontology_labels(dcp_flat)
     
     # Generate spreadsheet
     dcp_spreadsheet = get_dcp_template(local_template)

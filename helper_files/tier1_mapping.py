@@ -37,7 +37,7 @@ tier1_to_dcp = {
     'library_preparation_batch': 'sequence_file.library_prep_id',
     'library_sequencing_run': 'sequence_file.sequencing_run_batch',
     'sequenced_fragment': 'library_preparation_protocol.end_bias',
-    'sequencing_platform': 'sequencing_protocol.instrument_manufacturer_model.ontology',
+    'sequencing_platform': 'sequencing_protocol.instrument_manufacturer_model.text',
     # is_primary_data
     'reference_genome': 'analysis_file.genome_assembly_version',
     'gene_annotation_version': 'analysis_protocol.gene_annotation_version',
@@ -106,7 +106,11 @@ prot_def_field = {
     'analysis_protocol': 'analysis_protocol.alignment_software',
     'enrichment_protocol': 'enrichment_protocol.markers',
 }
-
+"""List of hca enum fields that are part of tier1"""
+# following fields are enums but are handled separately
+# 'donor_organism.is_living', 'specimen_from_organism.transplant_organ', 'library_preparation_protocol.nucleic_acid_source', 
+# 'library_preparation_protocol.end_bias', 'donor_organism.sex'
+tier1_enum = ['specimen_from_organism.preservation_storage.storage_method']
 
 entity_types = {
     "project":
