@@ -348,7 +348,6 @@ def edit_lib_prep_protocol(sample_metadata):
         print("No `assay` or `assay_ontology_term_id` field found.")
         return sample_metadata
     if sample_metadata[assay_var].isin(cheatsheet[field_map[assay_var]]).any():
-        cheatsheet = cheatsheet.set_index(field_map[assay_var], drop=False)
         print('`lib_prep fields`', end='; ', flush=True)
         assay_fields = cheatsheet.loc[cheatsheet[field_map[assay_var]].isin(sample_metadata[assay_var]),].dropna(axis=1)
         return sample_metadata.merge(assay_fields, how='left', left_on=assay_var, right_on=field_map[assay_var])
