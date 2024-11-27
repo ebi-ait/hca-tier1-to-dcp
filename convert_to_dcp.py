@@ -351,7 +351,7 @@ def edit_lib_prep_protocol(sample_metadata):
         cheatsheet = cheatsheet.set_index(field_map[assay_var], drop=False)
         print('`lib_prep fields`', end='; ', flush=True)
         assay_fields = cheatsheet.loc[cheatsheet[field_map[assay_var]].isin(sample_metadata[assay_var]),].dropna(axis=1)
-        return sample_metadata.merge(assay_fields, how='left', on=field_map[assay_var], left_index=True)
+        return sample_metadata.merge(assay_fields, how='left', left_on=assay_var, right_on=field_map[assay_var])
     return sample_metadata
 
 def edit_suspension_type(sample_metadata):
