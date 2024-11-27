@@ -332,11 +332,26 @@ def edit_dev_stage(sample_metadata):
     return sample_metadata
 
 def edit_lib_prep_protocol(sample_metadata):
-    cheatsheet = pd.read_csv('helper_files/lib_prep_cheatsheet.csv', index_col='assay_ontology_term_id')
-    if sample_metadata['assay_ontology_term_id'].isin(cheatsheet.index).any():
+    """If assay info is in CxG (either as label or ontology_id),
+       and if assay is in cheatsheet
+       add all lib_prep fields we have in cheatsheet"""
+    cheatsheet = pd.read_csv('helper_files/lib_prep_cheatsheet.csv')
+    field_map = {
+        'assay_ontology_term_id': 'library_preparation_protocol.library_construction_method.ontology',
+        'assay': 'library_preparation_protocol.library_construction_method.ontology_label'
+        }
+    if 'assay_ontology_term_id' in sample_metadata:
+        assay_var = 'assay_ontology_term_id'
+    elif 'assay' in sample_metadata:
+        assay_var = 'assay'
+    else:
+        print("No `assay` or `assay_ontology_term_id` field found.")
+        return sample_metadata
+    if sample_metadata[assay_var].isin(cheatsheet[field_map[assay_var]]).any():
+        cheatsheet = cheatsheet.set_index(field_map[assay_var], drop=False)
         print('`lib_prep fields`', end='; ', flush=True)
-        return sample_metadata.merge(cheatsheet.loc[sample_metadata['assay_ontology_term_id'].unique()].dropna(axis=1), 
-                                     how='left', on='assay_ontology_term_id')
+        assay_fields = cheatsheet.loc[cheatsheet[field_map[assay_var]].isin(sample_metadata[assay_var]),].dropna(axis=1)
+        return sample_metadata.merge(assay_fields, how='left', on=field_map[assay_var], left_index=True)
     return sample_metadata
 
 def edit_suspension_type(sample_metadata):
