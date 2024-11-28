@@ -274,7 +274,7 @@ def edit_alignment_software(sample_metadata):
     # for now we extract the numbers as in the example pattern
     if 'alignment_software' in sample_metadata:
         sample_metadata[['analysis_protocol.alignment_software', 'analysis_protocol.alignment_software_version']] = \
-            sample_metadata['alignment_software'].str.extract(r'([\w\s]+)\s(v?[\d\.]+)')
+            sample_metadata['alignment_software'].str.extract(r'([\w\s]+)[\s\/](v?[\d\.]+\w?)')
         no_version = ~sample_metadata['alignment_software'].str.match(r'.*v?[\d\.]+')
         sample_metadata.loc[no_version, 'analysis_protocol.alignment_software'] = \
                 sample_metadata.loc[no_version, 'alignment_software']
