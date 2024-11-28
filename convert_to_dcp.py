@@ -376,21 +376,31 @@ def edit_suspension_type(sample_metadata):
                   f"{'; '.join(technologies)}")
     return sample_metadata
 
+def make_protocol_name(value: str):
+    replacements = {
+        ' ': '_',
+        '/': '_',
+        "'": "",
+    }
+    for old, new in replacements.items():
+        value = value.replace(old, new)
+    return value + "_protocol"
+
 def create_protocol_ids(dcp_spreadsheet, dcp_flat):
     protocols = [key.lower().replace(' ', '_') for key in dcp_spreadsheet if 'protocol' in key]
     
     for protocol in protocols:
         if dcp_flat.filter(like=protocol).empty:
             continue
-        protocol_df = dcp_flat.filter(like=protocol).replace('na', nan).dropna().drop_duplicates()
+        protocol_df = dcp_flat.filter(like=protocol).replace('na', nan).dropna(axis=1).drop_duplicates()
         protocol_id_col = protocol + '.protocol_core.protocol_id'
         if protocol in prot_def_field and \
            prot_def_field[protocol] in protocol_df and \
            protocol_df[prot_def_field[protocol]].is_unique:
-            protocol_df[protocol_id_col] = [field.replace(" ", "_").replace("'","") + "_protocol" for field in protocol_df[prot_def_field[protocol]].values]
+            protocol_df[protocol_id_col] = [make_protocol_name(value) for value in protocol_df[prot_def_field[protocol]].values]
         else:
             protocol_df[protocol_id_col] = [protocol + "_" + str(n + 1) for n in range(len(protocol_df))]
-        dcp_flat = dcp_flat.merge(protocol_df,  how='left',on=list(protocol_df.columns.values[:-1]))
+        dcp_flat = dcp_flat.merge(protocol_df,  how='left', on=list(protocol_df.columns.values[:-1]))
     return dcp_flat
 
 def not_text(col, dcp_flat):
