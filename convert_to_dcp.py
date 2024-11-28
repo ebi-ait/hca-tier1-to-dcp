@@ -357,8 +357,11 @@ def edit_lib_prep_protocol(sample_metadata):
         return sample_metadata
     if sample_metadata[assay_var].isin(cheatsheet[field_map[assay_var]]).any():
         print('`lib_prep fields`', end='; ', flush=True)
-        assay_fields = cheatsheet.loc[cheatsheet[field_map[assay_var]].isin(sample_metadata[assay_var]),].dropna(axis=1)
-        return sample_metadata.merge(assay_fields, how='left', left_on=assay_var, right_on=field_map[assay_var])
+        assay_fields = cheatsheet.loc[cheatsheet[field_map[assay_var]].isin(sample_metadata[assay_var]),]\
+            .dropna(axis=1)
+        return sample_metadata.merge(assay_fields, how='left', 
+                                     left_on=assay_var, right_on=field_map[assay_var])\
+            .drop(field_map[assay_var], axis=1)
     return sample_metadata
 
 def edit_suspension_type(sample_metadata):
