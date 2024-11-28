@@ -527,10 +527,11 @@ def add_analysis_file(dcp_spreadsheet, collection_id, dataset_id):
     # We chould have 1 only Analysis file with all the CS merged
     analysis_file_metadata = {
         'analysis_file.file_core.file_name': f'{collection_id}_{dataset_id}.h5ad',
-        'analysis_file.file_core.content_description.text': 'count matrix',
+        'analysis_file.file_core.content_description.text': 'Count matrix',
+        'analysis_file.file_core.content_description.ontology': 'EDAM:3917',
+        'analysis_file.file_core.content_description.ontology_label': 'Count matrix',
         'analysis_file.file_core.file_source': 'Contributor',
-        'analysis_file.file_core.format': 'h5ad',
-        'sequencing_protocol.protocol_core.protocol_id': dcp_spreadsheet['Sequencing protocol']['sequencing_protocol.protocol_core.protocol_id']
+        'analysis_file.file_core.format': 'h5ad'
         }
     
     for key in dcp_spreadsheet['Analysis file']:
