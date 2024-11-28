@@ -104,6 +104,9 @@ def add_process_locations(sample_metadata, dcp_spreadsheet):
         dcp_spreadsheet['Specimen from organism'] = process_site_type(sample_metadata, dcp_spreadsheet, 'sample_collection_site')
     return dcp_spreadsheet
 
+def tab_to_entity(tab):
+    return tab.lower().replace(" ", "_")
+
 def process_site_type(sample_metadata, dcp_spreadsheet, site_type):
     biomat_dcp = {'institute': 'Cell suspension',
                    'sample_collection_site': 'Specimen from organism'}
@@ -112,7 +115,7 @@ def process_site_type(sample_metadata, dcp_spreadsheet, site_type):
     return dcp_spreadsheet[biomat_dcp[site_type]].\
         merge(sample_metadata[[biomat_tier1[site_type], site_type]].drop_duplicates(), \
               how='left', right_on=biomat_tier1[site_type], \
-              left_on=f'{biomat_dcp[site_type].lower().replace(" ", "_")}.biomaterial_core.biomaterial_id').\
+              left_on=f'{tab_to_entity(biomat_dcp[site_type])}.biomaterial_core.biomaterial_id').\
         drop(columns=[biomat_tier1[site_type], 'process.process_core.location']).\
         rename(columns={site_type: 'process.process_core.location'})
 
@@ -387,7 +390,7 @@ def make_protocol_name(value: str):
     return value + "_protocol"
 
 def create_protocol_ids(dcp_spreadsheet, dcp_flat):
-    protocols = [key.lower().replace(' ', '_') for key in dcp_spreadsheet if 'protocol' in key]
+    protocols = [tab_to_entity(key) for key in dcp_spreadsheet if 'protocol' in key]
     
     for protocol in protocols:
         if dcp_flat.filter(like=protocol).empty:
