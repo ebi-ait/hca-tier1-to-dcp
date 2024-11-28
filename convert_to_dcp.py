@@ -453,9 +453,14 @@ def get_ontology_restriction(field, xml_keys, schemas_url="https://schema.humanc
     elif len(field.split('.')) == 3: 
         key_schema = get_entity_schema(field.split('.')[0], xml_keys, schemas_url)
     if key_schema and \
-       field.split('.')[1] in key_schema['properties'] and \
-       '$ref' in key_schema['properties'][field.split('.')[1]]:
-        ontology_response = requests.get(key_schema['properties'][field.split('.')[1]]['$ref'], timeout=10)
+       field.split('.')[1] in key_schema['properties']:
+        if '$ref' in key_schema['properties'][field.split('.')[1]]:
+            ontology_response = requests.get(key_schema['properties'][field.split('.')[1]]['$ref'], timeout=10)
+        elif '$ref' in key_schema['properties'][field.split('.')[1]]['items']:
+            ontology_response = requests.get(key_schema['properties'][field.split('.')[1]]['items']['$ref'], timeout=10)
+        else:
+            print(f'No ontology link found in {key_schema}')
+            return
         if 'ontology' in ontology_response.json()['properties']:
             return [ont.replace('obo:','') for ont in ontology_response.json()['properties']['ontology']['graph_restriction']['ontologies']]
     return
