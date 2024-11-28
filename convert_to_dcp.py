@@ -413,10 +413,11 @@ def fill_ontology_labels(dcp_flat):
     ont_fields = [col for col in dcp_flat if col.endswith('ontology') and (not_text(col, dcp_flat) or not_label(col, dcp_flat))]
     for field in ont_fields:
         print(field, end='; ', flush=True)
+        ont_dict = {value: ols_label(value) for value in dcp_flat[field].unique()}
         if not_text(field, dcp_flat):
-            dcp_flat[field.replace("ontology","text")] = dcp_flat[field].apply(ols_label)
+            dcp_flat[field.replace("ontology","text")] = dcp_flat[field].replace(ont_dict)
         if not_label(field, dcp_flat):
-            dcp_flat[field.replace("ontology","ontology_label")] = dcp_flat[field].apply(ols_label)
+            dcp_flat[field.replace("ontology","ontology_label")] = dcp_flat[field].replace(ont_dict)
     print('\t')
     return dcp_flat
 
@@ -480,12 +481,12 @@ def fill_ontology_ids(term, field, xml_keys, silent=False):
         return obo_id
 
 def fill_missing_ontology_ids(dcp_flat):
-    # generalise with check if .text field is in dcp_flat & not .ontology and then fill that in
     fields = [x for x in dcp_flat if x.endswith('text') and x.replace('text','ontology') not in dcp_flat]
     xml_keys = get_xml_keys()
     for field in fields:
         print(field, end='; ', flush=True)
-        dcp_flat[field.replace('text','ontology')] = dcp_flat[field].apply(lambda x: fill_ontology_ids(x, field, xml_keys,silent=True))
+        ont_dict = {value: fill_ontology_ids(value, field, xml_keys, silent=True) for value in dcp_flat[field].unique()}
+        dcp_flat[field.replace('text','ontology')] = dcp_flat[field].replace(ont_dict)
     return dcp_flat
 
 def check_enum_values(dcp_flat):
