@@ -511,6 +511,8 @@ def populate_spreadsheet(dcp_spreadsheet, dcp_flat):
                 df = dcp_flat[dub_cols]
                 dcp_flat.drop(columns=dub_cols, inplace=True)
                 dcp_flat[dub_cols] = df[dub_cols].apply(lambda x: '||'.join(x.dropna().astype(str)),axis=1)
+        # copy dtypes in dcp_spreadsheet
+        dcp_spreadsheet[tab] = dcp_spreadsheet[tab].astype(dcp_flat[keys_union].dtypes.to_dict())
         # merge the two dataframes
         dcp_spreadsheet[tab] = pd.concat([dcp_spreadsheet[tab],dcp_flat[keys_union]])
         dcp_spreadsheet[tab] = dcp_spreadsheet[tab].dropna(how='all').drop_duplicates()
