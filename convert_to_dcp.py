@@ -152,8 +152,10 @@ def collection_user_select(x):
     sample_id = x['sample_id']
     collection_method = x['sample_collection_method']
     tissue = ols_label(x['tissue_ontology_term_id'])
-    options = '\n'.join([str(i) + ': '+ ols_label(term) for i, term in enumerate(collection_dict[x['sample_collection_method']])])
-    n = input(f"Please specify the collection method `{collection_method}` matching for sample {sample_id} from {tissue}." + \
+    death = x['manner_of_death']
+    options = '\n'.join([str(i) + ': '+ term for i, term in enumerate(collection_dict[x['sample_collection_method']])])
+    n = input(f"Please specify the collection method `{collection_method}` matching for sample {sample_id} " + \
+        f"from {tissue} and manner of death {death}." + \
         f"Available options:\n{options}\n")
     if not n.isdigit() or int(n) not in range(len(collection_dict[x['sample_collection_method']])):
         raise TypeError(f"Please use a value from {list(range(len(collection_dict[x['sample_collection_method']])))}")
@@ -161,9 +163,15 @@ def collection_user_select(x):
 
 def edit_collection_method(sample_metadata, collection_dict):
     if 'sample_collection_method' in sample_metadata:
-        sample_metadata['collection_protocol.method.ontology'] = sample_metadata\
-        .apply(lambda x: collection_dict[x['sample_collection_method']] \
-            if isinstance(collection_dict[x['sample_collection_method']],str) else collection_user_select(x), axis=1)
+        collect_fields = ['sample_collection_method', 'manner_of_death', 'tissue_ontology_term_id']
+        sample_metadata['collection_protocol.method.text'] = sample_metadata\
+        .apply(lambda x: x['sample_collection_method'] \
+            if x['sample_collection_method'] not in collection_dict else None, axis=1)
+        no_collect_comb = sample_metadata.loc[\
+            sample_metadata['sample_collection_method'].isin(collection_dict), ['sample_id'] + collect_fields]\
+            .drop_duplicates(subset=collect_fields)
+        for _, row in no_collect_comb.iterrows():
+            sample_metadata.loc[(sample_metadata[collect_fields] == row[collect_fields]).all(axis=1), 'collection_protocol.method.text'] = collection_user_select(row)
         print('`sample_collection_method`', end='; ', flush=True)
     return sample_metadata
 

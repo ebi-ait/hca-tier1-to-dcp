@@ -22,7 +22,7 @@ tier1_to_dcp = {
     # 'manner_of_death': 'donor_organism.death.hardy_scale',
     # 'sample_source': 'donor_organism.is_living',
     # 'sex_ontology_term_id': 'donor_organism.sex',
-    'sample_collection_method': 'collection_protocol.method.text',
+    # 'sample_collection_method': 'collection_protocol.method.text',
     # tissue_type
     # 'sampled_site_condition': 'specimen_from_organism.diseases.text', # if is healthy PATO, if adjacent PATO & adjacent disease_ontology_term_id, else disease_ontology_term_id
     'tissue_ontology_term_id': 'specimen_from_organism.organ.ontology',
@@ -195,13 +195,33 @@ all_entities = [
     "Project - hca bionetworks"
 ]
 
-collection_dict = {"brush": ['EFO:0010741', 'EFO:0011029'],
-                   "scraping": 'EFO:0009122',
-                   "biopsy": 'EFO:0009120',
-                   "surgical resection": 'EFO:0009744',
-                   "blood draw": 'EFO:0009121',
-                   "body fluid": ['EFO:0030020', 'EFO:0009123', 'EFO:0700013', 
-                                  'OBI:0600044', 'EFO:0010960', 'EFO:0030079'],
-                   "other": ['EFO:0009292', 'EFO:0009627', 'EFO:0010728', 'EFO:0003856', 
-                             'EFO:0009807', 'EFO:0009808', 'EFO:0010173', 'EFO:0009124', 
-                             'EFO:0010174', 'EFO:0700009', 'EFO:0010727']}
+collection_dict = {
+    "brush":
+    [
+        "nasal brush",
+        "tracheal brush"
+    ],
+    "body fluid":
+    [
+        "breast milk collection",
+        "urine collection",
+        "oral rinse collection",
+        "lavage",
+        "lumbar puncture",
+        "paracentesis"
+    ],
+    "other":
+    [
+        "bone marrow aspiration",
+        "collecting specimen from organ postmortem",
+        "curettage",
+        "dissection",
+        "cadaver dissection",
+        "immunosurgery",
+        "oophorectomy",
+        "organ extraction",
+        "tonsillectomy",
+        "transvaginal ultrasound-guided oocyte retrieval",
+        "vacuum aspiration"
+    ]
+}
