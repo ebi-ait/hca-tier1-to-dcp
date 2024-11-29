@@ -285,6 +285,8 @@ def edit_alignment_software(sample_metadata):
         no_version = ~sample_metadata['alignment_software'].str.match(r'.*v?[\d\.]+')
         sample_metadata.loc[no_version, 'analysis_protocol.alignment_software'] = \
                 sample_metadata.loc[no_version, 'alignment_software']
+        # if alignment software is there, it's processed matrix generation
+        sample_metadata['analysis_protocol.type.text'] = 'processed matrix generation'
         print('`alignment_software`', end='; ', flush=True)
     return sample_metadata
 
