@@ -35,7 +35,7 @@ def get_dataset_id(args):
     if len(set(dataset_ids)) == 1:
         return dataset_ids[0]
     print("Please specify the -d dataset_id. There are available files for:")
-    print('\n'.join(dataset_ids))
+    print('\n'.join(set(dataset_ids)))
     sys.exit()
 
 def open_tier1_spreadsheet(collection_id, dataset_id):
