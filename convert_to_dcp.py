@@ -8,7 +8,8 @@ import pandas as pd
 from numpy import nan
 from packaging.version import parse as parse_version
 
-from helper_files.tier1_mapping import tier1_to_dcp, collection_dict, prot_def_field, tier1_enum
+from helper_files.tier1_mapping import tier1_to_dcp, collection_dict, prot_def_field, tier1_enum, entity_types
+from helper_files.required_fields import required_fields
 
 
 def define_parser():
@@ -106,6 +107,9 @@ def add_process_locations(sample_metadata, dcp_spreadsheet):
 
 def tab_to_entity(tab):
     return tab.lower().replace(" ", "_")
+
+def entity_to_tab(entity):
+    return entity.capitalize().replace("_", " ")
 
 def process_site_type(sample_metadata, dcp_spreadsheet, site_type):
     biomat_dcp = {'institute': 'Cell suspension',
@@ -542,12 +546,34 @@ def add_analysis_file(dcp_spreadsheet, collection_id, dataset_id):
             dcp_spreadsheet['Analysis file'][key] = analysis_file_metadata[key]
     
     dcp_spreadsheet['Analysis file'] = dcp_spreadsheet['Analysis file']\
-        .fillna('')\
         .groupby('analysis_file.file_core.file_name')\
         .agg(collapse_values)\
         .reset_index()
     print('Added `Analysis file` info')
     return dcp_spreadsheet
+
+def check_required_fields(dcp_spreadsheet):
+    all_fields = []
+    missing_required = set()
+    missing_dict = {}
+    for tab in dcp_spreadsheet:
+        if dcp_spreadsheet[tab].empty:
+            continue
+        all_fields.extend(dcp_spreadsheet[tab].dropna(axis=1, how='all').columns.tolist())
+    for field in all_fields:
+        # req_modules = [key for key in required_fields if field.startswith(key)]
+        modules = [key for key in required_fields if key in field]
+        for module in modules:
+            missing_required.update([req_field for req_field in required_fields[module] if req_field not in all_fields])
+    for field in missing_required:
+        key = entity_to_tab(field.split('.')[0])
+        if key not in missing_dict:
+            missing_dict[key] = [field]
+        else:
+            missing_dict[key].append(field)
+    print(f"{BOLD_START}MISSING DCP REQUIRED FIELDS: {BOLD_END}")
+    for key, values in missing_dict.items():
+        print(f"\t{key}:\t{', '.join(values)}")
 
 def export_to_excel(dcp_spreadsheet, collection_id, dataset_id, local_template):
     dcp_headers = get_dcp_headers(local_template)
@@ -607,6 +633,7 @@ def main():
     dcp_spreadsheet = populate_spreadsheet(dcp_spreadsheet, dcp_flat)
     dcp_spreadsheet = add_process_locations(sample_metadata, dcp_spreadsheet)
     dcp_spreadsheet = add_analysis_file(dcp_spreadsheet, collection_id, dataset_id)
+    check_required_fields(dcp_spreadsheet)
 
     print(f"{BOLD_START}EXPORTING SPREADSHEET{BOLD_END}")
     export_to_excel(dcp_spreadsheet, collection_id, dataset_id, local_template)
