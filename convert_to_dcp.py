@@ -422,7 +422,7 @@ def fill_ontology_labels(dcp_flat):
     ont_fields = [col for col in dcp_flat if col.endswith('ontology') and (not_text(col, dcp_flat) or not_label(col, dcp_flat))]
     for field in ont_fields:
         print(field, end='; ', flush=True)
-        ont_dict = {value: ols_label(value) for value in dcp_flat[field].unique()}
+        ont_dict = {value: ols_label(value) for value in dcp_flat[field].dropna().unique()}
         if not_text(field, dcp_flat):
             dcp_flat[field.replace("ontology","text")] = dcp_flat[field].replace(ont_dict)
         if not_label(field, dcp_flat):
