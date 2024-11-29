@@ -74,7 +74,7 @@ def get_number_of_field(tab, spreadsheet, field):
     return len(spreadsheet[tab][field])
 
 def get_values_of_field(tab, spreadsheet, field):
-    return spreadsheet[tab][field].tolist()
+    return spreadsheet[tab][field].dropna().tolist()
 
 def export_report_json(collection_id, dataset_id, report_dict):
     with open(f'report_compare/{collection_id}_{dataset_id}_compare.json', 'w', encoding='UTF-8') as json_file:
