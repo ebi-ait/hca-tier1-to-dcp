@@ -607,6 +607,7 @@ def main():
     sample_metadata = edit_sampled_site(sample_metadata)
     sample_metadata = edit_alignment_software(sample_metadata)
     sample_metadata = edit_lib_prep_protocol(sample_metadata)
+    sample_metadata = edit_suspension_type(sample_metadata)
     # sample_metadata = edit_cell_enrichment(sample_metadata) # not yet functional
     sample_metadata = edit_dev_stage(sample_metadata)
     sample_metadata = edit_collection_method(sample_metadata, collection_dict)
