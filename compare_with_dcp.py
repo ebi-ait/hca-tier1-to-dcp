@@ -188,6 +188,10 @@ def compare_filled_fields(tab, report_dict, tier1_spreadsheet, wrangled_spreadsh
         # protocol IDs are not defined in tier 1, therefore, we can skip them
         comp_tier1 = tier1_spreadsheet[tab][fields_intersect].drop(columns=get_tab_id(tab, tier1_spreadsheet))
         comp_wrang = wrangled_spreadsheet[tab][fields_intersect].drop(columns=get_tab_id(tab, wrangled_spreadsheet))
+        if len(comp_tier1) != len(comp_wrang):
+            print(f'More rows ({max(len(comp_wrang), len(comp_tier1))} > {min(len(comp_wrang), len(comp_tier1))}) in {"wrangled" if len(comp_wrang) > len(comp_tier1) else "tier1"}' + \
+                   'Cannot compare protocol entities with not equal number of rows')
+            return report_dict
     comp_df = comp_tier1.compare(comp_wrang,result_names= ('tier1', 'wrangled'), align_axis=1)
     comp_df = drop_external_ids(comp_df)
     report_dict['values'][tab]['values_diff'] = {}
