@@ -45,8 +45,7 @@ def generate_collection_report(collection):
         coll_report[field] = value
     return coll_report
 
-def selection_of_dataset(collection_id, dataset_id):
-    collection = get_collection_data(collection_id)
+def selection_of_dataset(collection, dataset_id):
     dataset_df = pd.DataFrame(collection['datasets'])[
         ['dataset_id', 'cell_count', 'title']]
 
@@ -159,7 +158,6 @@ def uuid_search_azul(uuid):
 
 def main(collection_id, dataset_id=None, token=None): 
 
-    dataset_id = selection_of_dataset(collection_id, dataset_id)
     # Query collection data
     collection = get_collection_data(collection_id)
     collection['protocols'] = [link['link_url']
@@ -168,6 +166,7 @@ def main(collection_id, dataset_id=None, token=None):
     # Generate and save collection report
     coll_report = generate_collection_report(collection)
     
+    dataset_id = selection_of_dataset(collection, dataset_id)
     os.makedirs('metadata', exist_ok=True)
     pd.DataFrame(coll_report, index=[0]).transpose()\
         .rename({'name': 'title', 'contact_name': 'study_pi'})\
