@@ -1,0 +1,24 @@
+collection_id	dataset_id	wrangled_path	ingest_token	local_template
+ced320a1-29f3-47c1-a735-513c7084d508	b0e547f0-462b-4f81-b31b-5b0a5d96f537	None		
+8f126edf-5405-4731-8374-b5ce11f53e82	ebc2e1ff-c8f9-466a-acf4-9d291afaf8b3	metadata/COMBAT2022_metadata_28-10-2024.xlsx		
+b0cf0afa-ec40-4d65-b570-ed4ceacc6813	ed5d841d-6346-47d4-ab2f-7119ad7e3a35	metadata/humanBloodCiteSeq2_metadata_04-04-2023.xlsx		
+4f889ffc-d4bc-4748-905b-8eb9db47a2ed	de2c780c-1747-40bd-9ccf-9588ec186cee	metadata/pbmcCov19Flu_metadata_25-10-2023.xlsx		
+ed9185e3-5b82-40c7-9824-b2141590c7f0	21d3e683-80a4-4d9b-bc89-ebb2df513dde	metadata/covid19PBMCsTCRandCITEseq_metadata_21-04-2023.xlsx		
+ed9185e3-5b82-40c7-9824-b2141590c7f0	21d3e683-80a4-4d9b-bc89-ebb2df513dde	metadata/covid19PBMCsTCRandCITEseq_metadata_21-04-2023.xlsx		
+ed9185e3-5b82-40c7-9824-b2141590c7f0	30cd5311-6c09-46c9-94f1-71fe4b91813c	metadata/covid19PBMCsTCRandCITEseq_metadata_21-04-2023.xlsx		
+436154da-bcf1-4130-9c8b-120ff9a888f2	218acb0f-9f2f-4f76-b90b-15a4b7c7f629	None		
+436154da-bcf1-4130-9c8b-120ff9a888f2	218acb0f-9f2f-4f76-b90b-15a4b7c7f629	None		
+25153f7a-c8d7-4753-a0cf-824f3207ef27	f2fbd90e-6229-4502-864b-484b30a24b7e	None		
+25153f7a-c8d7-4753-a0cf-824f3207ef27	f2fbd90e-6229-4502-864b-484b30a24b7e	None		
+b9fc3d70-5a72-4479-a046-c2cc1ab19efc	5e717147-0f75-4de1-8bd2-6fda01b8d75f	None		
+ddfad306-714d-4cc0-9985-d9072820c530	c7775e88-49bf-4ba2-a03b-93f00447c958	metadata/Covid19PBMC_metadata_29-08-2023.xlsx		
+7d7cabfd-1d1f-40af-96b7-26a0825a306d	01ad3cd7-3929-4654-84c0-6db05bd5fd59	None		
+eb735cc9-d0a7-48fa-b255-db726bf365af	c2a461b1-0c15-4047-9fcb-1f966fe55100	metadata/COVID19autoimmunityPBMCs_metadata_16-03-2023.xlsx		
+eb735cc9-d0a7-48fa-b255-db726bf365af	c2a461b1-0c15-4047-9fcb-1f966fe55100	metadata/COVID19autoimmunityPBMCs_metadata_16-03-2023.xlsx		
+e415fd00-4811-4a11-a35d-0e81b7f9eb4d	df80efa4-2831-406b-94af-e9469e8a6681	None		
+e415fd00-4811-4a11-a35d-0e81b7f9eb4d	1025380a-dc74-4e5d-bb9a-1216b886cceb	None		
+e415fd00-4811-4a11-a35d-0e81b7f9eb4d	b20a8ea5-cf86-4886-990a-15fe7ac2d976	None		
+dde06e0f-ab3b-46be-96a2-a8082383c4a1	3faad104-2ab8-4434-816d-474d8d2641db	metadata/eQTLAutoimmune_metadata_09-05-2024.xlsx		
+dde06e0f-ab3b-46be-96a2-a8082383c4a1	3faad104-2ab8-4434-816d-474d8d2641db	metadata/eQTLAutoimmune_metadata_09-05-2024.xlsx		
+03f821b4-87be-4ff4-b65a-b5fc00061da7	2a498ace-872a-4935-984b-1afa70fd9886	metadata/SARSCov2ChildrenAdults_metadata_07-11-2023.xlsx		
+03f821b4-87be-4ff4-b65a-b5fc00061da7	2a498ace-872a-4935-984b-1afa70fd9886	metadata/SARSCov2ChildrenAdults_metadata_07-11-2023.xlsx		

@@ -28,10 +28,10 @@ def define_parser():
                         dest="dataset_id", type=str, required=False, help="Dataset id")
     return parser
 
-def get_dataset_id(args):
-    if args.dataset_id is not None:
-        return args.dataset_id
-    dataset_ids = [file.split("_")[1] for file in os.listdir('metadata') if file.startswith(args.collection_id)]
+def get_dataset_id(collection_id, dataset_id=None):
+    if dataset_id is not None:
+        return dataset_id
+    dataset_ids = [file.split("_")[1] for file in os.listdir('metadata') if file.startswith(collection_id)]
     if len(set(dataset_ids)) == 1:
         return dataset_ids[0]
     print("Please specify the -d dataset_id. There are available files for:")
@@ -204,12 +204,8 @@ def compare_filled_fields(tab, report_dict, tier1_spreadsheet, wrangled_spreadsh
         print(get_slim_comp_df(comp_df, tab))
     return report_dict
 
-def main():
-    args = define_parser().parse_args()
-    collection_id = args.collection_id
-    dataset_id = get_dataset_id(args)
-    wrangled_path = args.wrangled_path
-
+def main(collection_id, wrangled_path, dataset_id=None):
+    dataset_id = get_dataset_id(collection_id, dataset_id)
     report_dict = init_report_dict()
 
     # Open cellxgene spreadsheet
@@ -255,4 +251,5 @@ BOLD_START = '\033[1m'
 BOLD_END = '\033[0;0m'
 
 if __name__ == "__main__":
-    main()
+    args = define_parser().parse_args()
+    main(collection_id=args.collection_id, dataset_id=args.dataset_id, wrangled_path=args.wrangled_path)

@@ -27,10 +27,9 @@ def get_collection_data(collection_id):
     cxg_api = 'https://api.cellxgene.cziscience.com/curation/v1'
     headers = {'Content-Type': 'application/json'}
     url = f'{cxg_api}/collections/{collection_id}'
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=headers, timeout=20)
     response.raise_for_status()
     return response.json()
-
 
 def generate_collection_report(collection):
     """Generates a report from collection metadata."""
@@ -46,15 +45,15 @@ def generate_collection_report(collection):
         coll_report[field] = value
     return coll_report
 
-def selection_of_dataset(args):
-    collection = get_collection_data(args.collection_id)
+def selection_of_dataset(collection_id, dataset_id):
+    collection = get_collection_data(collection_id)
     dataset_df = pd.DataFrame(collection['datasets'])[
         ['dataset_id', 'cell_count', 'title']]
 
-    if args.dataset_id is not None and args.dataset_id in dataset_df['dataset_id'].values:
-        print(f"Pre-selected dataset:")
-        print(dataset_df[dataset_df['dataset_id'] == args.dataset_id])
-        return args.dataset_id
+    if dataset_id is not None and dataset_id in dataset_df['dataset_id'].values:
+        print("Pre-selected dataset:")
+        print(dataset_df[dataset_df['dataset_id'] == dataset_id])
+        return dataset_id
     print(f"{BOLD_START}SELECT DATASET:{BOLD_END}")
     print(dataset_df)
     
@@ -158,10 +157,9 @@ def uuid_search_azul(uuid):
         return 'https://explore.data.humancellatlas/projects/' + uuid
     return response.json()['Message']
 
-def main():
-    args = define_parser().parse_args()
-    collection_id = args.collection_id
+def main(collection_id, dataset_id=None, token=None): 
 
+    dataset_id = selection_of_dataset(collection_id, dataset_id)
     # Query collection data
     collection = get_collection_data(collection_id)
     collection['protocols'] = [link['link_url']
@@ -169,7 +167,6 @@ def main():
 
     # Generate and save collection report
     coll_report = generate_collection_report(collection)
-    dataset_id = selection_of_dataset(args)
     
     os.makedirs('metadata', exist_ok=True)
     pd.DataFrame(coll_report, index=[0]).transpose()\
@@ -198,8 +195,8 @@ def main():
 
     print(f"{BOLD_START}ADDITIONAL INFO:{BOLD_END}")
     # Check if doi exists in ingest
-    if args.token is not None:
-        doi_search_ingest(coll_report['doi'], args.token)
+    if token is not None:
+        doi_search_ingest(coll_report['doi'], token)
 
     if 'sequencing_platform' not in adata.obs:
         if 'doi' in coll_report:
@@ -211,4 +208,5 @@ BOLD_START = '\033[1m'
 BOLD_END = '\033[0;0m'
 
 if __name__ == "__main__":
-    main()
+    args = define_parser().parse_args()
+    main(collection_id=args.collection_id, dataset_id=args.dataset_id, token=args.token)

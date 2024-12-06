@@ -23,10 +23,10 @@ def define_parser():
                         dest="local_template", type=str, required=False, help="Local path of the HCA template")
     return parser
 
-def get_dataset_id(args):
-    if args.dataset_id is not None:
-        return args.dataset_id
-    dataset_ids = [file.split("_")[1] for file in os.listdir('metadata') if file.startswith(args.collection_id)]
+def get_dataset_id(collection_id, dataset_id=None):
+    if dataset_id is not None:
+        return dataset_id
+    dataset_ids = [file.split("_")[1] for file in os.listdir('metadata') if file.startswith(collection_id)]
     if len(set(dataset_ids)) == 1:
         return dataset_ids[0]
     print("Please specify the -d dataset_id. There are available files for:")
@@ -329,6 +329,7 @@ def dev_label(ontology):
 def edit_dev_stage(sample_metadata):
     # local map of the most used ranges to reduce 
     dev_to_age_dict = {
+        'unknown': 'unknown unknown',
         'HsapDv:0000264': '0-14 year',
         'HsapDv:0000268': '15-19 year',
         'HsapDv:0000237': '20-29 year',
@@ -343,7 +344,7 @@ def edit_dev_stage(sample_metadata):
     if 'development_stage_ontology_term_id' in sample_metadata:
         sample_metadata[['donor_organism.organism_age', 'donor_organism.organism_age_unit.text']] = \
             sample_metadata['development_stage_ontology_term_id']\
-                .apply(lambda x: dev_to_age_dict[x] if x in dev_to_age_dict.keys() else dev_label(x))\
+                .apply(lambda x: dev_to_age_dict[x] if x in dev_to_age_dict else dev_label(x))\
                 .str.split(' ', expand=True)
         print('`development_stage`', end='; ', flush=True)
     return sample_metadata
@@ -586,12 +587,8 @@ def export_to_excel(dcp_spreadsheet, collection_id, dataset_id, local_template):
                 pd.concat([dcp_headers[tab_name], data], ignore_index=True).to_excel(writer, sheet_name=tab_name, index=False, header=False)
     print(f'Exported to {output_path}')
 
-def main():
-    args = define_parser().parse_args()
-    collection_id = args.collection_id
-    dataset_id = get_dataset_id(args)
-    local_template = args.local_template
-
+def main(collection_id, dataset_id=None, local_template=None):
+    dataset_id = get_dataset_id(collection_id, dataset_id)
     print(f"{BOLD_START}READING FILES{BOLD_END}")
     sample_metadata = read_sample_metadata(collection_id, dataset_id)
     study_metadata = read_study_metadata(collection_id, dataset_id)
@@ -645,4 +642,5 @@ BOLD_START = '\033[1m'
 BOLD_END = '\033[0;0m'
 
 if __name__ == "__main__":
-    main()
+    args = define_parser().parse_args()
+    main(collection_id=args.collection_id, dataset_id=args.dataset_id, local_template=args.local_template)
