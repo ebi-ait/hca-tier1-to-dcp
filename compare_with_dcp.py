@@ -2,6 +2,7 @@ import argparse
 import os
 import re
 import sys
+import select
 import json
 
 import pandas as pd
@@ -26,6 +27,9 @@ def define_parser():
                         dest="wrangled_path", type=str, required=True, help="Path of previously wrangled project spreadsheet")
     parser.add_argument("--dataset_id", "-d", action="store",
                         dest="dataset_id", type=str, required=False, help="Dataset id")
+    parser.add_argument("--unequal_comparisson", "-c", action="store",
+                        dest="unequal_comparisson", type=bool, required=False, 
+                        help="Automaticly continue comparing even if biomaterials are not equal")
     return parser
 
 def get_dataset_id(collection_id, dataset_id=None):
@@ -105,7 +109,7 @@ def compare_n_tabs(tier1_spreadsheet, wrangled_spreadsheet, report_dict):
     report_dict['tabs']['intersect'] = intersect_tabs
     return report_dict
 
-def compare_n_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet, collection_id, dataset_id):
+def compare_n_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet, collection_id, dataset_id, unequal_comparisson):
     n_ids = {}
     
     tab_id = get_tab_id(tab, tier1_spreadsheet)
@@ -115,9 +119,15 @@ def compare_n_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet, col
     
     if n_ids['tier1'] != n_ids['wrangled']:
         print(f"{BOLD_START}WARNING{BOLD_END}: Not equal number of {tab}\n\tTier1 {n_ids['tier1']} vs Wrangled {n_ids['wrangled']}")
-        if input("Continue anyway? (yes/no)") in ['no', 'n', 'NO', 'No']:
+        if unequal_comparisson:
+            return report_dict
+        print("Continue anyway? (yes/no)")
+        a, _ , _ = select.select([sys.stdin], [], [], 5)
+        input_text = sys.stdin.readline().strip() if a else 'no'
+        if input_text in ['no', 'n', 'NO', 'No']:
+            print(f'Ending comparisson of {collection_id} - {dataset_id}')
             export_report_json(collection_id, dataset_id, report_dict)
-            sys.exit()
+            return False
     return report_dict
 
 def compare_v_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet):
@@ -204,7 +214,7 @@ def compare_filled_fields(tab, report_dict, tier1_spreadsheet, wrangled_spreadsh
         print(get_slim_comp_df(comp_df, tab))
     return report_dict
 
-def main(collection_id, wrangled_path, dataset_id=None):
+def main(collection_id, wrangled_path, dataset_id=None, unequal_comparisson=False):
     dataset_id = get_dataset_id(collection_id, dataset_id)
     report_dict = init_report_dict()
 
@@ -229,7 +239,10 @@ def main(collection_id, wrangled_path, dataset_id=None):
             continue
         
         # compare Number and Values of ids per tab
-        report_dict = compare_n_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet, collection_id, dataset_id)
+        report_dict = compare_n_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet, 
+                                    collection_id, dataset_id, unequal_comparisson)
+        if not report_dict:
+            return
         # Value of ids
         if tab in entity_types['protocol']:
             # for protocol we don't care about matching IDs with tier 1
@@ -252,4 +265,5 @@ BOLD_END = '\033[0;0m'
 
 if __name__ == "__main__":
     args = define_parser().parse_args()
-    main(collection_id=args.collection_id, dataset_id=args.dataset_id, wrangled_path=args.wrangled_path)
+    main(collection_id=args.collection_id, dataset_id=args.dataset_id, 
+         wrangled_path=args.wrangled_path, unequal_comparisson=args.unequal_comparisson)

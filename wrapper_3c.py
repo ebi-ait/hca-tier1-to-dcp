@@ -27,6 +27,7 @@ def read_input_spreadsheet(input_path):
 def main(input_spreadsheet_path):
     input_spreadsheet = read_input_spreadsheet(input_spreadsheet_path)
     for index, row in input_spreadsheet.iterrows():
+        print(f"{BOLD_START}===C: {row['collection_id']} D: {row['dataset_id']}===={BOLD_END}")
         if pd.isnull(row['collection_id']):
             print(f"Collection_id not provided for index {index}")
             continue
@@ -41,7 +42,8 @@ def main(input_spreadsheet_path):
             continue
         compare_with_dcp.main(collection_id=row['collection_id'],
                               dataset_id=row['dataset_id'],
-                              wrangled_path=row['wrangled_path'])
+                              wrangled_path=row['wrangled_path'],
+                              unequal_comparisson=True)
         
 BOLD_START = '\033[1m'
 BOLD_END = '\033[0;0m'
