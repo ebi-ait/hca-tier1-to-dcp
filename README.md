@@ -32,6 +32,11 @@ python3 convert_to_dcp.py -c <CxG collection_id> -d <CxG dataset_id>
 python3 compare_with_dcp.py -c <CxG collection_id> -d <CxG dataset_id> -w <previously wrangled spreadsheet path>
 ```
 
+Alternatively, you can now use the [wrapper_3c.py](wrapper_3c.py) script to run all the scripts at once for multiple collections, using a separate csv file for the IDs & wrangled spreadsheets path.
+```bash
+python3 wrapper_3c.py -i input_spreadsheet.tsv
+```
+
 ### Arguments
 - `--collection_id` or `-c`: CxG collection_id of the project. 
     - i.e. `c353707f-09a4-4f12-92a0-cb741e57e5f0`, `dc3a5256-5c39-4a21-ac0c-4ede3e7b2323`, `20eea6c8-9d64-42c9-9b6f-c11b5249e0e9`

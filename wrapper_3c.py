@@ -16,7 +16,7 @@ def define_parser():
 def read_input_spreadsheet(input_path):
     df = pd.read_csv(input_path, sep='\t')
     columns = ['collection_id', 'dataset_id', 'wrangled_path']
-    if not all([col in columns for col in df.columns]):
+    if not all(col in df.columns for col in columns):
         print(f"input tsv file should have the following column names: {'; '.join(columns)}. Found the following: {'; '.join(df.columns)}")
     if 'ingest_token' in df and df['ingest_token'].any():
         df['ingest_token'] = df.loc[df['ingest_token'].notna(), 'ingest_token'][0] # assume all tokens are identical
@@ -44,7 +44,7 @@ def main(input_spreadsheet_path):
                               dataset_id=row['dataset_id'],
                               wrangled_path=row['wrangled_path'],
                               unequal_comparisson=True)
-        
+
 BOLD_START = '\033[1m'
 BOLD_END = '\033[0;0m'
 
