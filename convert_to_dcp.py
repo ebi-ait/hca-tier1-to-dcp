@@ -131,6 +131,8 @@ def ols_label(ontology_id, only_label=True, ontology=None):
         return ontology_id
     ontology_name = ontology if ontology else ontology_id.split(":")[0].lower()
     ontology_term = ontology_id.replace(":", "_")
+    if ontology_name == 'hsapdv':
+        ontology_name = 'hcao'
     url = f'https://www.ebi.ac.uk/ols4/api/ontologies/{ontology_name}/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252F{ontology_term}'
     if ontology_name == 'efo':
         url = f'https://www.ebi.ac.uk/ols4/api/ontologies/{ontology_name}/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252F{ontology_term}'
@@ -305,7 +307,7 @@ def edit_cell_enrichment(sample_metadata):
 def dev_label(ontology):
     start_id = ['start, days post fertilization', 'start, months post birth', 'start, years post birth']
     end_id = ['end, days post fertilization', 'end, months post birth', 'end, years post birth']
-    result = ols_label(ontology, ontology= 'HsapDv', only_label=False)
+    result = ols_label(ontology, only_label=False)
     if not 'annotation' in result:
         print(f'Ontology {ontology} does not have annotation')
         return ontology
