@@ -131,8 +131,6 @@ def ols_label(ontology_id, only_label=True, ontology=None):
         return ontology_id
     ontology_name = ontology if ontology else ontology_id.split(":")[0].lower()
     ontology_term = ontology_id.replace(":", "_")
-    if ontology_name == 'hsapdv':
-        ontology_name = 'hcao'
     url = f'https://www.ebi.ac.uk/ols4/api/ontologies/{ontology_name}/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252F{ontology_term}'
     if ontology_name == 'efo':
         url = f'https://www.ebi.ac.uk/ols4/api/ontologies/{ontology_name}/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252F{ontology_term}'
@@ -425,7 +423,7 @@ def fill_ontology_labels(dcp_flat):
     ont_fields = [col for col in dcp_flat if col.endswith('ontology') and (not_text(col, dcp_flat) or not_label(col, dcp_flat))]
     for field in ont_fields:
         print(field, end='; ', flush=True)
-        ont_dict = {value: ols_label(value) for value in dcp_flat[field].dropna().unique()}
+        ont_dict = {value: ols_label(value) for value in dcp_flat[field].dropna().unique() if value}
         if not_text(field, dcp_flat):
             dcp_flat[field.replace("ontology","text")] = dcp_flat[field].replace(ont_dict)
         if not_label(field, dcp_flat):
@@ -497,7 +495,7 @@ def fill_missing_ontology_ids(dcp_flat):
     xml_keys = get_xml_keys()
     for field in fields:
         print(field, end='; ', flush=True)
-        ont_dict = {value: fill_ontology_ids(value, field, xml_keys, silent=True) for value in dcp_flat[field].unique()}
+        ont_dict = {value: fill_ontology_ids(value, field, xml_keys, silent=True) for value in dcp_flat[field].unique() if value}
         dcp_flat[field.replace('text','ontology')] = dcp_flat[field].replace(ont_dict)
     return dcp_flat
 
