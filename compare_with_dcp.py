@@ -27,7 +27,7 @@ def define_parser():
                         dest="wrangled_path", type=str, required=True, help="Path of previously wrangled project spreadsheet")
     parser.add_argument("--dataset_id", "-d", action="store",
                         dest="dataset_id", type=str, required=False, help="Dataset id")
-    parser.add_argument("--unequal_comparisson", "-c", action="store",
+    parser.add_argument("--unequal_comparisson", "-u", action="store",
                         dest="unequal_comparisson", type=bool, required=False, 
                         help="Automaticly continue comparing even if biomaterials are not equal")
     return parser
@@ -206,7 +206,7 @@ def compare_filled_fields(tab, report_dict, tier1_spreadsheet, wrangled_spreadsh
     comp_df = drop_external_ids(comp_df)
     report_dict['values'][tab]['values_diff'] = {}
     for field in comp_df.columns.levels[0]:
-        report_dict['values'][tab]['values_diff'][field] = comp_df[field].to_dict(orient='index')
+        report_dict['values'][tab]['values_diff'][field] = comp_df[field].dropna(how='all').to_dict(orient='index')
     if not comp_df.empty:
         ont_fields = sum(['ontology' in field for field in comp_df.columns.levels[0]])
         print(f'{tab}: {len(comp_df.columns.levels[0])} fields from {len(comp_df.index)} ids, have different values.' + \
