@@ -50,8 +50,7 @@ def selection_of_dataset(collection, dataset_id):
         ['dataset_id', 'cell_count', 'title']]
 
     if dataset_id is not None and dataset_id in dataset_df['dataset_id'].values:
-        print("Pre-selected dataset:")
-        print(dataset_df[dataset_df['dataset_id'] == dataset_id])
+        print(f"Pre-selected dataset: {dataset_df[dataset_df['dataset_id'] == dataset_id]}")
         return dataset_id
     print(f"{BOLD_START}SELECT DATASET:{BOLD_END}")
     print(dataset_df)

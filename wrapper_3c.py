@@ -1,6 +1,7 @@
 import argparse
 import pandas as pd
 
+from collect_cellxgene_metadata import selection_of_dataset, get_collection_data
 import collect_cellxgene_metadata
 import convert_to_dcp
 import compare_with_dcp
@@ -37,6 +38,8 @@ def read_input_spreadsheet(input_path):
 
 def run_three_scripts(collection_id, dataset_id, wrangled_path, token, local_template):
     print(f"{BOLD_START}===C: {collection_id} D: {dataset_id}===={BOLD_END}")
+    collection = get_collection_data(collection_id)
+    dataset_id = selection_of_dataset(collection, dataset_id)
     collect_cellxgene_metadata.main(collection_id=collection_id,
                                     dataset_id=dataset_id,
                                     token=token)
