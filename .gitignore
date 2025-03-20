@@ -21,3 +21,6 @@ metadata/*
 report_compare/*
 !report_compare/README.md
 !report_compare/c353707f-09a4-4f12-92a0-cb741e57e5f0_124744b8-4681-474a-9894-683896122708_compare.json
+
+# bionetworks extract
+extract_from_orcf.py
