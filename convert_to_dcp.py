@@ -8,7 +8,7 @@ import pandas as pd
 from numpy import nan
 from packaging.version import parse as parse_version
 
-from helper_files.tier1_mapping import tier1_to_dcp, collection_dict, prot_def_field, tier1_enum, entity_types
+from helper_files.tier1_mapping import tier1_to_dcp, collection_dict, prot_def_field, tier1_enum
 from helper_files.required_fields import required_fields
 
 
@@ -40,6 +40,9 @@ def read_sample_metadata(collection_id, dataset_id):
         return pd.read_csv(sample_metadata_path)
     except FileNotFoundError:
         print(f"File not found: {sample_metadata_path}")
+        return pd.DataFrame()
+    except pd.errors.EmptyDataError:
+        print(f"Empty file: {sample_metadata_path}")
         return pd.DataFrame()
 
 def read_study_metadata(collection_id, dataset_id):
@@ -125,9 +128,9 @@ def process_site_type(sample_metadata, dcp_spreadsheet, site_type):
 
 # Get the ontology label instead of ontology id from OLS4
 def ols_label(ontology_id, only_label=True, ontology=None):
-    if not re.match(r"\w+:\d+", ontology_id):
-        return ontology_id
     if ontology_id is nan:
+        return ontology_id
+    if not re.match(r"\w+:\d+", ontology_id):
         return ontology_id
     ontology_name = ontology if ontology else ontology_id.split(":")[0].lower()
     ontology_term = ontology_id.replace(":", "_")
@@ -135,7 +138,7 @@ def ols_label(ontology_id, only_label=True, ontology=None):
     if ontology_name == 'efo':
         url = f'https://www.ebi.ac.uk/ols4/api/ontologies/{ontology_name}/terms/http%253A%252F%252Fwww.ebi.ac.uk%252Fefo%252F{ontology_term}'
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, timeout=100)
         results = response.json()
     except ConnectionError as e:
         print(e)
@@ -205,12 +208,8 @@ def edit_ncbitaxon(sample_metadata):
     return sample_metadata
 
 def edit_sex(sample_metadata):
-    # sex_ontology_dict = {
-    #         'PATO:0000383': 'female',
-    #         'PATO:0000384': 'male'
-    # }
     if 'sex_ontology_term_id' in sample_metadata:
-        sample_metadata['donor_organism.sex'] = sample_metadata['sex_ontology_term_id'].apply(ols_label)
+        sample_metadata['donor_organism.sex'] = sample_metadata['sex_ontology_term_id'].apply(ols_label).fillna('unknown')
         allowed_sex_values = ['female', 'male', 'mixed', 'unknown']
         bool_sex_values = sample_metadata['donor_organism.sex'].isin(allowed_sex_values)
         if not bool_sex_values.all():
@@ -478,6 +477,8 @@ def get_ontology_restriction(field, xml_keys, schemas_url="https://schema.humanc
 
 def fill_ontology_ids(term, field, xml_keys, silent=False):
     ontologies = get_ontology_restriction(field, xml_keys)
+    if not ontologies:
+        return term
     for ontology in ontologies:
         request_query = 'https://www.ebi.ac.uk/ols4/api/search?q='
         response = requests.get(request_query + f"{term.replace(' ', '+')}&ontology={ontology}", timeout=10).json()
@@ -504,7 +505,7 @@ def check_enum_values(dcp_flat):
     for field in tier1_enum:
         if field in dcp_flat:
             enum = get_enum_restriction(field, xml_keys)
-            not_in_enum = [value for value in dcp_flat[field].unique() if value not in enum]
+            not_in_enum = [value for value in dcp_flat[field].unique() if value not in enum and value is not nan]
             if not_in_enum:
                 print(f"{BOLD_START}WARNING:{BOLD_END}\n\tValue(s) `{', '.join(not_in_enum)}` are not valid in {field} schema", end='')
 
