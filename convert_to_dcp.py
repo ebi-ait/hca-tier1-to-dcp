@@ -149,6 +149,8 @@ def ols_label(ontology_id, only_label=True, ontology=None):
 def edit_collection_relative(sample_metadata):
     if 'sample_collection_relative_time_point' in sample_metadata:
         number_pattern = '([\\d]+[.|\\,]?\\d?)'
+        if all(sample_metadata['sample_collection_relative_time_point'].apply(lambda x: isinstance(x, (bool, object)))):
+            return sample_metadata
         sample_metadata['specimen_from_organism.biomaterial_core.timecourse.value'] = \
             sample_metadata['sample_collection_relative_time_point'].str.extract(number_pattern, expand=False)
         sample_metadata.loc[sample_metadata['sample_collection_relative_time_point'].notna(), 'specimen_from_organism.biomaterial_core.timecourse.relevance'] = 'relative time of collection'
