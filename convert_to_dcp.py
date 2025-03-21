@@ -130,6 +130,8 @@ def process_site_type(sample_metadata, dcp_spreadsheet, site_type):
 def ols_label(ontology_id, only_label=True, ontology=None):
     if ontology_id is nan:
         return ontology_id
+    if re.match(r"\w+_\d+", ontology_id):
+        ontology_id = ontology_id.replace("_", ":")
     if not re.match(r"\w+:\d+", ontology_id):
         return ontology_id
     ontology_name = ontology if ontology else ontology_id.split(":")[0].lower()
