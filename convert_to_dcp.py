@@ -347,6 +347,7 @@ def edit_dev_stage(sample_metadata):
     if 'development_stage_ontology_term_id' in sample_metadata:
         sample_metadata[['donor_organism.organism_age', 'donor_organism.organism_age_unit.text']] = \
             sample_metadata['development_stage_ontology_term_id']\
+                .dropna()\
                 .apply(lambda x: dev_to_age_dict[x] if x in dev_to_age_dict else dev_label(x))\
                 .str.split(' ', expand=True)
         print('`development_stage`', end='; ', flush=True)
@@ -480,6 +481,8 @@ def get_ontology_restriction(field, xml_keys, schemas_url="https://schema.humanc
     return
 
 def fill_ontology_ids(term, field, xml_keys, silent=False):
+    if term is nan:
+        return term
     ontologies = get_ontology_restriction(field, xml_keys)
     if not ontologies:
         return term
