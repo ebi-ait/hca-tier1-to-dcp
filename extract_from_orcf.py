@@ -1,4 +1,5 @@
 import os
+import shutil
 import pandas as pd
 import convert_to_dcp
 
@@ -16,13 +17,15 @@ def gen_uuid(filename):
 def main(summary_filename):
     df_all = pd.read_csv(f'metadata/{summary_filename}', sep=',')
     for file in df_all['worksheet'].unique():
-        df = df_all[df_all['worksheet'] == file].dropna(axis=1, how='all')
+        df = df_all[df_all['worksheet'] == file].dropna(axis=1, how='all').drop(columns=['worksheet'])
         file_uuid = gen_uuid(file)
         df.to_csv(f'metadata/{file_uuid}_{file_uuid}_metadata.csv', index=False)
         if os.path.exists(f'metadata/{file_uuid}_{file_uuid}_dcp.xlsx'):
             continue
         convert_to_dcp.main(collection_id=file_uuid,
                             dataset_id=file_uuid)
+        shutil.copy(f'metadata/{file_uuid}_{file_uuid}_dcp.xlsx', f'metadata/{file}_dcp.xlsx')
+        
 
 if '__main__' == __name__:
     main('perstudy/orcf_t1_all.csv')
