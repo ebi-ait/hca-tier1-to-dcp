@@ -450,33 +450,45 @@ def get_entity_schema(entity, xml_keys, schemas_url="https://schema.humancellatl
 
 def get_enum_restriction(field, xml_keys, schemas_url="https://schema.humancellatlas.org/"):
     key_schema = {}
-    i = 0
-    while i <= 4: 
-        key_schema = get_entity_schema(field.split('.')[i], xml_keys, schemas_url)
-        if not key_schema or not field.split('.')[-1] in key_schema['properties']:
-            i+=1
-            continue
-        if key_schema and 'enum' in key_schema['properties'][field.split('.')[-1]]:
-            return key_schema['properties'][field.split('.')[-1]]['enum']
+    if field.split('.')[-1] in ['text', 'ontology', 'ontology_label']:
+        field = '.'.join(field.split('.')[:-1])
+    prop = field.split('.')[-1]
+    key = field.split('.')[-2]
+    key_schema = get_entity_schema(key, xml_keys, schemas_url)
+    if key_schema and 'enum' in key_schema['properties'][prop]:
+        return key_schema['properties'][prop]['enum']
     print(f'Could not retrieve enum restriction for {field}')
 
 def get_ontology_restriction(field, xml_keys, schemas_url="https://schema.humancellatlas.org/"):
     key_schema = {}
-    if len(field.split('.')) == 4:
-        key_schema = get_entity_schema(field.split('.')[1], xml_keys, schemas_url)
-    elif len(field.split('.')) == 3: 
-        key_schema = get_entity_schema(field.split('.')[0], xml_keys, schemas_url)
-    if key_schema and \
-       field.split('.')[1] in key_schema['properties']:
-        if '$ref' in key_schema['properties'][field.split('.')[1]]:
-            ontology_response = requests.get(key_schema['properties'][field.split('.')[1]]['$ref'], timeout=10)
-        elif '$ref' in key_schema['properties'][field.split('.')[1]]['items']:
-            ontology_response = requests.get(key_schema['properties'][field.split('.')[1]]['items']['$ref'], timeout=10)
-        else:
-            print(f'No ontology link found in {key_schema}')
-            return
-        if 'ontology' in ontology_response.json()['properties']:
-            return [ont.replace('obo:','') for ont in ontology_response.json()['properties']['ontology']['graph_restriction']['ontologies']]
+    if field.split('.')[-1] not in ['text', 'ontology', 'ontology_label']:
+        print(f'Field {field} is not an ontology field.')
+        return
+    ont_prop = field.split('.')[-2]
+    key = field.split('.')[-3]
+    key_schema = get_entity_schema(key, xml_keys, schemas_url)
+    if not key_schema:
+        prop = field.split('.')[-3]
+        prev_key = field.split('.')[-4]
+        prev_key_schema = get_entity_schema(prev_key, xml_keys, schemas_url)['properties'][prop]
+        if '$ref' in prev_key_schema:
+            key_schema = requests.get(prev_key_schema['$ref'], timeout=10).json()
+        elif 'items' in prev_key_schema and '$ref' in prev_key_schema['items']:
+            key_schema = requests.get(prev_key_schema['items']['$ref'], timeout=10).json()
+    prop_schema = key_schema['properties'][ont_prop]
+    
+    if not key_schema and not prop_schema:
+        print(f'Could not retrieve ontology restriction for {field}')
+        return
+    if '$ref' in prop_schema:
+        ontology_response = requests.get(prop_schema['$ref'], timeout=10)
+    elif 'items' in prop_schema and '$ref' in prop_schema['items']:
+        ontology_response = requests.get(prop_schema['items']['$ref'], timeout=10)
+    else:
+        print(f'No ontology link found in {key_schema}')
+        return
+    if 'ontology' in ontology_response.json()['properties']:
+        return [ont.replace('obo:','') for ont in ontology_response.json()['properties']['ontology']['graph_restriction']['ontologies']]
     return
 
 def fill_ontology_ids(term, field, xml_keys, silent=False):
