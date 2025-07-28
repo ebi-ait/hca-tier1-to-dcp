@@ -1,7 +1,15 @@
 import os
 import shutil
+import argparse
 import pandas as pd
 import convert_to_dcp
+
+def define_parser():
+    """Defines and returns the argument parser."""
+    parser = argparse.ArgumentParser(description="Parser for the arguments")
+    parser.add_argument("--overwrite", "-o", action="store_true",
+                        dest="overwrite", help="Overwrite existing files")
+    return parser
 
 def to_uuid(filename):
     return '-'.join([filename[0:8], filename[8:12], filename[12:16], filename[16:20], filename[20:32]])
@@ -15,8 +23,9 @@ def gen_uuid(filename):
     return to_uuid(newf)
 
 def main(summary_dir: str):
+    args = define_parser().parse_args()
     for file in os.listdir(f'metadata/{summary_dir}'):
-        if not file.endswith('_HCA_tier_1_metadata.xlsx') :
+        if not file.endswith('_HCA_tier_1_metadata.xlsx'):
             continue
         print(f"Processing file: {file}")
         file_uuid = gen_uuid(file)
@@ -24,7 +33,7 @@ def main(summary_dir: str):
         df = {sheet: df[sheet][4:] for sheet in df if sheet != 'Tier 1 Celltype Metadata'}
         for dataset_id in df['Tier 1 Dataset Metadata']['dataset_id'].unique():
             dataset_uuid = gen_uuid(dataset_id)
-            if os.path.exists(f'metadata/{file_uuid}_{dataset_uuid}_dcp.xlsx'):
+            if os.path.exists(f'metadata/{file_uuid}_{dataset_uuid}_dcp.xlsx') and not args.overwrite:
                 print(f"Skipping existing DCP file for dataset {dataset_id}")
                 continue
             print(f"Processing dataset: {dataset_id}")
