@@ -27,9 +27,8 @@ def define_parser():
                         dest="wrangled_path", type=str, required=True, help="Path of previously wrangled project spreadsheet")
     parser.add_argument("--dataset_id", "-d", action="store",
                         dest="dataset_id", type=str, required=False, help="Dataset id")
-    parser.add_argument("--unequal_comparisson", "-u", action="store",
-                        dest="unequal_comparisson", type=bool, required=False, 
-                        help="Automaticly continue comparing even if biomaterials are not equal")
+    parser.add_argument("--unequal_comparisson", "-u", action="store_false",
+                        dest="unequal_comparisson", help="Automaticly continue comparing even if biomaterials are not equal")
     return parser
 
 def get_dataset_id(collection_id, dataset_id=None):
@@ -202,6 +201,7 @@ def compare_filled_fields(tab, report_dict, tier1_spreadsheet, wrangled_spreadsh
             print(f'More rows ({max(len(comp_wrang), len(comp_tier1))} > {min(len(comp_wrang), len(comp_tier1))}) in {"wrangled" if len(comp_wrang) > len(comp_tier1) else "tier1"}' + \
                    'Cannot compare protocol entities with not equal number of rows')
             return report_dict
+    comp_wrang = comp_wrang.reindex(comp_tier1.index)
     comp_df = comp_tier1.compare(comp_wrang,result_names= ('tier1', 'wrangled'), align_axis=1)
     comp_df = drop_external_ids(comp_df)
     report_dict['values'][tab]['values_diff'] = {}
