@@ -246,7 +246,7 @@ def edit_sample_source(sample_metadata):
 def edit_hardy_scale(sample_metadata):
     hardy_scale = [0, 1, 2, 3, 4, '0', '1', '2', '3', '4']
     manner_of_death_is_living_dict = {n: 'no' for n in hardy_scale}
-    manner_of_death_is_living_dict.update({'unknown': 'no', 'not applicable': 'yes'})
+    manner_of_death_is_living_dict.update({'unknown': 'no', 'not applicable': 'yes', 'not_applicable': 'yes'})
     
     if 'manner_of_death' in sample_metadata:
         sample_metadata['donor_organism.is_living'] = sample_metadata['manner_of_death'].replace(manner_of_death_is_living_dict)
@@ -648,7 +648,6 @@ def main(collection_id, dataset_id=None, local_template=None):
     # Populate spreadsheet
     print(f"{BOLD_START}POPULATING SPREADSHEET{BOLD_END}")
     dcp_spreadsheet = populate_spreadsheet(dcp_spreadsheet, dcp_flat)
-    dcp_spreadsheet = add_process_locations(sample_metadata, dcp_spreadsheet)
     dcp_spreadsheet = add_analysis_file(dcp_spreadsheet, collection_id, dataset_id)
     check_required_fields(dcp_spreadsheet)
 
