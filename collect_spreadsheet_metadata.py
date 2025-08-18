@@ -43,7 +43,8 @@ def main():
     donor_metadata = df['Tier 1 Donor Metadata'].drop(columns=['dataset_id'])
     sample_metadata = df['Tier 1 Sample Metadata']
     csv = pd.merge(sample_metadata, donor_metadata, on='donor_id', how='inner').merge(dataset_metadata, on='dataset_id', how='inner')
-    csv.rename({'assay_ontology_term': 'assay', 'tissue_ontology_term': 'tissue', 'sex_ontology_term': 'sex', 'age_range': 'age'}, axis=1, inplace=True)
+    csv = csv.rename({'assay_ontology_term': 'assay', 'tissue_ontology_term': 'tissue', 'sex_ontology_term': 'sex', 'age_range': 'age'}, axis=1)
+    csv = csv.dropna(axis=1, how='all')
     csv.to_csv(f'metadata/{file_uuid}_{file_uuid}_metadata.csv', index=False)
     print(f"Flat metadata saved as metadata/{file_uuid}_{file_uuid}_metadata.csv.")
     print(f"Collection: {file_uuid}\nDataset: {file_uuid}")
