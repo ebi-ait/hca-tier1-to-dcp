@@ -8,7 +8,7 @@ import pandas as pd
 from numpy import nan
 from packaging.version import parse as parse_version
 
-from helper_files.tier1_mapping import tier1_to_dcp, collection_dict, prot_def_field, tier1_enum
+from helper_files.tier1_mapping import tier1_to_dcp, collection_dict, prot_def_field, tier1_enum, dev_to_age_dict, age_to_dev_dict
 from helper_files.required_fields import required_fields
 
 
@@ -329,27 +329,19 @@ def dev_label(ontology):
         return ' '.join([age_range[0],unit_time])
     return ' '.join(['-'.join(age_range),unit_time])
 
-def edit_dev_stage(sample_metadata):
-    # local map of the most used ranges to reduce 
-    dev_to_age_dict = {
-        'unknown': 'unknown unknown',
-        'HsapDv:0000264': '0-14 year',
-        'HsapDv:0000268': '15-19 year',
-        'HsapDv:0000237': '20-29 year',
-        'HsapDv:0000238': '30-39 year',
-        'HsapDv:0000239': '40-49 year',
-        'HsapDv:0000240': '50-59 year',
-        'HsapDv:0000241': '60-69 year',
-        'HsapDv:0000242': '70-79 year',
-        'HsapDv:0000243': '80-89 year'
-    }
-    
-    if 'development_stage_ontology_term_id' in sample_metadata:
+def edit_dev_stage(sample_metadata):   
+    if 'development_stage_ontology_term_id' in sample_metadata and sample_metadata['development_stage_ontology_term_id'].notna().any():
         sample_metadata[['donor_organism.organism_age', 'donor_organism.organism_age_unit.text']] = \
             sample_metadata['development_stage_ontology_term_id']\
                 .apply(lambda x: dev_to_age_dict[x] if x in dev_to_age_dict else dev_label(x))\
                 .str.split(' ', expand=True)
         print('`development_stage`', end='; ', flush=True)
+    elif 'donor_organism.organism_age' in sample_metadata and sample_metadata['donor_organism.organism_age'].notna().any():
+        sample_metadata[['donor_organism.organism_age', 'donor_organism.organism_age_unit.text']] = \
+            sample_metadata['age']\
+                .apply(lambda x: age_to_dev_dict[x] if x in age_to_dev_dict else nan)\
+                .str.split(' ', expand=True)
+        print('`donor_organism.organism_age`', end='; ', flush=True)
     return sample_metadata
 
 def edit_lib_prep_protocol(sample_metadata):

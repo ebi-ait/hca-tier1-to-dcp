@@ -225,3 +225,19 @@ collection_dict = {
         "vacuum aspiration"
     ]
 }
+
+# local map of the most used ranges to reduce 
+dev_to_age_dict = {
+    'unknown': 'unknown unknown',
+    'HsapDv:0000264': '0-14 year',
+    'HsapDv:0000268': '15-19 year',
+    'HsapDv:0000237': '20-29 year',
+    'HsapDv:0000238': '30-39 year',
+    'HsapDv:0000239': '40-49 year',
+    'HsapDv:0000240': '50-59 year',
+    'HsapDv:0000241': '60-69 year',
+    'HsapDv:0000242': '70-79 year',
+    'HsapDv:0000243': '80-89 year'
+}
+
+age_to_dev_dict = {v: k for k, v in dev_to_age_dict.items()}
