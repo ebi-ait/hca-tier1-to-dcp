@@ -53,8 +53,7 @@ def open_wrangled_spreadsheet(wranged_spreadsheet_path):
     try:
         return pd.read_excel(wranged_spreadsheet_path, sheet_name=None, skiprows=[0, 1, 2, 4])
     except FileNotFoundError:
-        print(f"File not found: {wranged_spreadsheet_path}")
-        sys.exit()
+        raise FileNotFoundError(f"File not found: {wranged_spreadsheet_path}")
 
 def get_tab_id(tab, spreadsheet):
     id_suffixs = ['.biomaterial_core.biomaterial_id', '.file_core.file_name', '.protocol_core.protocol_id']
