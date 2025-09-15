@@ -10,7 +10,7 @@ from helper_files.tier2_mapping import TIER2_TO_DCP, TIER2_TO_DCP_UPDATE
 def define_parse():
     parser = argparse.ArgumentParser(description="Merge Tier 2 metadata into DCP format.")
     parser.add_argument('--tier2_metadata', '-t2', type=str, required=True, help="Path to the Tier 2 metadata excel file.")
-    parser.add_argument('--wrangled_spreadsheet', '-ws', type=str, required=True, help="Path to the wrangled spreadsheet excel file.")
+    parser.add_argument('--wrangled_spreadsheet', '-w', type=str, required=True, help="Path to the wrangled spreadsheet excel file.")
     parser.add_argument('--output_path', '-o', type=str, required=True, default='metadata', help="Path to save the merged output excel file.")
     return parser
 
