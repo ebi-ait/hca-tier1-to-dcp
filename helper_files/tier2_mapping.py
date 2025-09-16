@@ -1,6 +1,6 @@
 TIER2_TO_DCP = {
     "age_at_PFT": "donor_organism.medical_tests.pft_age",
-    "age_unit": "donor_organism.organism_age_unit",
+    "age_unit": "donor_organism.organism_age_unit.text",
     "age_value": "donor_organism.organism_age",
     "alcohol_status": "donor_organism.medical_history.alcohol_status",
     "alcohol_type": "donor_organism.medical_history.alcohol_type",
