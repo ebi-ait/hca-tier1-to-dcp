@@ -22,8 +22,13 @@ def open_dcp_spreadsheet(spreadsheet_path):
     except Exception as e:
         raise ValueError(f"Error reading spreadsheet file: {e} for {spreadsheet_path}") from e
 
+def lower_list_values(l):
+    return [field.lower() for field in l]
+
 def rename_tier2_columns(tier2_df, tier2_to_dcp):
     mapped_fields = list(tier2_to_dcp.keys()) + TIER2_MANUAL_FIX['dcp']
+    mapped_fields= lower_list_values(mapped_fields)
+    tier2_df.columns = lower_list_values(tier2_df.columns)
     if any(col.lower() not in mapped_fields for col in tier2_df.columns):
         raise ValueError(f"Tier 2 fields missing in mapping: {set(tier2_df.columns) - set(mapped_fields)}")
     return tier2_df.rename(columns=tier2_to_dcp)
