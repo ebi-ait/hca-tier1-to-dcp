@@ -185,7 +185,7 @@ def main():
     output_filename = os.path.basename(wrangled_spreadsheet_path).replace(".xlsx", "_Tier2.xlsx")
     with pd.ExcelWriter(os.path.join(output_path, output_filename), engine='openpyxl') as writer:
         for tab_name, df in merged_df.items():
-            df.to_excel(writer, sheet_name=tab_name, index=False)
+            df.to_excel(writer, sheet_name=tab_name, index=False, startrow=3)
     print(f"Tier 2 metadata has been added to {os.path.join(output_path, output_filename)}.")
 
 if __name__ == "__main__":
