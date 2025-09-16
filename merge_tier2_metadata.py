@@ -111,9 +111,10 @@ def check_field_already_in_spreadsheet(field_name, tab_name, spreadsheet):
         print(f"Field {field_name} already exists in tab {tab_name} of the spreadsheet. It will be discarded and overwritten with Tier 2 data.")
         del spreadsheet[tab_name][field_name]
 
-def check_key_in_spreadsheet(key, tab_name, spreadsheet):
-    if key not in spreadsheet[tab_name].columns:
-        raise ValueError(f"Key column {key} not found in tab {tab_name} of the spreadsheet.")
+def check_key_in_spreadsheet(key, spreadsheet):
+    if key not in spreadsheet.columns:
+        raise ValueError(f"Key column {key} not found in spreadsheet.")
+
 
 def check_matching_keys(tier2_df, wrangled_spreadsheet, tab_name, key):
     if not wrangled_spreadsheet[tab_name][key].isin(tier2_df[key]).any():
@@ -132,7 +133,8 @@ def merge_overlap(wrangled_tab, tier2_fields, field_list, key):
     return merged_df
 
 def merge_sheets(wrangled_spreadsheet, tier2_df, tab_name, field_list, key, is_protocol):
-    check_key_in_spreadsheet(key, tab_name, wrangled_spreadsheet)
+    check_key_in_spreadsheet(key, wrangled_spreadsheet[tab_name])
+    check_key_in_spreadsheet(key, tier2_df)
     if is_protocol:
         return merge_overlap(
             wrangled_spreadsheet[tab_name],

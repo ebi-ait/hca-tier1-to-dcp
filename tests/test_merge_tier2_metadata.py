@@ -102,3 +102,24 @@ def test_merge_sheet_non_protocol():
     assert merged_df.loc[merged_df[key] == "donor_2", "age"].item() == 23
     assert pd.isna(merged_df.loc[merged_df[key] == "donor_3", "age"].item())
     assert 16 in merged_df['age'].values
+
+def test_merge_sheets_non_protocol_missing_key_raises():
+    wrangled_spreadsheet = {
+        "Donor organism": pd.DataFrame({
+            "donor_organism.donor_id": ["donor_1"]
+        })
+    }
+    tier2_df = pd.DataFrame({
+        "wrong_id": ["donor_1"],
+        "age": [30]
+    })
+
+    with pytest.raises(ValueError):
+        merge_sheets(
+            wrangled_spreadsheet,
+            tier2_df,
+            tab_name="Donor organism",
+            field_list=list(tier2_df.columns),
+            key="donor_organism.donor_id",
+            is_protocol=False
+        )
