@@ -122,3 +122,11 @@ def test_merge_sheets_non_protocol_missing_key_raises():
             key="donor_organism.donor_id",
             is_protocol=False
         )
+
+def test_flatten_raises_on_no_common_key():
+    tab1 = pd.DataFrame({"donor_id": ["donor_1"], "age": [30]})
+    tab2 = pd.DataFrame({"sample_id": ["sample_1"], "storage_time": [1000]})
+    tier2_excel = {"Tier2": tab1, "GDN": tab2}
+
+    with pytest.raises(ValueError):
+        flatten_tier2_spreadsheet(tier2_excel)
