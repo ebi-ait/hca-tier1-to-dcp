@@ -68,7 +68,7 @@ TIER2_TO_DCP = {
     "years_since_smoking_cessation": "donor_organism.medical_history.years_since_smoking_cessation",
 }
 
-TIER2_TO_DCP_UPDATE= {
+TIER2_TO_DCP_UPDATE = {
     "age_at_pft": "donor_organism.medical_tests.age_at_pft",
     "comorbidities_ontology_term_id": "donor_organism.medical_history.comorbidities.ontology",
     "diet_meat_consumption": "donor_organism.medical_history.diet_meat_consumption",
@@ -103,8 +103,6 @@ TIER2_TO_DCP_UPDATE= {
     "medication_within_last_month_pre_sample": "donor_organism.medical_history.medication.text",
     "menarche_age": "donor_organism.reproductive.menarche_age",
     "percentage_of_emphysema": "donor_organism.medical_tests.percentage_of_emphysema",
-    "protocol_tissue_dissociation": "dissociation_protocol.digestion_",
-    "protocol_tissue_dissociation_free_text": "dissociation_protocol.digestion_",
     "reproductive_menopause": "donor_organism.reproductive.menopause",
     "reproductive_number_children": "donor_organism.reproductive.number_of_children",
     "reproductive_number_pregnancies": "donor_organism.reproductive.number_of_pregnancies",
@@ -119,3 +117,17 @@ restrictions_tier2 = {
         "restrictions": "less than 'age_value'",
     }
 }
+
+
+LUNG_DIGESTION = {
+    "Collagenase D + DNAse": {"dissociation_protocol.digestion_solution": "Collagenase D||DNAse"},
+    "Dispase + collagenase": {"dissociation_protocol.digestion_solution": "Dispase||Collagenase"},
+    "Cold protease 1h": {"dissociation_protocol.digestion_solution": "Protease", "dissociation_protocol.digestion_temperature": "cold", "dissociation_protocol.digestion_time": 1, "dissociation_protocol.digestion_time_unit": "hour"},
+    "Collagenase + Elastase + DNAse": {"dissociation_protocol.digestion_solution": "Collagenase||Elastase||DNAse"},
+    "Cold protease overnight": {"dissociation_protocol.digestion_solution": "Protease", "dissociation_protocol.digestion_temperature": "cold", "dissociation_protocol.digestion_time": 16, "dissociation_protocol.digestion_time_unit": "hour"},
+    "Collagenase A + DNAse": {"dissociation_protocol.digestion_solution": "Collagenase A||DNAse"},
+    "Mechanical dissociation (chilled) + detergent-based nuclei isolation": {"dissociation_protocol.digestion_solution": "Detergent-based", "dissociation_protocol.digestion_temperature": 8},
+    "Mechanical dissociation (frozen) + citric-acid based nuclei isolation": {"dissociation_protocol.digestion_solution": "Citric-acid based", "dissociation_protocol.digestion_temperature": "frozen"},
+}
+
+TIER2_MANUAL_FIX = {"tier2": ["protocol_tissue_dissociation", "protocol_tissue_dissociation_free_text"], "dcp": ["dissociation_protocol.digestion_solution", "dissociation_protocol.digestion_temperature", "dissociation_protocol.digestion_time", "dissociation_protocol.digestion_time_unit"]}

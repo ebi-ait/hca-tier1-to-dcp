@@ -5,7 +5,7 @@ from collections import defaultdict
 
 import pandas as pd
 
-from helper_files.tier2_mapping import TIER2_TO_DCP, TIER2_TO_DCP_UPDATE
+from helper_files.tier2_mapping import TIER2_TO_DCP, TIER2_TO_DCP_UPDATE, LUNG_DIGESTION, TIER2_MANUAL_FIX
 
 def define_parse():
     parser = argparse.ArgumentParser(description="Merge Tier 2 metadata into DCP format.")
@@ -23,9 +23,33 @@ def open_dcp_spreadsheet(spreadsheet_path):
         raise ValueError(f"Error reading spreadsheet file: {e} for {spreadsheet_path}") from e
 
 def rename_tier2_columns(tier2_df, tier2_to_dcp):
-    if any(col.lower() not in tier2_to_dcp.keys() for col in tier2_df.columns):
-        raise ValueError(f"Tier 2 fields missing in mapping: {set(tier2_df.columns) - set(tier2_to_dcp.keys())}")
+    mapped_fields = list(tier2_to_dcp.keys()) + TIER2_MANUAL_FIX['dcp']
+    if any(col.lower() not in mapped_fields for col in tier2_df.columns):
+        raise ValueError(f"Tier 2 fields missing in mapping: {set(tier2_df.columns) - set(mapped_fields)}")
     return tier2_df.rename(columns=tier2_to_dcp)
+
+def split_lung_dissociation(tier2_df, lung_digest_dict):
+    all_diss_fields = ['dissociation_protocol.digestion_solution', 'dissociation_protocol.digestion_temperature', 'dissociation_protocol.digestion_time', 'dissociation_protocol.digestion_time_unit']
+    for diss in all_diss_fields:
+        tier2_df[diss] = pd.NA
+    if not tier2_df['protocol_tissue_dissociation'].isna().all():
+        for i, row in tier2_df.iterrows():
+            prot = row['protocol_tissue_dissociation']
+            if pd.isna(prot):
+                continue
+            if prot not in lung_digest_dict:
+                raise ValueError(f"Digestion protocol {prot} not in pre-defined enum. Should be under `protocol_tissue_dissociation`")
+            for diss in all_diss_fields:
+                tier2_df.loc[i, diss] = lung_digest_dict[prot].get(diss, pd.NA)
+        del tier2_df['protocol_tissue_dissociation']
+    if not tier2_df['protocol_tissue_dissociation_free_text'].isna().all():
+        print(f"Need to update schema to include {tier2_df.loc[tier2_df['protocol_tissue_dissociation_free_text'].notna(), 'protocol_tissue_dissociation_free_text'].unique()} in enum.")
+    return tier2_df
+
+def manual_fix(tier2_df):
+    if tier2_df.columns.isin(['protocol_tissue_dissociation', 'protocol_tissue_dissociation_free_text']).any():
+        tier2_df = split_lung_dissociation(tier2_df, LUNG_DIGESTION)
+    return tier2_df
 
 def flatten_tier2_spreadsheet(tier2_excel, drop_na=True):
     key_cols = ['donor_id', 'sample_id', 'dataset_id', 'library_id']
@@ -39,6 +63,8 @@ def flatten_tier2_spreadsheet(tier2_excel, drop_na=True):
         if key_col is None:
             raise ValueError(f"No common key column found for tab {tab_name} for merging among: {key_cols}")
         flat_t2_df = pd.merge(flat_t2_df, tab_data, how='outer', on=key_col)
+    if flat_t2_df.columns.isin(TIER2_MANUAL_FIX['tier2']).any():
+        flat_t2_df = manual_fix(flat_t2_df)
     if drop_na:
         return flat_t2_df.dropna(axis=1, how='all')
     return flat_t2_df
@@ -83,7 +109,7 @@ def merge_tier2_with_dcp(tier2_df, wrangled_spreadsheet):
     for tab_name, field_list in fields_per_tab.items():
         # do checks
         check_tab_in_spreadsheet(tab_name, wrangled_spreadsheet)
-        if len(field_list) == 1 and field_list[0].endswith('_id'):
+        if len(field_list) == 1 and field_is_id(field_list[0]):
             continue
         # TODO until protocols is done, we add info manually
         if tab_name.endswith('protocol'):
