@@ -59,10 +59,11 @@ def check_tab_in_spreadsheet(tab_name, spreadsheet):
         if tab_name not in spreadsheet:
             raise ValueError(f"Tab {tab_name} from Tier 2 metadata not found in spreadsheet.")
 
+def field_is_id(field_name):
+    return re.match(r'[\w_]+\.\w+_core\.\w+_id', field_name) is not None
+
 def check_field_already_in_spreadsheet(field_name, tab_name, spreadsheet):
-    if re.search(r'[\w_]+\.\w+_core\.\w+_id', field_name):
-        return
-    if field_name in spreadsheet[tab_name].columns:
+    if field_name in spreadsheet[tab_name].columns and not field_is_id(field_name):
         print(f"Field {field_name} already exists in tab {tab_name} of the spreadsheet. It will be overwritten with Tier 2 data.")
         del spreadsheet[tab_name][field_name]
 
