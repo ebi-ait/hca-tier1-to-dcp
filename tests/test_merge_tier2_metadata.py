@@ -74,10 +74,9 @@ def test_merge_sheets_protocol():
         key=key,
         is_protocol=True
     )
-    assert pd.isna(merged_df.loc[merged_df[key] ==
-                   "protocol_1", "method"].item())
-    assert merged_df.loc[merged_df[key] ==
-                         "protocol_2", "method"].item() == "enzymatic"
+    assert pd.isna(merged_df.loc[merged_df[key] == "protocol_1", "method"].item())
+    assert "protocol_3" in merged_df[key].values
+    assert merged_df.loc[merged_df[key] == "protocol_2", "method"].item() == "enzymatic"
 
 
 def test_merge_sheet_non_protocol():
