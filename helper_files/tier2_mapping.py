@@ -166,7 +166,7 @@ LUNG_DIGESTION = {
         "dissociation_protocol.method.text": "enzymatic dissociation",
         "dissociation_protocol.method.ontology": "EFO:0009129",
         "dissociation_protocol.method.ontology_label": "enzymatic dissociation",
-        "dissociation_protocol.digestion_solution": "Collagenase A||DNAse"
+        "dissociation_protocol.digestion_solution": "Collagenase A||DNAse",
     },
     "Mechanical dissociation (chilled) + detergent-based nuclei isolation": {
         "dissociation_protocol.protocol_core.protocol_id": "Mechanical_dissociation_detergent-based_nuclei_isolation",
