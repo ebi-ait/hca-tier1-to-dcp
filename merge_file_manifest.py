@@ -81,7 +81,7 @@ def get_fastq_ext(row):
 
 def add_standard_fields(wrangled_spreadsheet, standard_values_dictionary):
     """Add standard fields like content description which for fastqs will always be DNA sequence"""
-    wrangled_spreadsheet['Sequence file']['sequence_file.file_core.format'] = wrangled_spreadsheet['Sequence file']['sequence_file.file_core.format'].apply(get_fastq_ext)
+    wrangled_spreadsheet['Sequence file']['sequence_file.file_core.format'] = wrangled_spreadsheet['Sequence file']['sequence_file.file_core.file_name'].apply(get_fastq_ext)
     for key, value in standard_values_dictionary.items():
         wrangled_spreadsheet['Sequence file'][key] = value
     return wrangled_spreadsheet
@@ -171,7 +171,10 @@ def main():
     output_filename = os.path.basename(args.wrangled_spreadsheet).replace(".xlsx", "_fastqed.xlsx")
     with pd.ExcelWriter(os.path.join(args.output_path, output_filename), engine='openpyxl') as writer:
         for tab_name, df in wrangled_spreadsheet.items():
-            df.to_excel(writer, sheet_name=tab_name, index=False, startrow=3)
+            df.iloc[0:0].to_excel(writer, sheet_name=tab_name, index=False, startrow=3)
+            worksheet = writer.sheets[tab_name]
+            worksheet.write_blank(4, 0, None)
+            df.to_excel(writer, sheet_name=tab_name, index=False, header=False, startrow=5)
     print(f"File metadata has been added to {os.path.join(args.output_path, output_filename)}.")
 
 if __name__ == "__main__":
