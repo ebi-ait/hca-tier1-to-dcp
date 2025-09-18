@@ -43,11 +43,11 @@ def define_parse():
     return parser
 
 
-def open_dcp_spreadsheet(spreadsheet_path):
+def open_dcp_spreadsheet(spreadsheet_path, tab_name=None):
     if not os.path.exists(spreadsheet_path):
         raise FileNotFoundError(f"File not found at {spreadsheet_path}")
     try:
-        return pd.read_excel(spreadsheet_path, sheet_name=None, skiprows=[0, 1, 2, 4])
+        return pd.read_excel(spreadsheet_path, sheet_name=tab_name, skiprows=[0, 1, 2, 4])
     except Exception as e:
         raise ValueError(
             f"Error reading spreadsheet file: {e} for {spreadsheet_path}"
@@ -100,8 +100,10 @@ def main():
     parser = define_parse()
     args = parser.parse_args()
 
-    file_manifest = open_dcp_spreadsheet(args.file_manifest)
+    file_manifest = open_dcp_spreadsheet(spreadsheet_path=args.file_manifest, tab_name="File_manifest")
     wrangled_spreadsheet = open_dcp_spreadsheet(args.wrangled_spreadsheet)
+    if 'Sequence file' in wrangled_spreadsheet:
+        del wrangled_spreadsheet['Sequence file']
     tier1_spreadsheet = open_dcp_spreadsheet(args.tier1_spreadsheet)
 
     wrangled_spreadsheet = merge_file_manifest(wrangled_spreadsheet, file_manifest, FILE_MANIFEST_MAPPING)
@@ -113,8 +115,7 @@ def main():
     with pd.ExcelWriter(os.path.join(args.output_path, output_filename), engine='openpyxl') as writer:
         for tab_name, df in wrangled_spreadsheet.items():
             df.to_excel(writer, sheet_name=tab_name, index=False, startrow=3)
-    print(
-        f"Tier 2 metadata has been added to {os.path.join(args.output_path, output_filename)}.")
+    print(f"File metadata has been added to {os.path.join(args.output_path, output_filename)}.")
 
 if __name__ == "__main__":
     main()
