@@ -11,12 +11,11 @@ TIER_1_MAPPING = {
     # "library_id_repository": "cell_suspension.biomaterial_core.biosamples_accession",
     "library_preparation_batch": "sequence_file.library_prep_id",
     "library_sequencing_run": "sequence_file.sequence_run_batch", 
-    "assay": "library_preparation_protocol.library_construction_method.text", 
+    "assay_ontology_term_id": "library_preparation_protocol.library_construction_method.ontology", 
     "sequencing_platform": "sequencing_protocol.instrument_manufacturer_model.text"
 }
 
 FASTQ_STANDARD_FIELDS = {
-    "sequence_file.file_core.format": "fastq.gz",
     "sequence_file.file_core.content_description.text": "DNA sequence",
     "sequence_file.file_core.content_description.ontology": "EDAM:3494",
     "sequence_file.file_core.content_description.ontology_label": "DNA sequence"
