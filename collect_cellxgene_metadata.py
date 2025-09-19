@@ -7,6 +7,7 @@ import requests
 import scanpy as sc
 
 from helper_files.tier1_mapping import tier1, tier1_list
+from helper_files.file_io import filename_suffixed
 
 BOLD_START = '\033[1m'
 BOLD_END = '\033[0;0m'
@@ -100,13 +101,13 @@ def extract_and_save_metadata(adata, collection_id, dataset_id, label=None, outd
     # Save essential metadata
     if 'library_id' in adata.obs:
         pd.DataFrame(adata.obs[tier1_in_object].drop_duplicates()).set_index('library_id')\
-            .to_csv(filename_suffixed(collection_id, dataset_id, label, outdir, 'metadata'))
+            .to_csv(filename_suffixed(collection_id, dataset_id, 'metadata', label, outdir))
     else:
         print("No library_id information. Saving tier 1 with donor_id index.\n")
         pd.DataFrame(adata.obs[tier1_in_object].drop_duplicates()).set_index('donor_id')\
-            .to_csv(filename_suffixed(collection_id, dataset_id, label, outdir, 'metadata'))
+            .to_csv(filename_suffixed(collection_id, dataset_id, 'metadata', label, outdir))
     # Save full cell observations
-    pd.DataFrame(adata.obs).to_csv(filename_suffixed(collection_id, dataset_id, label, outdir, 'cell_obs'))
+    pd.DataFrame(adata.obs).to_csv(filename_suffixed(collection_id, dataset_id, 'cell_obs', label, outdir))
 
     # Check for missing fields
     missing_must_fields = [must for must in tier1['obs']
@@ -156,11 +157,6 @@ def uuid_search_azul(uuid):
         return 'https://explore.data.humancellatlas/projects/' + uuid
     return response.json()['Message']
 
-def filename_suffixed(collection_id, dataset_id, label, outdir, suffix):
-    if label:
-        return os.path.join(outdir, f"{label}_{suffix}.csv")
-    return os.path.join(outdir, f'{collection_id}_{dataset_id}_{suffix}.csv')
-
 def main(collection_id, dataset_id=None, label=None, token=None): 
 
     # Query collection data
@@ -175,7 +171,7 @@ def main(collection_id, dataset_id=None, label=None, token=None):
     os.makedirs('metadata', exist_ok=True)
     pd.DataFrame(coll_report, index=[0]).transpose()\
         .rename({'name': 'title', 'contact_name': 'study_pi'})\
-        .to_csv(filename_suffixed(collection_id, dataset_id, label, 'metadata', 'study_metadata'), header=None)
+        .to_csv(filename_suffixed(collection_id, dataset_id, 'study_metadata', label, 'metadata'), header=None)
 
     # Download the H5AD file
     mx_file = f'h5ads/{collection_id}_{dataset_id}.h5ad'
