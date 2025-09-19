@@ -157,7 +157,7 @@ def collection_user_select(x):
     sample_id = x['sample_id']
     collection_method = x['sample_collection_method']
     tissue = ols_label(x['tissue_ontology_term_id'])
-    death = x['manner_of_death']
+    death = x.get('manner_of_death', "not provided")
     options = '\n'.join([str(i) + ': '+ term for i, term in enumerate(collection_dict[x['sample_collection_method']])])
     n = input(f"Please specify the collection method `{collection_method}` matching for sample {sample_id} " + \
         f"from {tissue} and manner of death {death}." + \
@@ -168,7 +168,7 @@ def collection_user_select(x):
 
 def edit_collection_method(sample_metadata, collection_dict):
     if 'sample_collection_method' in sample_metadata:
-        collect_fields = ['sample_collection_method', 'manner_of_death', 'tissue_ontology_term_id']
+        collect_fields = [field for field in ['sample_collection_method', 'manner_of_death', 'tissue_ontology_term_id'] if field in sample_metadata]
         sample_metadata['collection_protocol.method.text'] = sample_metadata\
         .apply(lambda x: x['sample_collection_method'] \
             if x['sample_collection_method'] not in collection_dict else None, axis=1)
