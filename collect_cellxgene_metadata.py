@@ -8,6 +8,10 @@ import scanpy as sc
 
 from helper_files.tier1_mapping import tier1, tier1_list
 
+BOLD_START = '\033[1m'
+BOLD_END = '\033[0;0m'
+CXG_API = 'https://api.cellxgene.cziscience.com/curation/v1'
+DEFAULT_CHUNK = 1024 * 1024
 
 def define_parser():
     """Defines and returns the argument parser."""
@@ -16,6 +20,8 @@ def define_parser():
                         dest="collection_id", type=str, required=True, help="Collection ID")
     parser.add_argument("-d", "--dataset_id", action="store",
                         dest="dataset_id", type=str, required=False, help="Dataset id")
+    parser.add_argument("-l", "--dataset-label", type=str, action="store",
+                        dest="label", help="Label to use instead of collection-dataset")
     parser.add_argument("-t", "--ingest_token", action="store",
                         dest='token', type=str, required=False,
                         help="Ingest token to query for existing projects with same DOI")
@@ -24,9 +30,8 @@ def define_parser():
 
 def get_collection_data(collection_id):
     """Queries the CELLxGENE API for collection metadata and returns it."""
-    cxg_api = 'https://api.cellxgene.cziscience.com/curation/v1'
     headers = {'Content-Type': 'application/json'}
-    url = f'{cxg_api}/collections/{collection_id}'
+    url = f'{CXG_API}/collections/{collection_id}'
     response = requests.get(url, headers=headers, timeout=20)
     response.raise_for_status()
     return response.json()
@@ -57,15 +62,12 @@ def selection_of_dataset(collection, dataset_id):
     
     if len(dataset_df.index) == 1:
         print("Selected unique dataset in collection.")
-        dataset_ix = 0
-    else:
+        return dataset_df.loc[0, 'dataset_id']
+    while True:
         dataset_ix = input("Please select the index of the dataset to be converted:\n")
-        if not isinstance(dataset_ix, int) and not dataset_ix.isdigit():
-            raise ValueError("Please type a valid integer as index of the dataframe.")
-        if int(dataset_ix) not in dataset_df.index:
-            raise IndexError("Please use a valid index for the dataframe.")
-    dataset_id = dataset_df.loc[int(dataset_ix), 'dataset_id']
-    return dataset_id
+        if dataset_ix.isdigit() and int(dataset_ix) in dataset_df.index:
+            return dataset_df.loc[int(dataset_ix), "dataset_id"]
+        print("invalid index")
 
 def download_h5ad_file(h5ad_url, output_file):
     """Downloads the H5AD file if not already present or if size differs."""
@@ -76,7 +78,7 @@ def download_h5ad_file(h5ad_url, output_file):
         if not isfile(output_file):
             with open(output_file, 'wb') as df:
                 total_bytes_received = 0
-                for chunk in res.iter_content(chunk_size=1024 * 1024):
+                for chunk in res.iter_content(chunk_size=DEFAULT_CHUNK):
                     df.write(chunk)
                     total_bytes_received += len(chunk)
                     percent_of_total_upload = float('{:.1f}'.format(
@@ -90,22 +92,21 @@ def download_h5ad_file(h5ad_url, output_file):
             print("Local " + output_file + " and remote file, has same size.")
 
 
-def extract_and_save_metadata(adata, collection_id, dataset_id):
+def extract_and_save_metadata(adata, collection_id, dataset_id, label=None, outdir='metadata'):
     """Extracts and saves metadata from the AnnData object."""
     print(f"{BOLD_START}EXTRACT METADATA:{BOLD_END}")
     tier1_in_object = [key for key in adata.obs.keys() if key in tier1_list]
-
+    
     # Save essential metadata
     if 'library_id' in adata.obs:
         pd.DataFrame(adata.obs[tier1_in_object].drop_duplicates()).set_index('library_id')\
-            .to_csv(f'metadata/{collection_id}_{dataset_id}_metadata.csv')
+            .to_csv(filename_suffixed(collection_id, dataset_id, label, outdir, 'metadata'))
     else:
         print("No library_id information. Saving tier 1 with donor_id index.\n")
         pd.DataFrame(adata.obs[tier1_in_object].drop_duplicates()).set_index('donor_id')\
-            .to_csv(f'metadata/{collection_id}_{dataset_id}_metadata.csv')
+            .to_csv(filename_suffixed(collection_id, dataset_id, label, outdir, 'metadata'))
     # Save full cell observations
-    pd.DataFrame(adata.obs).to_csv(
-        f'metadata/{collection_id}_{dataset_id}_cell_obs.csv')
+    pd.DataFrame(adata.obs).to_csv(filename_suffixed(collection_id, dataset_id, label, outdir, 'cell_obs'))
 
     # Check for missing fields
     missing_must_fields = [must for must in tier1['obs']
@@ -155,7 +156,12 @@ def uuid_search_azul(uuid):
         return 'https://explore.data.humancellatlas/projects/' + uuid
     return response.json()['Message']
 
-def main(collection_id, dataset_id=None, token=None): 
+def filename_suffixed(collection_id, dataset_id, label, outdir, suffix):
+    if label:
+        return os.path.join(outdir, f"{label}_{suffix}.csv")
+    return os.path.join(outdir, f'{collection_id}_{dataset_id}_{suffix}.csv')
+
+def main(collection_id, dataset_id=None, label=None, token=None): 
 
     # Query collection data
     collection = get_collection_data(collection_id)
@@ -165,11 +171,11 @@ def main(collection_id, dataset_id=None, token=None):
     # Generate and save collection report
     coll_report = generate_collection_report(collection)
     
-    dataset_id = selection_of_dataset(collection, dataset_id)
+    dataset_id = selection_of_dataset(collection, dataset_id) if not dataset_id else dataset_id
     os.makedirs('metadata', exist_ok=True)
     pd.DataFrame(coll_report, index=[0]).transpose()\
         .rename({'name': 'title', 'contact_name': 'study_pi'})\
-        .to_csv(f'metadata/{collection_id}_{dataset_id}_study_metadata.csv', header=None)
+        .to_csv(filename_suffixed(collection_id, dataset_id, label, 'metadata', 'study_metadata'), header=None)
 
     # Download the H5AD file
     mx_file = f'h5ads/{collection_id}_{dataset_id}.h5ad'
@@ -189,7 +195,7 @@ def main(collection_id, dataset_id=None, token=None):
 
     # Extract metadata from the AnnData file
     adata = sc.read_h5ad(mx_file, backed='r')
-    extract_and_save_metadata(adata, collection_id, dataset_id)
+    extract_and_save_metadata(adata, collection_id, dataset_id, label)
 
     print(f"{BOLD_START}ADDITIONAL INFO:{BOLD_END}")
     # Check if doi exists in ingest
@@ -202,9 +208,6 @@ def main(collection_id, dataset_id=None, token=None):
         else:
             print(f"No sequencer info. See {collection['collection_url']} for more.")
 
-BOLD_START = '\033[1m'
-BOLD_END = '\033[0;0m'
-
 if __name__ == "__main__":
     args = define_parser().parse_args()
-    main(collection_id=args.collection_id, dataset_id=args.dataset_id, token=args.token)
+    main(collection_id=args.collection_id, dataset_id=args.dataset_id, label=args.label, token=args.token)
