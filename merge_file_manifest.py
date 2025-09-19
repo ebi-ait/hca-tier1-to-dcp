@@ -171,10 +171,10 @@ def main():
     output_filename = os.path.basename(args.wrangled_spreadsheet).replace(".xlsx", "_fastqed.xlsx")
     with pd.ExcelWriter(os.path.join(args.output_path, output_filename), engine='openpyxl') as writer:
         for tab_name, df in wrangled_spreadsheet.items():
-            df.iloc[0:0].to_excel(writer, sheet_name=tab_name, index=False, startrow=3)
-            worksheet = writer.sheets[tab_name]
-            worksheet.write_blank(4, 0, None)
-            df.to_excel(writer, sheet_name=tab_name, index=False, header=False, startrow=5)
+            # add empty row for "FILL OUT INFORMATION BELOW THIS ROW" row
+            df = pd.concat([pd.DataFrame([{col: None for col in df.columns}]), df], ignore_index=True)
+            df.to_excel(writer, sheet_name=tab_name, index=False, startrow=3)
+
     print(f"File metadata has been added to {os.path.join(args.output_path, output_filename)}.")
 
 if __name__ == "__main__":
