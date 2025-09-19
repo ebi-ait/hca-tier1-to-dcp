@@ -123,7 +123,7 @@ def ols_label(ontology_id, only_label=True, ontology=None):
         return ontology_id
     if re.match(r"\w+_\d+", ontology_id):
         ontology_id = ontology_id.replace("_", ":")
-    if not re.match(r"\w+:\d+", ontology_id):
+    if not re.match(r"\w+:[\w\d]+", ontology_id):
         return ontology_id
     ontology_name = ontology if ontology else ontology_id.split(":")[0].lower()
     ontology_term = ontology_id.replace(":", "_")
