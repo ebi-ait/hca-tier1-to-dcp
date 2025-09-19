@@ -143,4 +143,3 @@ def test_check_10x_n_files_fail():
     }
     with pytest.raises(ValueError):
         check_10x_n_files(wrangled)
-

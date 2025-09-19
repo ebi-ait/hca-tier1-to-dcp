@@ -7,6 +7,54 @@ import pandas as pd
 
 from helper_files.tier2_mapping import TIER2_TO_DCP, TIER2_TO_DCP_UPDATE, LUNG_DIGESTION, TIER2_MANUAL_FIX
 
+# Small helpers
+def lower_list_values(l):
+    return [field.lower() for field in l]
+
+def get_entity_type(field_name):
+    return field_name.split('.')[0].replace('_', ' ').capitalize() if '.' in field_name else None
+
+def get_tab_id(tab_name):
+    if 'protocol' in tab_name.lower():
+        entity_type = 'protocol'
+    elif tab_name in ['Donor organism', 'Specimen from organism', 'Cell suspension', 'Organoid', 'Cell line', 'Imaged specimen']:
+        entity_type = 'biomaterial'
+    else: 
+        raise ValueError(f"Unknown tab name: {tab_name}")
+    return f"{tab_name.replace(' ', '_').lower()}.{entity_type}_core.{entity_type}_id"
+    
+
+def get_fields_per_tab(tier2_df):
+    fields_per_tab = defaultdict(list)
+    for col in tier2_df.columns:
+        fields_per_tab[get_entity_type(col)].append(col)
+    return fields_per_tab
+
+def field_is_id(field_name):
+    return re.match(r'[\w_]+\.\w+_core\.\w+_id', field_name) is not None
+
+def tab_is_protocol(tab_name):
+    return re.match(r'.*protocol', tab_name) is not None
+
+# Checks
+def check_tab_in_spreadsheet(tab_name, spreadsheet):
+        if tab_name not in spreadsheet:
+            raise ValueError(f"Tab {tab_name} from Tier 2 metadata not found in spreadsheet.")
+
+def check_field_already_in_spreadsheet(field_name, tab_name, spreadsheet):
+    if field_name in spreadsheet[tab_name].columns and not field_is_id(field_name):
+        print(f"Field {field_name} already exists in tab {tab_name} of the spreadsheet. It will be discarded and overwritten with Tier 2 data.")
+        del spreadsheet[tab_name][field_name]
+
+def check_key_in_spreadsheet(key, spreadsheet):
+    if key not in spreadsheet.columns:
+        raise ValueError(f"Key column {key} not found in spreadsheet.")
+
+def check_matching_keys(tier2_df, wrangled_spreadsheet, tab_name, key):
+    if not wrangled_spreadsheet[tab_name][key].isin(tier2_df[key]).any():
+        raise ValueError(f"No matching keys found between Tier 2 metadata and wrangled spreadsheet for tab {tab_name} using key {key}.")
+
+# other functions
 def define_parse():
     parser = argparse.ArgumentParser(description="Merge Tier 2 metadata into DCP format.")
     parser.add_argument('--tier2_metadata', '-t2', type=str, required=True, help="Path to the Tier 2 metadata excel file.")
@@ -21,9 +69,6 @@ def open_dcp_spreadsheet(spreadsheet_path):
         return pd.read_excel(spreadsheet_path, sheet_name=None, skiprows=[0, 1, 2, 4])
     except Exception as e:
         raise ValueError(f"Error reading spreadsheet file: {e} for {spreadsheet_path}") from e
-
-def lower_list_values(l):
-    return [field.lower() for field in l]
 
 def rename_tier2_columns(tier2_df, tier2_to_dcp):
     mapped_fields = list(tier2_to_dcp.keys()) + TIER2_MANUAL_FIX['dcp']
@@ -54,9 +99,10 @@ def split_lung_dissociation(tier2_df, lung_digest_dict):
     del tier2_df['protocol_tissue_dissociation']
     return tier2_df
 
-def manual_fix(tier2_df):
+def manual_fixes(tier2_df):
     if tier2_df.columns.isin(['protocol_tissue_dissociation', 'protocol_tissue_dissociation_free_text']).any():
         tier2_df = split_lung_dissociation(tier2_df, LUNG_DIGESTION)
+    # TODO add gut diet fields mapping to diet_meat_consumption
     return tier2_df
 
 def flatten_tier2_spreadsheet(tier2_excel, drop_na=True):
@@ -72,53 +118,10 @@ def flatten_tier2_spreadsheet(tier2_excel, drop_na=True):
             raise ValueError(f"No common key column found for tab {tab_name} for merging among: {key_cols}")
         flat_t2_df = pd.merge(flat_t2_df, tab_data, how='outer', on=key_col)
     if flat_t2_df.columns.isin(TIER2_MANUAL_FIX['tier2']).any():
-        flat_t2_df = manual_fix(flat_t2_df)
+        flat_t2_df = manual_fixes(flat_t2_df)
     if drop_na:
         return flat_t2_df.dropna(axis=1, how='all')
     return flat_t2_df
-
-def get_entity_type(field_name):
-    return field_name.split('.')[0].replace('_', ' ').capitalize() if '.' in field_name else None
-
-def get_tab_id(tab_name):
-    if 'protocol' in tab_name.lower():
-        entity_type = 'protocol'
-    elif tab_name in ['Donor organism', 'Specimen from organism', 'Cell suspension', 'Organoid', 'Cell line', 'Imaged specimen']:
-        entity_type = 'biomaterial'
-    else: 
-        raise ValueError(f"Unknown tab name: {tab_name}")
-    return f"{tab_name.replace(' ', '_').lower()}.{entity_type}_core.{entity_type}_id"
-    
-
-def get_fields_per_tab(tier2_df):
-    fields_per_tab = defaultdict(list)
-    for col in tier2_df.columns:
-        fields_per_tab[get_entity_type(col)].append(col)
-    return fields_per_tab
-
-def check_tab_in_spreadsheet(tab_name, spreadsheet):
-        if tab_name not in spreadsheet:
-            raise ValueError(f"Tab {tab_name} from Tier 2 metadata not found in spreadsheet.")
-
-def field_is_id(field_name):
-    return re.match(r'[\w_]+\.\w+_core\.\w+_id', field_name) is not None
-
-def tab_is_protocol(tab_name):
-    return re.match(r'.*protocol', tab_name) is not None
-
-def check_field_already_in_spreadsheet(field_name, tab_name, spreadsheet):
-    if field_name in spreadsheet[tab_name].columns and not field_is_id(field_name):
-        print(f"Field {field_name} already exists in tab {tab_name} of the spreadsheet. It will be discarded and overwritten with Tier 2 data.")
-        del spreadsheet[tab_name][field_name]
-
-def check_key_in_spreadsheet(key, spreadsheet):
-    if key not in spreadsheet.columns:
-        raise ValueError(f"Key column {key} not found in spreadsheet.")
-
-
-def check_matching_keys(tier2_df, wrangled_spreadsheet, tab_name, key):
-    if not wrangled_spreadsheet[tab_name][key].isin(tier2_df[key]).any():
-        raise ValueError(f"No matching keys found between Tier 2 metadata and wrangled spreadsheet for tab {tab_name} using key {key}.")
 
 def merge_overlap(wrangled_tab, tier2_fields, field_list, key):
     merged_df = pd.merge(
