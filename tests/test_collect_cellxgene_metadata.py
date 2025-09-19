@@ -141,12 +141,12 @@ def test_main_integration_real_extract(mock_get_collection, mock_download, mock_
 
     # Check files
     files = os.listdir(tmp_path)
-    assert any("study_metadata" in f for f in files), "study_metadata file should be created"
-    assert any("metadata" in f for f in files), "metadata file should be created by extract"
-    assert any("cell_obs" in f for f in files), "cell_obs file should be created by extract"
+    assert any(f.endswith("_study_metadata.csv") for f in files), "study_metadata file should be created"
+    assert any(f.endswith("_metadata.csv") for f in files), "metadata file should be created by extract"
+    assert any(f.endswith("_cell_obs.csv") for f in files), "cell_obs file should be created by extract"
 
 
-    obs_file = [f for f in files if "metadata" in f][0]
+    obs_file = [f for f in files if f.endswith("_metadata.csv")][0]
     content = pd.read_csv((tmp_path / obs_file))
     assert "library_id" in content
     assert content.loc[0, "tissue_free_text"]
