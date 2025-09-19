@@ -2,20 +2,7 @@ import pytest
 import pandas as pd
 from unittest.mock import patch
 
-from collect_spreadsheet_metadata import get_label, flatten_tier1, main
-
-@pytest.mark.parametrize(
-    "filename,expected",
-    [
-        ("HCA_Tier1_Metadata.xlsx", ""),
-        ("sample_HCA-Tier_1_metadata.xlsx", "sample"),
-        ("metadata_09_19_2025.xlsx", ""),
-        ("experiment_metadata.xlsx", "experiment"),
-        ("my-file.xlsx", "my_file"),
-    ]
-)
-def test_get_label(filename, expected):
-    assert get_label(filename) == expected
+from collect_spreadsheet_metadata import flatten_tier1, main
 
 def test_flatten_tier1_merges_correctly():
     dataset_metadata = pd.DataFrame({'dataset_id': [1], 'dataset_col': ['A']})

@@ -3,9 +3,8 @@ import re
 import shutil
 import argparse
 import pandas as pd
-from pathlib import Path
 
-from helper_files.file_io import filename_suffixed, open_spreadsheet
+from helper_files.file_io import filename_suffixed, open_spreadsheet, get_label
 
 def define_parser():
     """Defines and returns the argument parser."""
@@ -14,21 +13,6 @@ def define_parser():
     parser.add_argument("-d", "--spreadsheet_dir", type=str, default='.',
                         help="Directory for summary files inside <project_dir>/metadata/<spreadsheet_dir>.")
     return parser
-
-def get_label(filename: str) -> str:
-    label = Path(filename).stem  # strip extension
-
-    # Remove case-insensitive 'HCA Tier 1 metadata' or variants
-    label = re.sub(r'hca[_\s-]*tier[_\s-]*1[_\s-]*metadata', '', label, flags=re.I)
-
-    # Remove 'metadata' if followed by date or nothing
-    label = re.sub(r'[_\s-]*metadata([_\s-]*\d{1,2}[_\s-]*\d{1,2}[_\s-]*\d{2,4})?$', '', label, flags=re.I)
-
-    # Collapse multiple underscores or dashes
-    label = re.sub(r'[_\s-]+', '_', label)
-
-    # Strip leading/trailing underscores
-    return label.strip('_')
 
 def flatten_tier1(df):
     if 'Tier 1 Dataset Metadata' not in df:

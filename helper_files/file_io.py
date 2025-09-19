@@ -1,7 +1,15 @@
 import os
 import re
 import pandas as pd
+from pathlib import Path
 from typing import Optional
+
+def get_label(filename: str) -> str:
+    label = Path(filename).stem  # strip extension
+    label = re.sub(r'hca[_\s-]*tier[_\s-]*1[_\s-]*metadata', '', label, flags=re.I)
+    label = re.sub(r'[_\s-]*metadata([_\s-]*\d{1,2}[_\s-]*\d{1,2}[_\s-]*\d{2,4})?$', '', label, flags=re.I)
+    label = re.sub(r'[_\s-]+', '_', label)
+    return label.strip('_')
 
 def filename_suffixed(
     collection_id: str, dataset_id: str,

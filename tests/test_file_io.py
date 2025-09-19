@@ -1,7 +1,20 @@
 import pandas as pd
 import pytest
 from pathlib import Path
-from helper_files.file_io import open_spreadsheet, drop_empty_cols, detect_excel_format
+from helper_files.file_io import open_spreadsheet, drop_empty_cols, detect_excel_format, get_label
+
+@pytest.mark.parametrize(
+    "filename,expected",
+    [
+        ("HCA_Tier1_Metadata.xlsx", ""),
+        ("sample_HCA-Tier_1_metadata.xlsx", "sample"),
+        ("metadata_09_19_2025.xlsx", ""),
+        ("experiment_metadata.xlsx", "experiment"),
+        ("my-file.xlsx", "my_file"),
+    ]
+)
+def test_get_label(filename, expected):
+    assert get_label(filename) == expected
 
 def test_open_spreadsheet_single_sheet(tmp_path):
     df = pd.DataFrame({'donor_id': [1, 2, 3], 'age': [30, 40, 50]})
