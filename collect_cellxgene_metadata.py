@@ -23,6 +23,8 @@ def define_parser():
                         dest="dataset_id", type=str, required=False, help="Dataset id")
     parser.add_argument("-l", "--dataset-label", type=str, action="store",
                         dest="label", help="Label to use instead of collection-dataset")
+    parser.add_argument("-o", "--output_dir", type=str, action="store",
+                        dest="label", help="Label to use instead of collection-dataset")
     parser.add_argument("-t", "--ingest_token", action="store",
                         dest='token', type=str, required=False,
                         help="Ingest token to query for existing projects with same DOI")
@@ -93,7 +95,7 @@ def download_h5ad_file(h5ad_url, output_file):
             print("Local " + output_file + " and remote file, has same size.")
 
 
-def extract_and_save_metadata(adata, collection_id, dataset_id, label=None, outdir='metadata'):
+def extract_and_save_metadata(adata, collection_id, dataset_id, label=None, output_dir='metadata'):
     """Extracts and saves metadata from the AnnData object."""
     print(f"{BOLD_START}EXTRACT METADATA:{BOLD_END}")
     tier1_in_object = [key for key in adata.obs.keys() if key in tier1_list]
@@ -101,13 +103,13 @@ def extract_and_save_metadata(adata, collection_id, dataset_id, label=None, outd
     # Save essential metadata
     if 'library_id' in adata.obs:
         pd.DataFrame(adata.obs[tier1_in_object].drop_duplicates()).set_index('library_id')\
-            .to_csv(filename_suffixed(collection_id, dataset_id, 'metadata', label, outdir))
+            .to_csv(filename_suffixed(output_dir, f"{collection_id}_{dataset_id}" if not label else label, 'metadata'))
     else:
         print("No library_id information. Saving tier 1 with donor_id index.\n")
         pd.DataFrame(adata.obs[tier1_in_object].drop_duplicates()).set_index('donor_id')\
-            .to_csv(filename_suffixed(collection_id, dataset_id, 'metadata', label, outdir))
+            .to_csv(filename_suffixed(output_dir, f"{collection_id}_{dataset_id}" if not label else label, 'metadata'))
     # Save full cell observations
-    pd.DataFrame(adata.obs).to_csv(filename_suffixed(collection_id, dataset_id, 'cell_obs', label, outdir))
+    pd.DataFrame(adata.obs).to_csv(filename_suffixed(output_dir, f"{collection_id}_{dataset_id}" if not label else label, 'cell_obs'))
 
     # Check for missing fields
     missing_must_fields = [must for must in tier1['obs']
@@ -157,7 +159,7 @@ def uuid_search_azul(uuid):
         return 'https://explore.data.humancellatlas/projects/' + uuid
     return response.json()['Message']
 
-def main(collection_id, dataset_id=None, label=None, token=None): 
+def main(collection_id, dataset_id=None, label=None, output_dir="metadata", token=None): 
 
     # Query collection data
     collection = get_collection_data(collection_id)
@@ -171,8 +173,8 @@ def main(collection_id, dataset_id=None, label=None, token=None):
     os.makedirs('metadata', exist_ok=True)
     pd.DataFrame(coll_report, index=[0]).transpose()\
         .rename({'name': 'title', 'contact_name': 'study_pi'})\
-        .to_csv(filename_suffixed(collection_id, dataset_id, 'study_metadata', label, 'metadata'), header=None)
-
+        .to_csv(filename_suffixed(output_dir, f"{collection_id}_{dataset_id}" if not label else label, 'study_metadata'), header=None)
+        
     # Download the H5AD file
     mx_file = f'h5ads/{collection_id}_{dataset_id}.h5ad'
     os.makedirs('h5ads', exist_ok=True)
@@ -203,6 +205,8 @@ def main(collection_id, dataset_id=None, label=None, token=None):
             print(f"No sequencer info. See doi.org/{coll_report['doi']} for more.")
         else:
             print(f"No sequencer info. See {collection['collection_url']} for more.")
+
+    print(f'Output {filename_suffixed(output_dir, f"{collection_id}_{dataset_id}" if not label else label, suffix=None, ext=None)}')
 
 if __name__ == "__main__":
     args = define_parser().parse_args()

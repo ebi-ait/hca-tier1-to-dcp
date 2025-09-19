@@ -22,7 +22,7 @@ def define_parser():
     """Defines and returns the argument parser."""
     parser = argparse.ArgumentParser(description="Parser for the arguments")
     parser.add_argument("--tier1_path", "-t", action="store",
-                        dest="tier1_path", type=str, required=True, help="Flat Tier 1 spreadsheet path")
+                        dest="tier1_path", type=str, required=True, help="DCP'ed Tier 1 spreadsheet path")
     parser.add_argument("--wrangled_path", "-w", action="store", 
                         dest="wrangled_path", type=str, required=True, help="Path of previously wrangled project spreadsheet")
     parser.add_argument("--unequal_comparisson", "-u", action="store_false",

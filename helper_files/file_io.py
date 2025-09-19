@@ -7,16 +7,19 @@ from typing import Optional
 def get_label(filename: str) -> str:
     label = Path(filename).stem  # strip extension
     label = re.sub(r'hca[_\s-]*tier[_\s-]*1[_\s-]*metadata', '', label, flags=re.I)
+    label = re.sub(r'_dcp|_cell_obs|_study_metadata', '', label, flags=re.I)
     label = re.sub(r'[_\s-]*metadata([_\s-]*\d{1,2}[_\s-]*\d{1,2}[_\s-]*\d{2,4})?$', '', label, flags=re.I)
     label = re.sub(r'[_\s-]+', '_', label)
     return label.strip('_')
 
 def filename_suffixed(
-    collection_id: str, dataset_id: str,
-    suffix: str, label: Optional[str] = None,
-    outdir: str = "metadata", ext: str = "csv") -> str:
-    basename = f"{label or f'{collection_id}_{dataset_id}'}_{suffix}.{ext}"
-    return os.path.join(outdir, basename)
+    dir_name: str, 
+    label: str,
+    suffix: str,
+    ext: str = "csv"
+    ) -> str:
+    basename = f"{label}_{suffix}.{ext}"
+    return os.path.join(dir_name, basename)
 
 def detect_excel_format(spreadsheet_path):
     """DCP, HLCA, Gut, Tracker and dcp-to-tier1 use small variations of the DCP spreadsheet.

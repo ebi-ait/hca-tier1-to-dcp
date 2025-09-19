@@ -33,7 +33,7 @@ def main(file_name, input_dir):
         del df['Tier 1 Celltype Metadata']
     csv = flatten_tier1(df)
     csv.rename({'assay_ontology_term': 'assay', 'tissue_ontology_term': 'tissue', 'sex_ontology_term': 'sex', 'age_range': 'age'}, axis=1, inplace=True)
-    output_filename = filename_suffixed(None, None, 'metadata', label, input_dir)
+    output_filename = filename_suffixed(input_dir, label, 'metadata')
     csv.to_csv(output_filename, index=False)
     print(f"Flat metadata saved as {output_filename}")
     return label
