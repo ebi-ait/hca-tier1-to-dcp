@@ -82,7 +82,7 @@ def test_download_h5ad_file(mock_get, tmp_path):
     assert out_file.read_bytes() == fake_content
 
 
-@mock.patch("scanpy.read_h5ad")
+@mock.patch("anndata.read_h5ad")
 def test_extract_and_save_metadata(mock_read, tmp_path, dummy_collection):
     # Mock AnnData object
     obs_df = pd.DataFrame({
@@ -116,7 +116,7 @@ def test_doi_search_ingest_found(mock_request):
     mock_request.return_value.raise_for_status.return_value = None
     doi_search_ingest("10.1234/example", token="fake")
 
-@mock.patch("scanpy.read_h5ad")
+@mock.patch("anndata.read_h5ad")
 @mock.patch("collect_cellxgene_metadata.download_h5ad_file")
 @mock.patch("collect_cellxgene_metadata.get_collection_data")
 def test_main_integration_real_extract(mock_get_collection, mock_download, mock_read, tmp_path, dummy_collection):
