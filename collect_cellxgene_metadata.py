@@ -193,7 +193,7 @@ def main(collection_id, dataset_id=None, label=None, output_dir="metadata", toke
 
     # Extract metadata from the AnnData file
     adata = sc.read_h5ad(mx_file, backed='r')
-    extract_and_save_metadata(adata, collection_id, dataset_id, label)
+    extract_and_save_metadata(adata, collection_id, dataset_id, label, output_dir)
 
     print(f"{BOLD_START}ADDITIONAL INFO:{BOLD_END}")
     # Check if doi exists in ingest
@@ -206,8 +206,8 @@ def main(collection_id, dataset_id=None, label=None, output_dir="metadata", toke
         else:
             print(f"No sequencer info. See {collection['collection_url']} for more.")
 
-    print(f'Output {filename_suffixed(output_dir, f"{collection_id}_{dataset_id}" if not label else label, suffix=None, ext=None)}')
+    print(f'Output {filename_suffixed(output_dir, f"{collection_id}_{dataset_id}" if not label else label, suffix=None,ext=None)}')
 
 if __name__ == "__main__":
     args = define_parser().parse_args()
-    main(collection_id=args.collection_id, dataset_id=args.dataset_id, label=args.label, token=args.token)
+    main(collection_id=args.collection_id, dataset_id=args.dataset_id, label=args.label, output_dir=args.output_dir, token=args.token)
