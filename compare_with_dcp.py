@@ -5,8 +5,8 @@ import sys
 import select
 import json
 
-import pandas as pd
 from helper_files.tier1_mapping import entity_types, all_entities
+from helper_files.file_io import open_spreadsheet, get_label
 
 # Open cellxgene spreadsheet
 # Open DCP spreadsheet
@@ -21,39 +21,13 @@ from helper_files.tier1_mapping import entity_types, all_entities
 def define_parser():
     """Defines and returns the argument parser."""
     parser = argparse.ArgumentParser(description="Parser for the arguments")
-    parser.add_argument("--collection_id", "-c", action="store",
-                        dest="collection_id", type=str, required=True, help="Collection ID")
+    parser.add_argument("--tier1_path", "-t", action="store",
+                        dest="tier1_path", type=str, required=True, help="Flat Tier 1 spreadsheet path")
     parser.add_argument("--wrangled_path", "-w", action="store", 
                         dest="wrangled_path", type=str, required=True, help="Path of previously wrangled project spreadsheet")
-    parser.add_argument("--dataset_id", "-d", action="store",
-                        dest="dataset_id", type=str, required=False, help="Dataset id")
     parser.add_argument("--unequal_comparisson", "-u", action="store_false",
                         dest="unequal_comparisson", help="Automaticly continue comparing even if biomaterials are not equal")
     return parser
-
-def get_dataset_id(collection_id, dataset_id=None):
-    if dataset_id is not None:
-        return dataset_id
-    dataset_ids = [file.split("_")[1] for file in os.listdir('metadata') if file.startswith(collection_id)]
-    if len(set(dataset_ids)) == 1:
-        return dataset_ids[0]
-    print("Please specify the -d dataset_id. There are available files for:")
-    print('\n'.join(set(dataset_ids)))
-    sys.exit()
-
-def open_tier1_spreadsheet(collection_id, dataset_id):
-    try:
-        tier1_spreadsheet_path = f"metadata/{collection_id}_{dataset_id}_dcp.xlsx"
-        return pd.read_excel(tier1_spreadsheet_path, sheet_name=None, skiprows=[0, 1, 2, 4])
-    except FileNotFoundError:
-        print(f"File not found: {tier1_spreadsheet_path}")
-        sys.exit()
-
-def open_wrangled_spreadsheet(wranged_spreadsheet_path):
-    try:
-        return pd.read_excel(wranged_spreadsheet_path, sheet_name=None, skiprows=[0, 1, 2, 4])
-    except FileNotFoundError:
-        raise FileNotFoundError(f"File not found: {wranged_spreadsheet_path}")
 
 def get_tab_id(tab, spreadsheet):
     id_suffixs = ['.biomaterial_core.biomaterial_id', '.file_core.file_name', '.protocol_core.protocol_id']
@@ -78,8 +52,8 @@ def get_number_of_field(tab, spreadsheet, field):
 def get_values_of_field(tab, spreadsheet, field):
     return spreadsheet[tab][field].dropna().tolist()
 
-def export_report_json(collection_id, dataset_id, report_dict):
-    with open(f'report_compare/{collection_id}_{dataset_id}_compare.json', 'w', encoding='UTF-8') as json_file:
+def export_report_json(label, report_dict):
+    with open(f'report_compare/{label}_compare.json', 'w', encoding='UTF-8') as json_file:
                     json.dump(report_dict, json_file)
 
 def init_report_dict():
@@ -107,7 +81,7 @@ def compare_n_tabs(tier1_spreadsheet, wrangled_spreadsheet, report_dict):
     report_dict['tabs']['intersect'] = intersect_tabs
     return report_dict
 
-def compare_n_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet, collection_id, dataset_id, unequal_comparisson):
+def compare_n_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet, label, unequal_comparisson):
     n_ids = {}
     
     tab_id = get_tab_id(tab, tier1_spreadsheet)
@@ -123,8 +97,8 @@ def compare_n_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet, col
         a, _ , _ = select.select([sys.stdin], [], [], 5)
         input_text = sys.stdin.readline().strip() if a else 'no'
         if input_text in ['no', 'n', 'NO', 'No']:
-            print(f'Ending comparisson of {collection_id} - {dataset_id}')
-            export_report_json(collection_id, dataset_id, report_dict)
+            print(f'Ending comparisson of {label}')
+            export_report_json(label, report_dict)
             return False
     return report_dict
 
@@ -213,14 +187,12 @@ def compare_filled_fields(tab, report_dict, tier1_spreadsheet, wrangled_spreadsh
         print(get_slim_comp_df(comp_df, tab))
     return report_dict
 
-def main(collection_id, wrangled_path, dataset_id=None, unequal_comparisson=False):
-    dataset_id = get_dataset_id(collection_id, dataset_id)
+def main(tier1_path, wrangled_path, unequal_comparisson=False):
     report_dict = init_report_dict()
 
-    # Open cellxgene spreadsheet
-    tier1_spreadsheet = open_tier1_spreadsheet(collection_id, dataset_id)
-    # Open DCP spreadsheet
-    wrangled_spreadsheet = open_wrangled_spreadsheet(wrangled_path)
+    tier1_spreadsheet = open_spreadsheet(tier1_path)
+    wrangled_spreadsheet = open_spreadsheet(wrangled_path)
+    label = get_label(tier1_path)
     
     # Compare number of tabs
     print(f"{BOLD_START}____COMPARE TABS____{BOLD_END}")
@@ -238,8 +210,7 @@ def main(collection_id, wrangled_path, dataset_id=None, unequal_comparisson=Fals
             continue
         
         # compare Number and Values of ids per tab
-        report_dict = compare_n_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet, 
-                                    collection_id, dataset_id, unequal_comparisson)
+        report_dict = compare_n_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet, label, unequal_comparisson)
         if not report_dict:
             return
         # Value of ids
@@ -257,12 +228,12 @@ def main(collection_id, wrangled_path, dataset_id=None, unequal_comparisson=Fals
         print(f"{BOLD_START}Comparing {tab} values:{BOLD_END}")
         report_dict = compare_filled_fields(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet)
 
-    export_report_json(collection_id, dataset_id, report_dict)
+    export_report_json(label, report_dict)
 
 BOLD_START = '\033[1m'
 BOLD_END = '\033[0;0m'
 
 if __name__ == "__main__":
     args = define_parser().parse_args()
-    main(collection_id=args.collection_id, dataset_id=args.dataset_id, 
-         wrangled_path=args.wrangled_path, unequal_comparisson=args.unequal_comparisson)
+    main(tier1_path=args.tier1_path, wrangled_path=args.wrangled_path, 
+         unequal_comparisson=args.unequal_comparisson)
