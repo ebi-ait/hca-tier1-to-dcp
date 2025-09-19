@@ -17,6 +17,11 @@ def detect_excel_format(spreadsheet_path):
 
     donor_tab = re.compile(r'donor', re.IGNORECASE)
     tab_name = next((k for k in df.keys() if donor_tab.search(k)), list(df.keys())[0])
+    df = {k: d.fillna('').astype(str) for k,d in df.items()}
+
+    if len(df[tab_name]) < 4:
+        # if less than 3 rows in sheet, dcp headers are missing, so it's dcp-to-tier1 format
+        return None
 
     # DCP/ HLCA Tier 1 format
     donor_field = re.compile(r'^donor_id$|^donor_organism.biomaterial_core.biomaterial_id$', re.IGNORECASE)
