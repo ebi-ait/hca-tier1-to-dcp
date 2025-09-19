@@ -4,7 +4,7 @@ from os.path import isfile, getsize
 
 import pandas as pd
 import requests
-import scanpy as sc
+import anndata
 
 from helper_files.tier1_mapping import tier1, tier1_list
 from helper_files.file_io import filename_suffixed
@@ -192,7 +192,7 @@ def main(collection_id, dataset_id=None, label=None, output_dir="metadata", toke
         print("H5AD URL not found for the selected dataset.")
 
     # Extract metadata from the AnnData file
-    adata = sc.read_h5ad(mx_file, backed='r')
+    adata = anndata.read_h5ad(mx_file, backed='r')
     extract_and_save_metadata(adata, collection_id, dataset_id, label, output_dir)
 
     print(f"{BOLD_START}ADDITIONAL INFO:{BOLD_END}")
