@@ -146,7 +146,7 @@ def test_main_integration_real_extract(mock_get_collection, mock_download, mock_
     assert any(f.endswith("_cell_obs.csv") for f in files), "cell_obs file should be created by extract"
 
 
-    obs_file = [f for f in files if f.endswith("_metadata.csv")][0]
+    obs_file = [f for f in files if f.endswith("_metadata.csv") and '_study_' not in f][0]
     content = pd.read_csv((tmp_path / obs_file))
     assert "library_id" in content
     assert content.loc[0, "tissue_free_text"]
