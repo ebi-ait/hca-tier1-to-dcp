@@ -6,6 +6,7 @@ from collections import defaultdict
 import pandas as pd
 
 from helper_files.tier2_mapping import TIER2_TO_DCP, TIER2_TO_DCP_UPDATE, LUNG_DIGESTION, TIER2_MANUAL_FIX
+from helper_files.dcp_required import dcp_required_entities, dcp_required_modules
 from convert_to_dcp import fill_missing_ontology_ids, fill_ontology_labels
 
 # Small helpers
@@ -57,6 +58,18 @@ def check_key_in_spreadsheet(key, spreadsheet):
 def check_matching_keys(tier2_df, wrangled_spreadsheet, tab_name, key):
     if not wrangled_spreadsheet[tab_name][key].isin(tier2_df[key]).any():
         raise ValueError(f"No matching keys found between Tier 2 metadata and wrangled spreadsheet for tab {tab_name} using key {key}.")
+    
+def check_dcp_required_fields(df):
+    req_ent = []
+    for tab_name, tab in df.items():
+        if tab_name == 'Schemas':
+            continue
+        req_ent.extend([req for req in dcp_required_entities[tab_name] if req not in tab])
+        # req_mod = [tab for req_mod in dcp_required_modules[tab_name] if tab.columns.isin(req_mod)]
+    if req_ent:
+        print(f"Missing DCP required field(s) {'; '.join(req_ent)}")
+        # if req_mod:
+        #     print(f"Missing DCP required module field(s) {'; '.join(req_mod)}")
 
 # other functions
 def define_parse():
@@ -213,6 +226,7 @@ def main():
 
     merged_df = merge_tier2_with_dcp(tier2_df, wrangled_spreadsheet)
     merged_df = add_protocol_targets(tier2_df, merged_df)
+    check_dcp_required_fields(merged_df)
 
     output_filename = os.path.basename(wrangled_spreadsheet_path).replace(".xlsx", "_Tier2.xlsx")
     with pd.ExcelWriter(os.path.join(output_path, output_filename), engine='openpyxl') as writer:
