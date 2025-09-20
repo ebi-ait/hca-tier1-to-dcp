@@ -6,6 +6,8 @@ from collections import defaultdict
 import pandas as pd
 
 from helper_files.tier2_mapping import TIER2_TO_DCP, TIER2_TO_DCP_UPDATE, LUNG_DIGESTION, TIER2_MANUAL_FIX
+from convert_to_dcp import fill_missing_ontology_ids, fill_ontology_labels
+
 
 # Small helpers
 def lower_list_values(l):
@@ -43,8 +45,8 @@ def check_tab_in_spreadsheet(tab_name, spreadsheet):
 
 def check_field_already_in_spreadsheet(field_name, tab_name, spreadsheet):
     if field_name in spreadsheet[tab_name].columns and not field_is_id(field_name):
-        print(f"Field {field_name} already exists in tab {tab_name} of the spreadsheet. It will be discarded and overwritten with Tier 2 data.")
         del spreadsheet[tab_name][field_name]
+        return field_name
 
 def check_key_in_spreadsheet(key, spreadsheet):
     if key not in spreadsheet.columns:
@@ -160,9 +162,12 @@ def merge_tier2_with_dcp(tier2_df, wrangled_spreadsheet):
         if len(field_list) == 1 and field_is_id(field_list[0]):
             continue
         # TODO add protocol to applied biomaterial as well
+        removed_fields = set()
         if not tab_is_protocol(tab_name):
-            for field in field_list:
-                check_field_already_in_spreadsheet(field, tab_name, wrangled_spreadsheet) 
+            removed_fields = {check_field_already_in_spreadsheet(field, tab_name, wrangled_spreadsheet) for field in field_list}
+            removed_fields.remove(None)
+        if removed_fields:
+            print(f'Fields exist in both spreadsheets. Overwritting previously wrangled metadata with tier 2:\n{"; ".join(removed_fields)}')
         key = get_tab_id(tab_name)
         # perform merge
         wrangled_spreadsheet[tab_name] = merge_sheets(wrangled_spreadsheet, tier2_df, tab_name, field_list, key, is_protocol)
@@ -183,6 +188,11 @@ def main():
 
     tier2_df = flatten_tier2_spreadsheet(tier2_excel)
     tier2_df = rename_tier2_columns(tier2_df, all_tier2)
+    print('\nPull ontology ids from fields:')
+    tier2_df = fill_missing_ontology_ids(tier2_df)
+    print('\nPull ontology labels from fields:')
+    tier2_df = fill_ontology_labels(tier2_df)
+
     merged_df = merge_tier2_with_dcp(tier2_df, wrangled_spreadsheet)
 
     output_filename = os.path.basename(wrangled_spreadsheet_path).replace(".xlsx", "_Tier2.xlsx")
