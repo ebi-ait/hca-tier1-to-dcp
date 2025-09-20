@@ -10,32 +10,23 @@ from packaging.version import parse as parse_version
 
 from helper_files.tier1_mapping import tier1_to_dcp, collection_dict, prot_def_field, tier1_enum, dev_to_age_dict, age_to_dev_dict
 from helper_files.required_fields import required_fields
+from helper_files.file_io import get_label, filename_suffixed
 
 
 def define_parser():
     """Defines and returns the argument parser."""
     parser = argparse.ArgumentParser(description="Parser for the arguments")
-    parser.add_argument("--collection_id", "-c", action="store",
-                        dest="collection_id", type=str, required=True, help="Collection id")
-    parser.add_argument("--dataset_id", "-d", action="store",
-                        dest="dataset_id", type=str, required=False, help="Dataset id")
+    parser.add_argument("--file_path", "-f", action="store",
+                        dest="file_path", type=str, required=True, help="Flat Tier 1 spreadsheet path")
+    parser.add_argument("--output_dir", "-o", type=str, default='metadata',
+                        help="Directory to output dcp formated spreadsheet.")
     parser.add_argument("--local_template", "-l", action="store",
                         dest="local_template", type=str, required=False, help="Local path of the HCA template")
     return parser
 
-def get_dataset_id(collection_id, dataset_id=None):
-    if dataset_id is not None:
-        return dataset_id
-    dataset_ids = [file.split("_")[1] for file in os.listdir('metadata') if file.startswith(collection_id)]
-    if len(set(dataset_ids)) == 1:
-        return dataset_ids[0]
-    print("Please specify the -d dataset_id. There are available files for:")
-    print('\n'.join(set(dataset_ids)))
-    sys.exit()
-
-def read_sample_metadata(collection_id, dataset_id):
+def read_sample_metadata(label, dir_name):
     try:
-        sample_metadata_path = f"metadata/{collection_id}_{dataset_id}_metadata.csv"
+        sample_metadata_path = filename_suffixed(dir_name, label, "metadata")
         print(f"Tier 1 obs spreadsheet found in {sample_metadata_path}")
         return pd.read_csv(sample_metadata_path)
     except FileNotFoundError:
@@ -45,9 +36,9 @@ def read_sample_metadata(collection_id, dataset_id):
         print(f"Empty file: {sample_metadata_path}")
         return pd.DataFrame()
 
-def read_study_metadata(collection_id, dataset_id):
+def read_study_metadata(label, dir_name):
     try:
-        metadata_path = f"metadata/{collection_id}_{dataset_id}_study_metadata.csv"
+        metadata_path = filename_suffixed(dir_name, label, "study_metadata")
         metadata = pd.read_csv(metadata_path, header=None).T
         metadata.columns = metadata.iloc[0]
         print(f"Tier 1 uns spreadsheet found in {metadata_path}")
@@ -132,7 +123,7 @@ def ols_label(ontology_id, only_label=True, ontology=None):
         return ontology_id
     if re.match(r"\w+_\d+", ontology_id):
         ontology_id = ontology_id.replace("_", ":")
-    if not re.match(r"\w+:\d+", ontology_id):
+    if not re.match(r"\w+:[\w\d]+", ontology_id):
         return ontology_id
     ontology_name = ontology if ontology else ontology_id.split(":")[0].lower()
     ontology_term = ontology_id.replace(":", "_")
@@ -166,7 +157,7 @@ def collection_user_select(x):
     sample_id = x['sample_id']
     collection_method = x['sample_collection_method']
     tissue = ols_label(x['tissue_ontology_term_id'])
-    death = x['manner_of_death']
+    death = x.get('manner_of_death', "not provided")
     options = '\n'.join([str(i) + ': '+ term for i, term in enumerate(collection_dict[x['sample_collection_method']])])
     n = input(f"Please specify the collection method `{collection_method}` matching for sample {sample_id} " + \
         f"from {tissue} and manner of death {death}." + \
@@ -177,7 +168,7 @@ def collection_user_select(x):
 
 def edit_collection_method(sample_metadata, collection_dict):
     if 'sample_collection_method' in sample_metadata:
-        collect_fields = ['sample_collection_method', 'manner_of_death', 'tissue_ontology_term_id']
+        collect_fields = [field for field in ['sample_collection_method', 'manner_of_death', 'tissue_ontology_term_id'] if field in sample_metadata]
         sample_metadata['collection_protocol.method.text'] = sample_metadata\
         .apply(lambda x: x['sample_collection_method'] \
             if x['sample_collection_method'] not in collection_dict else None, axis=1)
@@ -542,10 +533,10 @@ def populate_spreadsheet(dcp_spreadsheet, dcp_flat):
 def collapse_values(series):
     return "||".join(series.unique().astype(str))
 
-def add_analysis_file(dcp_spreadsheet, collection_id, dataset_id):
+def add_analysis_file(dcp_spreadsheet, label):
     # We chould have 1 only Analysis file with all the CS merged
     analysis_file_metadata = {
-        'analysis_file.file_core.file_name': f'{collection_id}_{dataset_id}.h5ad',
+        'analysis_file.file_core.file_name': f'{label}.h5ad',
         'analysis_file.file_core.content_description.text': 'Count matrix',
         'analysis_file.file_core.content_description.ontology': 'EDAM:3917',
         'analysis_file.file_core.content_description.ontology_label': 'Count matrix',
@@ -587,20 +578,21 @@ def check_required_fields(dcp_spreadsheet):
     for key, values in missing_dict.items():
         print(f"\t{key}:\t{', '.join(values)}")
 
-def export_to_excel(dcp_spreadsheet, collection_id, dataset_id, local_template):
+def export_to_excel(dcp_spreadsheet, dir_name, label, local_template):
     dcp_headers = get_dcp_headers(local_template)
-    output_path = f"metadata/{collection_id}_{dataset_id}_dcp.xlsx"
+    output_path = filename_suffixed(dir_name, label, "dcp", ext="xlsx")
     with pd.ExcelWriter(output_path) as writer:
         for tab_name, data in dcp_spreadsheet.items():
             if not data.empty:
                 pd.concat([dcp_headers[tab_name], data], ignore_index=True).to_excel(writer, sheet_name=tab_name, index=False, header=False)
     print(f'Exported to {output_path}')
 
-def main(collection_id, dataset_id=None, local_template=None):
-    dataset_id = get_dataset_id(collection_id, dataset_id)
+def main(file_path, local_template=None):
+    label = get_label(file_path)
+    dir_name = os.path.dirname(file_path)
     print(f"{BOLD_START}READING FILES{BOLD_END}")
-    sample_metadata = read_sample_metadata(collection_id, dataset_id)
-    study_metadata = read_study_metadata(collection_id, dataset_id)
+    sample_metadata = read_sample_metadata(label, dir_name)
+    study_metadata = read_study_metadata(label, dir_name)
     
     # Edit conditionally mapped fields
     print(f"{BOLD_START}CONVERTING METADATA{BOLD_END}")
@@ -641,15 +633,16 @@ def main(collection_id, dataset_id=None, local_template=None):
     print(f"{BOLD_START}POPULATING SPREADSHEET{BOLD_END}")
     dcp_spreadsheet = populate_spreadsheet(dcp_spreadsheet, dcp_flat)
     dcp_spreadsheet = add_process_locations(sample_metadata, dcp_spreadsheet)
-    dcp_spreadsheet = add_analysis_file(dcp_spreadsheet, collection_id, dataset_id)
+    dcp_spreadsheet = add_analysis_file(dcp_spreadsheet, label)
+    
     check_required_fields(dcp_spreadsheet)
 
     print(f"{BOLD_START}EXPORTING SPREADSHEET{BOLD_END}")
-    export_to_excel(dcp_spreadsheet, collection_id, dataset_id, local_template)
+    export_to_excel(dcp_spreadsheet, dir_name, label, local_template)
 
 BOLD_START = '\033[1m'
 BOLD_END = '\033[0;0m'
 
 if __name__ == "__main__":
     args = define_parser().parse_args()
-    main(collection_id=args.collection_id, dataset_id=args.dataset_id, local_template=args.local_template)
+    main(file_path=args.file_path, local_template=args.local_template)
