@@ -10,37 +10,11 @@ from helper_files.file_mapping import FILE_MANIFEST_MAPPING, TIER_1_MAPPING, FAS
 LAST_BIOMATERIAL = 'cell_suspension.biomaterial_core.biomaterial_id'
 
 def define_parse():
-    parser = argparse.ArgumentParser(
-        description="Merge Tier 2 metadata into DCP format."
-    )
-    parser.add_argument(
-        "--file_manifest",
-        "-f",
-        type=str,
-        required=True,
-        help="Path to the File manifest excel file.",
-    )
-    parser.add_argument(
-        "--wrangled_spreadsheet",
-        "-w",
-        type=str,
-        required=True,
-        help="Path to the wrangled spreadsheet excel file.",
-    )
-    parser.add_argument(
-        "--tier1_spreadsheet",
-        "-t1",
-        type=str,
-        required=True,
-        help="Path to the Tier 1 metadata excel file."
-    )
-    parser.add_argument(
-        "--output_path",
-        "-o",
-        type=str,
-        default="metadata",
-        help="Path to save the merged output excel file.",
-    )
+    parser = argparse.ArgumentParser(description="Merge Tier 2 metadata into DCP format.")
+    parser.add_argument("--file_manifest", "-f", type=str, required=True, help="Path to the File manifest excel file.")
+    parser.add_argument("--wrangled_spreadsheet", "-w", type=str, required=True, help="Path to the wrangled spreadsheet excel file.")
+    parser.add_argument("--tier1_spreadsheet", "-t1", type=str, required=True, help="Path to the Tier 1 metadata excel file.")
+    parser.add_argument("--output_path", "-o", type=str, default="metadata", help="Path to save the merged output excel file.")
     return parser
 
 
