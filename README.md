@@ -11,7 +11,7 @@ This convertion is done in 3 steps.
     1. Given a collection_id & dataset_id pull metadata from metadata dir
     1. Based on [hca_template.xlsx](https://github.com/ebi-ait/geo_to_hca/raw/master/template/hca_template.xlsx), using the [mapping](helper_files/tier1_mapping.py) convert to dcp flat metadata file with dcp programmatic fields
     1. Based on the field programmatic name, the dcp spreadsheet is populated
-    1. Exported into an xlsx file in `metadata` dir to `<collection_id>_<dataset_id>_dcp.csv` filename
+    1. Exported into an xlsx file in `metadata` dir to `<label>_dcp.csv` filename
 1. Compare previously wrangled spreadsheet vs tier 1 [compare_with_dcp.py](compare_with_dcp.py)
     1. Open cellxgene and previously wrangled DCP spreadsheet
     1. Compare number of tabs, use intersection
@@ -20,14 +20,18 @@ This convertion is done in 3 steps.
         1. Compare ids per tab, for intersection
         1. Compare values of entities with same IDs (except protocols)
     1. Export all comparison in a report json file in `report_compare` dir to `<collection_id>_<dataset_id>_compare.json` filename
-1. Merge Tier 2 metadata into existing or generated DCP spreadsheet
+1. Merge Tier 2 metadata into pre-filled DCP spreadsheet [merge_tier2_metadata.py](merge_tier2_metadata.py)
     1. Open Tier 2 spreadsheet and wrangled DCP spreadsheet
-    1. Perform sanity checks on both spreadsheets
     1. Flatten Tier 2 spreadsheet into a single denormalised tab
     1. Rename columns using [tier 2 mapping](helper_files/tier2_mapping.py)
     1. Merge tier 2 metadata in corresponding tabs/entities of dcp spreadsheet.
-1. Merge File metadata #TODO
-
+    1. Export into an xlsx file in `metadata` dir to `<label>_tier2.xlsx`
+1. Merge File metadata
+    1. Open File metadata tab, Tier 1 metadata and wrangled DCP spreadsheet
+    1. Merge File metadata tab into wrangled spreadsheet `Sequence tab` (remove existing & use [FILE_MANIFEST_MAPPING](helper_files/file_mapping.py))
+    1. Add standard FASTQ fields [FASTQ_STANDARD_FIELDS](helper_files/file_mapping.py)
+    1. Use Tier 1 metadata to assign sequqnce and library prep protocols, and other [TIER_1_MAPPING](helper_files/file_mapping.py) fields
+    1. Export into an xlsx file in `metadata` dir to `<label>_fastqed.xlsx`
 
 
 ## Usage
@@ -38,6 +42,7 @@ python3 collect_cellxgene_metadata.py -c <CxG collection_id> -t <ingest-token>
 python3 convert_to_dcp.py -c <CxG collection_id> -d <CxG dataset_id>
 python3 compare_with_dcp.py -c <CxG collection_id> -d <CxG dataset_id> -w <previously wrangled spreadsheet path>
 python3 merge_tier2_metadata.py -t2 <tier2_template_path> -ws <wrangled spreadsheet path> -o <output dir path>
+python3 merge_file_manifest.py -f <file_manifest_path> -w <wrangled_spreadsheet path> -t <tier1_spreadsheet path> -o <output_path>
 ```
 
 Alternatively, you can use the [wrapper_3c.py](wrapper_3c.py) script to run C scripts at once (**c**ollect, **c**onvert, **c**ompare) for multiple collections, using a separate csv file for the IDs & wrangled spreadsheets path.
