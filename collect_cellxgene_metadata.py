@@ -18,13 +18,13 @@ def define_parser():
     """Defines and returns the argument parser."""
     parser = argparse.ArgumentParser(description="Parser for the arguments")
     parser.add_argument("-c", "--collection_id", action="store",
-                        dest="collection_id", type=str, required=True, help="Collection ID")
+                        dest="collection_id", type=str, required=True, help="Collection id")
     parser.add_argument("-d", "--dataset_id", action="store",
                         dest="dataset_id", type=str, required=False, help="Dataset id")
     parser.add_argument("-l", "--dataset-label", type=str, action="store",
-                        dest="label", help="Label to use instead of collection-dataset")
+                        dest="label", help="Label to use instead of collection/ dataset ids")
     parser.add_argument("-o", "--output_dir", type=str, action="store",
-                        dest="label", help="Label to use instead of collection-dataset")
+                        dest="output_dir", help="Directory for the output files")
     parser.add_argument("-t", "--ingest_token", action="store",
                         dest='token', type=str, required=False,
                         help="Ingest token to query for existing projects with same DOI")
