@@ -8,7 +8,6 @@ import pandas as pd
 from helper_files.tier2_mapping import TIER2_TO_DCP, TIER2_TO_DCP_UPDATE, LUNG_DIGESTION, TIER2_MANUAL_FIX
 from convert_to_dcp import fill_missing_ontology_ids, fill_ontology_labels
 
-
 # Small helpers
 def lower_list_values(l):
     return [field.lower() for field in l]
@@ -34,6 +33,9 @@ def get_fields_per_tab(tier2_df):
 
 def field_is_id(field_name):
     return re.match(r'[\w_]+\.\w+_core\.\w+_id', field_name) is not None
+
+def field_is_protocol(field_name):
+    return re.match(r'^[\w_]+protocol\.\w+', field_name) is not None
 
 def tab_is_protocol(tab_name):
     return re.match(r'.*protocol', tab_name) is not None
@@ -161,7 +163,6 @@ def merge_tier2_with_dcp(tier2_df, wrangled_spreadsheet):
         check_tab_in_spreadsheet(tab_name, wrangled_spreadsheet)
         if len(field_list) == 1 and field_is_id(field_list[0]):
             continue
-        # TODO add protocol to applied biomaterial as well
         removed_fields = set()
         if not tab_is_protocol(tab_name):
             removed_fields = {check_field_already_in_spreadsheet(field, tab_name, wrangled_spreadsheet) for field in field_list}
@@ -171,6 +172,23 @@ def merge_tier2_with_dcp(tier2_df, wrangled_spreadsheet):
         key = get_tab_id(tab_name)
         # perform merge
         wrangled_spreadsheet[tab_name] = merge_sheets(wrangled_spreadsheet, tier2_df, tab_name, field_list, key, is_protocol)
+    return wrangled_spreadsheet
+
+def add_protocol_targets(tier2_df, wrangled_spreadsheet):
+    prot_ids = [col for col in tier2_df if field_is_protocol(col) and field_is_id(col)]
+    # to add dict of protocol: APpLied biomaterial if we have more tier 2 protocols
+    # for now map only dissociation to cell_suspension
+    apl = {'dissociation_protocol.protocol_core.protocol_id': {'from': 'specimen_from_organism.biomaterial_core.biomaterial_id', 'to': 'cell_suspension.biomaterial_core.biomaterial_id'}}
+    for prot_id in prot_ids:
+        if prot_id not in apl:
+            raise KeyError(f'Add protocol {get_entity_type(prot_id)} to protocol biomaterial mapping dictionary')
+        input_b = apl[prot_id]['from']
+        output_b = apl[prot_id]['to']
+        output_e = get_entity_type(output_b)
+        b2p = {row[input_b]: row[prot_id] for _, row in tier2_df[[input_b, prot_id]].iterrows()}
+        if not wrangled_spreadsheet[output_e][prot_id].isna().any():
+            print(f'Merging {get_entity_type(prot_id)} with existing values. Investigate for potential need for merging.')
+        wrangled_spreadsheet[output_e][prot_id] = wrangled_spreadsheet[output_e].apply(lambda x: '||'.join([b2p[x[input_b]], x[prot_id]]), axis=1)
     return wrangled_spreadsheet
 
 def main():
@@ -194,6 +212,7 @@ def main():
     tier2_df = fill_ontology_labels(tier2_df)
 
     merged_df = merge_tier2_with_dcp(tier2_df, wrangled_spreadsheet)
+    merged_df = add_protocol_targets(tier2_df, merged_df)
 
     output_filename = os.path.basename(wrangled_spreadsheet_path).replace(".xlsx", "_Tier2.xlsx")
     with pd.ExcelWriter(os.path.join(output_path, output_filename), engine='openpyxl') as writer:
