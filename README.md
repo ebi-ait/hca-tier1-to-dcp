@@ -42,14 +42,15 @@ This proces is done in 5 steps.
 Tested in python3.9. To run scripts you can run:
 ```bash
 python3 -m pip install -r requirements.txt
-python3 collect_cellxgene_metadata.py -c <CxG collection_id> -t <ingest-token>
-python3 convert_to_dcp.py -c <CxG collection_id> -d <CxG dataset_id>
-python3 compare_with_dcp.py -c <CxG collection_id> -d <CxG dataset_id> -w <previously wrangled spreadsheet path>
-python3 merge_tier2_metadata.py -t2 <tier2_template_path> -ws <wrangled spreadsheet path> -o <output dir path>
-python3 merge_file_manifest.py -f <file_manifest_path> -w <wrangled_spreadsheet path> -t <tier1_spreadsheet path> -o <output_path>
+python3 collect_cellxgene_metadata.py -c <collection_id> -t <ingest-token>
+python3 collect_spreadsheet_metadata.py -t1 <tier1_spreadsheet>
+python3 convert_to_dcp.py -ft <flat_tier1_spreadsheet>
+python3 compare_with_dcp.py -dt <dcp_tier1_spreadsheet> -w <wrangled_spreadsheet>
+python3 merge_tier2_metadata.py -t2 <tier2_metadata> -dt <dt_spreadsheet>
+python3 merge_file_manifest.py -fm <file_manifest> -dt <dt_spreadsheet> -t1 <tier1_spreadsheet>
 ```
 
-Alternatively, you can use the [wrapper_3c.py](wrapper_3c.py) script to run C scripts at once (**c**ollect, **c**onvert, **c**ompare) for multiple collections, using a separate csv file for the IDs & wrangled spreadsheets path. #Need to update collection->label in wrapper
+Alternatively, you can use the [wrapper_3c.py](wrapper_3c.py) script to run 3 scripts at once (**c**ollect, **c**onvert, **c**ompare) for multiple collections, using a separate csv file for the IDs & wrangled spreadsheets path. #Need to update wrapper
 ```bash
 python3 wrapper_3c.py -i input_spreadsheet.tsv
 ```
