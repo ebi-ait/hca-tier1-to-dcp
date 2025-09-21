@@ -110,8 +110,8 @@ def doi_search_ingest(doi, token):
         'Content-Type': 'application/json',
         'Authorization': "Bearer " + token
     }
-    response = requests.request("POST", 'https://api.ingest.archive.data.humancellatlas.org/projects/query?operator=AND',
-                                headers=headers, json=query, timeout=10)
+    response = requests.post('https://api.ingest.archive.data.humancellatlas.org/projects/query?operator=AND',
+                             headers=headers, json=query, timeout=10)
     response.raise_for_status()
     projects = response.json()
     if '_embedded' in projects:
@@ -132,7 +132,7 @@ def doi_search_ingest(doi, token):
 
 def uuid_search_azul(uuid):
     azul_api = 'https://service.azul.data.humancellatlas.org/index/projects/'
-    response = requests.get(azul_api + uuid)
+    response = requests.get(azul_api + uuid, timeout=10)
     if response.ok:
         return 'https://explore.data.humancellatlas/projects/' + uuid
     return response.json()['Message']

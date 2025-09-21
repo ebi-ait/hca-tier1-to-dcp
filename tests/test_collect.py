@@ -98,8 +98,11 @@ def test_extract_and_save_metadata(mock_read, tmp_path, dummy_collection):
     assert any("cell_obs" in f for f in files)
 
 
-@mock.patch("requests.request")
-def test_doi_search_ingest_found(mock_request):
+@mock.patch("requests.post")
+@mock.patch("requests.get")
+def test_doi_search_ingest_found(mock_get, mock_request):
+    mock_get.return_value.ok.return_value = True
+    mock_get.return_value.json.return_value = {"Message": "UUID not found"}
     mock_request.return_value.json.return_value = {
         "_embedded": {
             "projects": [
