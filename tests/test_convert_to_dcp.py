@@ -48,13 +48,13 @@ def mock_all(mocker):
 
 def test_main_happy_path(mock_all):
     """End-to-end test of main() with all dependencies mocked."""
-    fake_file_path = "/fake/dir/fake_file.xlsx"
-    convert_to_dcp.main(file_path=fake_file_path, local_template="fake_template.xlsx")
+    flat_tier1_spreadsheet = "/fake/dir/fake_file.xlsx"
+    convert_to_dcp.main(flat_tier1_spreadsheet=flat_tier1_spreadsheet, output_dir='fake/dir', local_template="fake_template.xlsx")
 
     # Assert export was called at the end
     convert_to_dcp.export_to_excel.assert_called_once()
     # Assert label extraction worked
-    convert_to_dcp.get_label.assert_called_once_with(fake_file_path)
+    convert_to_dcp.get_label.assert_called_once_with(flat_tier1_spreadsheet)
     # Assert metadata readers got correct args
     convert_to_dcp.read_sample_metadata.assert_called_once_with("fake_label", "/fake/dir")
     convert_to_dcp.read_study_metadata.assert_called_once_with("fake_label", "/fake/dir")
@@ -64,11 +64,11 @@ def test_define_parser_parses_args():
     """Check that define_parser parses CLI arguments correctly."""
     parser = convert_to_dcp.define_parser()
     args = parser.parse_args([
-        "--file_path", "input.xlsx",
+        "--flat_tier1_spreadsheet", "input.xlsx",
         "--output_dir", "outdir",
         "--local_template", "template.xlsx",
     ])
 
-    assert args.file_path == "input.xlsx"
+    assert args.flat_tier1_spreadsheet == "input.xlsx"
     assert args.output_dir == "outdir"
     assert args.local_template == "template.xlsx"

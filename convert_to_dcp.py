@@ -36,20 +36,23 @@ from helper_files.constants.tier1_mapping import tier1_to_dcp, collection_dict
 def define_parser():
     """Defines and returns the argument parser."""
     parser = argparse.ArgumentParser(description="Parser for the arguments")
-    parser.add_argument("--file_path", "-f", action="store",
-                        dest="file_path", type=str, required=True, help="Flat Tier 1 spreadsheet path")
-    parser.add_argument("--output_dir", "-o", type=str, default='metadata',
-                        help="Directory to output dcp formated spreadsheet.")
-    parser.add_argument("--local_template", "-l", action="store",
-                        dest="local_template", type=str, required=False, help="Local path of the HCA template")
+    parser.add_argument("-ft", "--flat_tier1_spreadsheet", action="store",
+                        dest="flat_tier1_spreadsheet", type=str, required=True,
+                        help="Flattened tier 1 spreadsheet path")
+    parser.add_argument("-o", "--output_dir", action="store",
+                        dest="output_dir", type=str, required=False, default='metadata',
+                        help="Directory for the output files")
+    parser.add_argument("-lt", "--local_template", action="store",
+                        dest="local_template", type=str, required=False,
+                        help="Local path of the HCA spreadsheet template")
     return parser
 
-def main(file_path, local_template=None):
-    label = get_label(file_path)
-    dir_name = os.path.dirname(file_path)
+def main(flat_tier1_spreadsheet, output_dir, local_template=None):
+    label = get_label(flat_tier1_spreadsheet)
+    input_dir = os.path.dirname(flat_tier1_spreadsheet)
     print(f"{BOLD_START}READING FILES{BOLD_END}")
-    sample_metadata = read_sample_metadata(label, dir_name)
-    study_metadata = read_study_metadata(label, dir_name)
+    sample_metadata = read_sample_metadata(label, input_dir)
+    study_metadata = read_study_metadata(label, input_dir)
     
     # Edit conditionally mapped fields
     print(f"{BOLD_START}CONVERTING METADATA{BOLD_END}")
@@ -95,11 +98,11 @@ def main(file_path, local_template=None):
     check_required_fields(dcp_spreadsheet)
 
     print(f"{BOLD_START}EXPORTING SPREADSHEET{BOLD_END}")
-    export_to_excel(dcp_spreadsheet, dir_name, label, local_template)
+    export_to_excel(dcp_spreadsheet, output_dir, label, local_template)
 
 BOLD_START = '\033[1m'
 BOLD_END = '\033[0;0m'
 
 if __name__ == "__main__":
     args = define_parser().parse_args()
-    main(file_path=args.file_path, local_template=args.local_template)
+    main(flat_tier1_spreadsheet=args.flat_tier1_spreadsheet, output_dir=args.output_dir, local_template=args.local_template)

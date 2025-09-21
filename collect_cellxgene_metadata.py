@@ -21,19 +21,23 @@ def define_parser():
     """Defines and returns the argument parser."""
     parser = argparse.ArgumentParser(description="Parser for the arguments")
     parser.add_argument("-c", "--collection_id", action="store",
-                        dest="collection_id", type=str, required=True, help="Collection id")
+                        dest="collection_id", type=str, required=True,
+                        help="Collection id (uuid) of the collection to download file from")
     parser.add_argument("-d", "--dataset_id", action="store",
-                        dest="dataset_id", type=str, required=False, help="Dataset id")
-    parser.add_argument("-l", "--dataset-label", type=str, action="store",
-                        dest="label", help="Label to use instead of collection/ dataset ids")
-    parser.add_argument("-o", "--output_dir", type=str, action="store", default='metadata',
-                        dest="output_dir", help="Directory for the output files")
+                        dest="dataset_id", type=str, required=False,
+                        help="Dataset id (uuid) of the file to download")
+    parser.add_argument("-l", "--dataset-label", action="store",
+                        dest="label", type=str, required=False,
+                        help="Label to use instead of collection/ dataset ids")
+    parser.add_argument("-o", "--output_dir", action="store",
+                        dest="output_dir", type=str, required=False, default='metadata',
+                        help="Directory for the output files")
     parser.add_argument("-t", "--ingest_token", action="store",
                         dest='token', type=str, required=False,
                         help="Ingest token to query for existing projects with same DOI")
     return parser
 
-def main(collection_id, dataset_id=None, label=None, output_dir="metadata", token=None): 
+def main(collection_id, dataset_id=None, label=None, output_dir="metadata", token=None):
 
     # Query collection data
     collection = get_collection_data(collection_id)

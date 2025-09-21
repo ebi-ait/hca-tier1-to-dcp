@@ -62,7 +62,7 @@ def test_main_outputs_flattened_df(mock_spreadsheet_data):
          patch('collect_spreadsheet_metadata.filename_suffixed', return_value='output.csv') as mock_filename, \
          patch('pandas.DataFrame.to_csv', new=fake_to_csv):
 
-        label = main('testfile.xlsx', '.')
+        label = main('metadata/testfile.xlsx', 'output')
 
     assert label == 'testfile'
 

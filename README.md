@@ -2,7 +2,7 @@
 Convert Human Cell Atlas Tier 1 metadata extracted out of an anndata object of a published CELLxGENE dataset,into [HCA DCP metadata schema](https://github.com/HumanCellAtlas/metadata-schema/tree/master/json_schema) ingestible [spreadsheet](https://github.com/ebi-ait/geo_to_hca/tree/master/template).
 
 ## Algorithm
-This convertion is done in 3 steps.
+This proces is done in 5 steps.
 1. Pull data from CxG [collect_cellxgene_metadata.py](collect_cellxgene_metadata.py) or spreadsheet [collect_spreadsheet_metadata.py](collect_spreadsheet_metadata.py)
     - from CxG
     1. Given a collection_id, select dataset and download h5ad
@@ -55,28 +55,35 @@ python3 wrapper_3c.py -i input_spreadsheet.tsv
 ```
 
 ### Arguments
-- `--collection_id` or `-c`: CxG collection_id of the project. 
-    - i.e. `c353707f-09a4-4f12-92a0-cb741e57e5f0`, `dc3a5256-5c39-4a21-ac0c-4ede3e7b2323`, `20eea6c8-9d64-42c9-9b6f-c11b5249e0e9`
-- `--dataset_id` or `-d`: Pre-select the CxG dataset_id to download.
-    - i.e. `124744b8-4681-474a-9894-683896122708`, `0bae7ebf-eb54-46a6-be9a-3461cecefa4c`, `2e9d2f32-4cfb-49b5-b990-cbf4c241214e`
-- `--dataset-label` or `-l`: Label to use instead of collection/ dataset ids.
-- `--file_path` or `-f`: Flat Tier 1 spreadsheet path.
-- `--tier1_path` or `-t`: DCP-formated Tier 1 spreadsheet path.
-- `--wrangled-path` or `-w`: Path of previously wrangled spreadsheet to compare with converted from tier 1 spreadsheet
-    - i.e. [`metadata/scAgingHumanMaleSkin_metadata_03-08-2023.xlsx`](https://explore.data.humancellatlas.org/projects/10201832-7c73-4033-9b65-3ef13d81656a)
-- `--ingest-token` or `-t`: Token of ingest for collecting DOI info from [ingest](https://contribute.data.humancellatlas.org/)
-- `--local_template` or `-l`: Local instance of [hca_template.xlsx](https://github.com/ebi-ait/geo_to_hca/raw/master/template/hca_template.xlsx)
-- `--tier2_metadata` or `-t2`: Path of tier 2 spreadsheet to merge with dcp spreadsheet
+- `--collection_id` or `-c`: Collection id (uuid) of the collection to download file from
+- `--dataset_id` or `-d`: Dataset id (uuid) of the file to download
+- `--dataset-label` or `-l`: Label to use instead of collection/ dataset ids
+- `--output_dir` or `-o`: Directory for the output files
+- `--ingest_token` or `-t`: [Ingest](https://contribute.data.humancellatlas.org/) token to query for existing projects with same DOI
+- `--tier1_spreadsheet` or `-t1`: Submitted tier 1 spreadsheet file path
+- `--flat_tier1_path` or `-ft`: Flattened tier 1 spreadsheet path
+- `--local_template` or `-lt`: Local path of the [hca_template.xlsx](https://github.com/ebi-ait/geo_to_hca/raw/master/template/hca_template.xlsx)
+- `--dcp-tier1-spreadsheet` or `-dt`: DCP formeted tier 1 spreadsheet path
+- `--wrangled_spreadsheet` or `-w`: Previously wrangled project spreadsheet path
+- `--unequal_comparisson` or `-u`: Automaticly continue comparing even if biomaterials are not equal
+- `--file_manifest` or `-fm`: File manifest path
+- `--tier2_metadata` or `-t2`: Tier 2 spreadsheet file path
 
 #### Requirement of arguments per script
-| args | [collect](collect_cellxgene_metadata.py) | [convert](convert_to_dcp.py) | [compare](compare_with_dcp.py) | [merge T2](merge_tier2_metadata.py)
-| ---- | ---------- | ---------- | ---------- | ------ | 
-| `--collection_id`, `-c` | required | required | required | n/a |
-| `--dataset_id`, `-d` | optional | optional | optional | n/a |
-| `--dataset-label`, `-l` | optional | n/a | n/a | n/a | 
-| `--file_path` or `-f` | n/a | required | n/a | n/a |
-| `--tier1_path` or `-t` | n/a | n/a | required | n/a |
-| `--wrangled_path`, `-w` | n/a | n/a | required | required |
-| `--ingest_token`, `-t` | optional | n/a | n/a | n/a |
-| `--local_template`, `-l` | n/a | optional | n/a | n/a |
-| `--tier2_metadata`, `-t2` | n/a | n/a | n/a | required |
+**R**: Required
+**o**: optional
+| args | [collect CxG](collect_cellxgene_metadata.py) | [collect excel](collect_cellxgene_metadata.py) | [convert](convert_to_dcp.py) | [compare](compare_with_dcp.py) | [merge T2](merge_tier2_metadata.py) | [merge file manifest](merge_file_manifest.py) |
+| ---- | ---------- | ---------- | ---------- | ------ | ------ | ------ | 
+| `--collection_id`, `-c` | R |  |  |  |  | 
+| `--dataset_id`, `-d` | o |  |  |  |  | 
+| `--dataset-label`, `-l` | o |  |  |  |  | 
+| `--output_dir`, `-o` | o | o | o |  | o | o
+| `--ingest_token`, `-t` | o |  |  |  |  | 
+| `--tier1_spreadsheet`, `-t1` |  | R |  |  |  | R
+| `--flat_tier1_path`, `-ft` |  |  | R |  |  | 
+| `--local_template`, `-lt` |  |  | o |  |  | 
+| `--dcp-tier1-spreadsheet`, `-dt` |  |  |  | R | R | R
+| `--wrangled_spreadsheet`, `-w` |  |  |  | R |  | 
+| `--unequal_comparisson`, `-u` |  |  |  | o |  | 
+| `--file_manifest`, `-fm` |  |  |  |  |  | R
+| `--tier2_metadata`, `-t2` |  |  |  |  | R | 
