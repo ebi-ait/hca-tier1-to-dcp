@@ -21,7 +21,7 @@ def define_parse():
     parser.add_argument("-fm", "--file_manifest", action='store', 
                         dest="file_manifest", type=str, required=True,
                         help="File manifest path")
-    parser.add_argument("-tw", "--dcp_tier1_spreadsheet", action="store",
+    parser.add_argument("-dt", "--dcp_tier1_spreadsheet", action="store",
                         dest="dt_spreadsheet", type=str, required=True,
                         help="DCP formeted tier 1 spreadsheet path")
     parser.add_argument("-t1", "--tier1_spreadsheet", action="store",
