@@ -10,7 +10,8 @@ from helper_files.convert import (
     tab_to_entity,
     make_protocol_name,
     collapse_values,
-    ols_label
+    ols_label,
+    flatten_tiered_spreadsheet
 )
 
 def test_tab_entity_roundtrip():
@@ -41,3 +42,11 @@ def test_ols_label(mock_get, term, expected):
     mock_get.return_value.json.return_value = {"label": expected}
     label = ols_label(term)
     assert label == expected
+
+from tests.test_merge import tier1_spreadsheet
+def test_flatten_tier1(tier1_spreadsheet):
+    flat = flatten_tiered_spreadsheet(tier1_spreadsheet)
+    assert "dataset_id" in flat
+    assert "sample_id" in flat
+    assert "donor_id" in flat
+
