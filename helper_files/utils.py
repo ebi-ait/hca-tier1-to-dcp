@@ -1,8 +1,7 @@
 import os
 import re
-import pandas as pd
 from pathlib import Path
-from typing import Optional
+import pandas as pd
 
 def get_label(filename: str) -> str:
     label = Path(filename).stem  # strip extension

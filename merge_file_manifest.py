@@ -3,7 +3,7 @@ import argparse
 import pandas as pd
 
 from helper_files.constants.file_mapping import FILE_MANIFEST_MAPPING, TIER_1_MAPPING, FASTQ_STANDARD_FIELDS
-from helper_files.file_io import open_spreadsheet
+from helper_files.utils import open_spreadsheet
 
 LAST_BIOMATERIAL = 'cell_suspension.biomaterial_core.biomaterial_id'
 

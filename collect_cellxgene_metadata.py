@@ -7,7 +7,7 @@ import requests
 import anndata
 
 from helper_files.constants.tier1_mapping import tier1, tier1_list
-from helper_files.file_io import filename_suffixed
+from helper_files.utils import filename_suffixed
 
 BOLD_START = '\033[1m'
 BOLD_END = '\033[0;0m'

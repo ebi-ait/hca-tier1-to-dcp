@@ -9,7 +9,7 @@ from packaging.version import parse as parse_version
 
 from helper_files.constants.tier1_mapping import tier1_to_dcp, collection_dict, prot_def_field, tier1_enum, dev_to_age_dict, age_to_dev_dict
 from helper_files.constants.required_fields import required_fields
-from helper_files.file_io import get_label, filename_suffixed
+from helper_files.utils import get_label, filename_suffixed
 
 
 def define_parser():

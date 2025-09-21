@@ -7,7 +7,7 @@ import pandas as pd
 
 from helper_files.constants.tier2_mapping import TIER2_TO_DCP, TIER2_TO_DCP_UPDATE, LUNG_DIGESTION, TIER2_MANUAL_FIX
 from helper_files.constants.dcp_required import dcp_required_entities
-from helper_files.file_io import open_spreadsheet
+from helper_files.utils import open_spreadsheet
 from convert_to_dcp import fill_missing_ontology_ids, fill_ontology_labels
 
 # Small helpers

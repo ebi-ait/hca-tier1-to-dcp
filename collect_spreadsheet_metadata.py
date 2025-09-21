@@ -2,7 +2,7 @@ import os
 import argparse
 import pandas as pd
 
-from helper_files.file_io import filename_suffixed, open_spreadsheet, get_label
+from helper_files.utils import filename_suffixed, open_spreadsheet, get_label
 
 def define_parser():
     """Defines and returns the argument parser."""
