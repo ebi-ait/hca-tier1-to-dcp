@@ -4,6 +4,7 @@ import pandas as pd
 
 from helper_files.constants.file_mapping import FILE_MANIFEST_MAPPING, TIER_1_MAPPING, FASTQ_STANDARD_FIELDS
 from helper_files.utils import open_spreadsheet
+from helper_files.convert import flatten_tier1
 
 LAST_BIOMATERIAL = 'cell_suspension.biomaterial_core.biomaterial_id'
 
@@ -14,15 +15,6 @@ def define_parse():
     parser.add_argument("--tier1_spreadsheet", "-t1", type=str, required=True, help="Path to the Tier 1 metadata excel file.")
     parser.add_argument("--output_path", "-o", type=str, default="metadata", help="Path to save the merged output excel file.")
     return parser
-
-def flatten_tier1(df):
-    dataset_metadata = df['Tier 1 Dataset Metadata']
-    donor_metadata = df['Tier 1 Donor Metadata']
-    sample_metadata = df['Tier 1 Sample Metadata']
-    if 'dataset_id' in sample_metadata:
-        donor_metadata = donor_metadata.drop(columns=['dataset_id'])
-    return pd.merge(sample_metadata, donor_metadata, on='donor_id', how='inner').merge(dataset_metadata, on='dataset_id', how='inner')
-
 
 def merge_file_manifest(wrangled_spreadsheet, file_manifest, file_mapping_dictionary):
     """Merge file manifest tab into wrangled spreadsheet and return wrangled_spreadsheet"""

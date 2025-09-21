@@ -1,8 +1,8 @@
 import os
 import argparse
-import pandas as pd
 
 from helper_files.utils import filename_suffixed, open_spreadsheet, get_label
+from helper_files.convert import flatten_tier1
 
 def define_parser():
     """Defines and returns the argument parser."""
@@ -12,21 +12,13 @@ def define_parser():
                         help="Directory for summary files inside <project_dir>/metadata/<spreadsheet_dir>.")
     return parser
 
-def flatten_tier1(df):
-    if 'Tier 1 Dataset Metadata' not in df:
-        raise KeyError('Tab name `Tier 1 Dataset Metadata` not found in spreadsheet. Is it Tier 1?')
-    dataset_metadata = df['Tier 1 Dataset Metadata']
-    donor_metadata = df['Tier 1 Donor Metadata']
-    sample_metadata = df['Tier 1 Sample Metadata']
-    if 'dataset_id' in sample_metadata:
-        donor_metadata = donor_metadata.drop(columns=['dataset_id'])
-    return pd.merge(sample_metadata, donor_metadata, on='donor_id', how='inner').merge(dataset_metadata, on='dataset_id', how='inner')
-
 def main(file_name, input_dir):
     label = get_label(file_name)
     print(f"Processing file {file_name}", end=' ')
     file_path = os.path.join(f'{input_dir}/{file_name}')
     df = open_spreadsheet(file_path)
+    if 'Tier 1 Dataset Metadata' not in df:
+        raise KeyError('Tab name `Tier 1 Dataset Metadata` not found in spreadsheet. Is it Tier 1?')
     if 'Tier 1 Celltype Metadata' in df:
         del df['Tier 1 Celltype Metadata']
     csv = flatten_tier1(df)

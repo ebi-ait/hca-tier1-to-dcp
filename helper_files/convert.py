@@ -571,3 +571,12 @@ def export_to_excel(dcp_spreadsheet, dir_name, label, local_template):
             if not data.empty:
                 pd.concat([dcp_headers[tab_name], data], ignore_index=True).to_excel(writer, sheet_name=tab_name, index=False, header=False)
     print(f'Exported to {output_path}')
+
+def flatten_tier1(df):
+    dataset_metadata = df['Tier 1 Dataset Metadata']
+    donor_metadata = df['Tier 1 Donor Metadata']
+    sample_metadata = df['Tier 1 Sample Metadata']
+    if 'dataset_id' in sample_metadata:
+        donor_metadata = donor_metadata.drop(columns=['dataset_id'])
+    return pd.merge(sample_metadata, donor_metadata, on='donor_id', how='inner').merge(dataset_metadata, on='dataset_id', how='inner')
+
