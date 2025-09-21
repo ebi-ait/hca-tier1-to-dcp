@@ -3,6 +3,7 @@ import argparse
 import pandas as pd
 
 from helper_files.constants.file_mapping import FILE_MANIFEST_MAPPING, TIER_1_MAPPING, FASTQ_STANDARD_FIELDS
+from helper_files.file_io import open_spreadsheet
 
 LAST_BIOMATERIAL = 'cell_suspension.biomaterial_core.biomaterial_id'
 
@@ -13,21 +14,6 @@ def define_parse():
     parser.add_argument("--tier1_spreadsheet", "-t1", type=str, required=True, help="Path to the Tier 1 metadata excel file.")
     parser.add_argument("--output_path", "-o", type=str, default="metadata", help="Path to save the merged output excel file.")
     return parser
-
-
-def open_spreadsheet(spreadsheet_path, tab_name=None, skip_dcp_rows=True, index_col=False):
-    if not os.path.exists(spreadsheet_path):
-        raise FileNotFoundError(f"File not found at {spreadsheet_path}")
-    try:
-        return pd.read_excel(spreadsheet_path,
-                             sheet_name=tab_name,
-                             skiprows=[0, 1, 2, 4] if skip_dcp_rows else [],
-                             index_col=index_col)
-    except Exception as e:
-        raise ValueError(
-            f"Error reading spreadsheet file: {e} for {spreadsheet_path}"
-        ) from e
-
 
 def flatten_tier1(df):
     dataset_metadata = df['Tier 1 Dataset Metadata']
@@ -61,7 +47,7 @@ def add_standard_fields(wrangled_spreadsheet, standard_values_dictionary):
 def add_tier1_fields(wrangled_spreadsheet, tier1_spreadsheet, tier1_to_file_dictionary):
     """Add info from tier1 into seq file tab."""
     if any(key not in tier1_spreadsheet for key in tier1_to_file_dictionary.keys()):
-        raise KeyError(f'Did not find in tier 1 spreadsheet {[key not in tier1_spreadsheet for key in tier1_to_file_dictionary.keys()]}')
+        raise KeyError(f'Did not find {[key for key in tier1_to_file_dictionary.keys() if key not in tier1_spreadsheet]} in tier 1 spreadsheet')
     tier1_mapped = tier1_spreadsheet[tier1_to_file_dictionary.keys()].rename(columns=tier1_to_file_dictionary)
     tier1_mapped = get_dcp_protocol_ids(tier1_mapped, wrangled_spreadsheet)
     wrangled_spreadsheet['Sequence file'] = wrangled_spreadsheet['Sequence file'].merge(tier1_mapped,
@@ -131,7 +117,7 @@ def main():
     wrangled_spreadsheet = open_spreadsheet(args.wrangled_spreadsheet)
     if 'Sequence file' in wrangled_spreadsheet:
         del wrangled_spreadsheet['Sequence file']
-    tier1_spreadsheet = open_spreadsheet(args.tier1_spreadsheet, skip_dcp_rows=False, index_col=0)
+    tier1_spreadsheet = open_spreadsheet(args.tier1_spreadsheet)
     tier1_spreadsheet = flatten_tier1(tier1_spreadsheet)
 
     wrangled_spreadsheet = merge_file_manifest(wrangled_spreadsheet, file_manifest, FILE_MANIFEST_MAPPING)

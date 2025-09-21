@@ -21,13 +21,13 @@ def filename_suffixed(
     basename = f"{label}_{suffix}.{ext}"
     return os.path.join(dir_name, basename)
 
-def detect_excel_format(spreadsheet_path):
+def detect_excel_format(spreadsheet_path, tab_name=None):
     """DCP, HLCA, Gut, Tracker and dcp-to-tier1 use small variations of the DCP spreadsheet.
     here we want to detect which variation is automatically and open to have programmatic name as header and from row 1+ the values"""
     df = pd.read_excel(spreadsheet_path, sheet_name=None, nrows=10, header=None)
 
-    donor_tab = re.compile(r'donor', re.IGNORECASE)
-    tab_name = next((k for k in df.keys() if donor_tab.search(k)), list(df.keys())[0])
+    donor_file_tab = re.compile(r'donor', re.IGNORECASE)
+    tab_name = next((k for k in df.keys() if donor_file_tab.search(k)), list(df.keys())[0]) if not tab_name else tab_name
     df = {k: d.fillna('').astype(str) for k,d in df.items()}
 
     if len(df[tab_name]) < 4:
@@ -35,7 +35,7 @@ def detect_excel_format(spreadsheet_path):
         return None
 
     # DCP/ HLCA Tier 1 format
-    donor_field = re.compile(r'^donor_id$|^donor_organism.biomaterial_core.biomaterial_id$', re.IGNORECASE)
+    donor_field = re.compile(r'^donor_id$|^donor_organism.biomaterial_core.biomaterial_id|file_name$', re.IGNORECASE)
     if df[tab_name].iloc[3].str.match(donor_field).any():
         return [0, 1, 2, 4]
     # Gut format

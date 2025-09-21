@@ -6,7 +6,8 @@ from collections import defaultdict
 import pandas as pd
 
 from helper_files.constants.tier2_mapping import TIER2_TO_DCP, TIER2_TO_DCP_UPDATE, LUNG_DIGESTION, TIER2_MANUAL_FIX
-from helper_files.constants.dcp_required import dcp_required_entities, dcp_required_modules
+from helper_files.constants.dcp_required import dcp_required_entities
+from helper_files.file_io import open_spreadsheet
 from convert_to_dcp import fill_missing_ontology_ids, fill_ontology_labels
 
 # Small helpers
@@ -78,14 +79,6 @@ def define_parse():
     parser.add_argument('--wrangled_spreadsheet', '-w', type=str, required=True, help="Path to the wrangled spreadsheet excel file.")
     parser.add_argument('--output_path', '-o', type=str, default='metadata', help="Path to save the merged output excel file.")
     return parser
-
-def open_dcp_spreadsheet(spreadsheet_path):
-    if not os.path.exists(spreadsheet_path):
-        raise FileNotFoundError(f"File not found at {spreadsheet_path}")
-    try:
-        return pd.read_excel(spreadsheet_path, sheet_name=None, skiprows=[0, 1, 2, 4])
-    except Exception as e:
-        raise ValueError(f"Error reading spreadsheet file: {e} for {spreadsheet_path}") from e
 
 def rename_tier2_columns(tier2_df, tier2_to_dcp):
     mapped_fields = list(tier2_to_dcp.keys()) + TIER2_MANUAL_FIX['dcp']
@@ -214,8 +207,8 @@ def main():
 
     all_tier2 = {**TIER2_TO_DCP, **TIER2_TO_DCP_UPDATE}
 
-    tier2_excel = open_dcp_spreadsheet(tier2_metadata_path)
-    wrangled_spreadsheet = open_dcp_spreadsheet(wrangled_spreadsheet_path)
+    tier2_excel = open_spreadsheet(tier2_metadata_path)
+    wrangled_spreadsheet = open_spreadsheet(wrangled_spreadsheet_path)
 
     tier2_df = flatten_tier2_spreadsheet(tier2_excel)
     tier2_df = rename_tier2_columns(tier2_df, all_tier2)
