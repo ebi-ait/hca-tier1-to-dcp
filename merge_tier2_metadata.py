@@ -20,8 +20,8 @@ from helper_files.merge import (
 
 def define_parse():
     parser = argparse.ArgumentParser(description="Merge Tier 2 metadata into DCP format.")
-    parser.add_argument('-t2', '--tier2_metadata', action="store",
-                        dest="tier2_metadata", type=str, required=True,
+    parser.add_argument('-t2', '--tier2_spreadsheet', action="store",
+                        dest="tier2_spreadsheet", type=str, required=True,
                         help="Submitted tier 2 spreadsheet file path")
     parser.add_argument("-dt", "--dt_spreadsheet", action="store",
                         dest="dt_spreadsheet", type=str, required=True,
@@ -35,13 +35,13 @@ def main():
     parser = define_parse()
     args = parser.parse_args()
 
-    tier2_metadata_path = args.tier2_metadata
+    tier2_spreadsheet_path = args.tier2_spreadsheet
     dt_spreadsheet_path = args.dt_spreadsheet
     output_path = args.output_path
 
     all_tier2 = {**TIER2_TO_DCP, **TIER2_TO_DCP_UPDATE}
 
-    tier2_excel = open_spreadsheet(tier2_metadata_path)
+    tier2_excel = open_spreadsheet(tier2_spreadsheet_path)
     dt_spreadsheet = open_spreadsheet(dt_spreadsheet_path)
 
     tier2_df = flatten_tiered_spreadsheet(tier2_excel, merge_type='outer')
