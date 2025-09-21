@@ -8,7 +8,7 @@ import pandas as pd
 from helper_files.constants.tier2_mapping import TIER2_TO_DCP, TIER2_TO_DCP_UPDATE, LUNG_DIGESTION, TIER2_MANUAL_FIX
 from helper_files.constants.dcp_required import dcp_required_entities
 from helper_files.utils import open_spreadsheet
-from convert_to_dcp import fill_missing_ontology_ids, fill_ontology_labels
+from helper_files.convert import fill_missing_ontology_ids, fill_ontology_labels, flatten_tiered_spreadsheet
 
 # Small helpers
 def lower_list_values(l):
@@ -210,7 +210,7 @@ def main():
     tier2_excel = open_spreadsheet(tier2_metadata_path)
     wrangled_spreadsheet = open_spreadsheet(wrangled_spreadsheet_path)
 
-    tier2_df = flatten_tier2_spreadsheet(tier2_excel)
+    tier2_df = flatten_tiered_spreadsheet(tier2_excel, merge_type='outer')
     tier2_df = rename_tier2_columns(tier2_df, all_tier2)
     print('\nPull ontology ids from fields:')
     tier2_df = fill_missing_ontology_ids(tier2_df)

@@ -2,7 +2,7 @@ import os
 import argparse
 
 from helper_files.utils import filename_suffixed, open_spreadsheet, get_label
-from helper_files.convert import flatten_tier1
+from helper_files.convert import flatten_tiered_spreadsheet
 
 def define_parser():
     """Defines and returns the argument parser."""
@@ -21,7 +21,7 @@ def main(file_name, input_dir):
         raise KeyError('Tab name `Tier 1 Dataset Metadata` not found in spreadsheet. Is it Tier 1?')
     if 'Tier 1 Celltype Metadata' in df:
         del df['Tier 1 Celltype Metadata']
-    csv = flatten_tier1(df)
+    csv = flatten_tiered_spreadsheet(df)
     csv.rename({'assay_ontology_term': 'assay', 'tissue_ontology_term': 'tissue', 'sex_ontology_term': 'sex', 'age_range': 'age'}, axis=1, inplace=True)
     output_filename = filename_suffixed(input_dir, label, 'metadata')
     csv.to_csv(output_filename, index=False)

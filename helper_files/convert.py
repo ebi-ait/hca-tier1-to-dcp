@@ -9,6 +9,8 @@ from helper_files.constants.tier1_mapping import collection_dict, prot_def_field
 from helper_files.constants.required_fields import required_fields
 from helper_files.utils import filename_suffixed, BOLD_START, BOLD_END
 
+KEY_COLS = ["donor_id", "sample_id", "dataset_id", "library_id"]
+
 def read_sample_metadata(label, dir_name):
     try:
         sample_metadata_path = filename_suffixed(dir_name, label, "metadata")
@@ -572,11 +574,22 @@ def export_to_excel(dcp_spreadsheet, dir_name, label, local_template):
                 pd.concat([dcp_headers[tab_name], data], ignore_index=True).to_excel(writer, sheet_name=tab_name, index=False, header=False)
     print(f'Exported to {output_path}')
 
-def flatten_tier1(df):
-    dataset_metadata = df['Tier 1 Dataset Metadata']
-    donor_metadata = df['Tier 1 Donor Metadata']
-    sample_metadata = df['Tier 1 Sample Metadata']
-    if 'dataset_id' in sample_metadata:
-        donor_metadata = donor_metadata.drop(columns=['dataset_id'])
-    return pd.merge(sample_metadata, donor_metadata, on='donor_id', how='inner').merge(dataset_metadata, on='dataset_id', how='inner')
-
+def flatten_tiered_spreadsheet(tiered_spreadsheet, merge_type='inner', drop_na=True):
+    flat_df = pd.DataFrame()
+    for tab_name, tab_data in tiered_spreadsheet.items():
+        tab_data = tab_data.rename(columns=str.lower)
+        if tab_data.empty:
+            continue
+        if flat_df.empty:
+            flat_df = tab_data
+            continue
+        key_cols = [col for col in KEY_COLS if col in tab_data.columns and col in flat_df.columns]
+        if len(key_cols) > 1:
+            tab_data = tab_data.drop(columns=key_cols[1:])
+        if not key_cols:
+            raise ValueError(f"No common key column found for tab '{tab_name}'. Expected one of {KEY_COLS}.")
+        key_col = key_cols[0]
+        flat_df = pd.merge(flat_df, tab_data, how=merge_type, on=key_col)
+    if drop_na:
+        flat_df = flat_df.dropna(axis=1, how="all")
+    return flat_df

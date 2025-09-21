@@ -4,7 +4,7 @@ import pandas as pd
 
 from helper_files.constants.file_mapping import FILE_MANIFEST_MAPPING, TIER_1_MAPPING, FASTQ_STANDARD_FIELDS
 from helper_files.utils import open_spreadsheet
-from helper_files.convert import flatten_tier1
+from helper_files.convert import flatten_tiered_spreadsheet
 
 LAST_BIOMATERIAL = 'cell_suspension.biomaterial_core.biomaterial_id'
 
@@ -110,7 +110,7 @@ def main():
     if 'Sequence file' in wrangled_spreadsheet:
         del wrangled_spreadsheet['Sequence file']
     tier1_spreadsheet = open_spreadsheet(args.tier1_spreadsheet)
-    tier1_spreadsheet = flatten_tier1(tier1_spreadsheet)
+    tier1_spreadsheet = flatten_tiered_spreadsheet(tier1_spreadsheet)
 
     wrangled_spreadsheet = merge_file_manifest(wrangled_spreadsheet, file_manifest, FILE_MANIFEST_MAPPING)
     wrangled_spreadsheet = add_standard_fields(wrangled_spreadsheet, FASTQ_STANDARD_FIELDS)

@@ -2,7 +2,8 @@ import pytest
 import pandas as pd
 from unittest.mock import patch
 
-from collect_spreadsheet_metadata import flatten_tier1, main
+from collect_spreadsheet_metadata import main
+from helper_files.convert import flatten_tiered_spreadsheet
 
 def test_flatten_tier1_merges_correctly():
     dataset_metadata = pd.DataFrame({'dataset_id': [1], 'dataset_col': ['A']})
@@ -15,15 +16,16 @@ def test_flatten_tier1_merges_correctly():
         'Tier 1 Sample Metadata': sample_metadata
     }
 
-    result = flatten_tier1(df)
+    result = flatten_tiered_spreadsheet(df)
     for col in ['sample_id', 'donor_id', 'dataset_id', 'sample_col', 'donor_col', 'dataset_col']:
         assert col in result.columns
     assert result.shape[0] == 1
 
-def test_flatten_tier1_missing_tab_raises():
-    df = {'Tier 1 Donor Metadata': pd.DataFrame(), 'Tier 1 Sample Metadata': pd.DataFrame()}
-    with pytest.raises(KeyError):
-        flatten_tier1(df)
+def test_flatten_miss_key_raises():
+    df = {'Tier 1 Donor Metadata': pd.DataFrame([{'dataset_id': ['d1']}]),
+          'Tier 1 Sample Metadata': pd.DataFrame([{'sample_id': ['s1']}])}
+    with pytest.raises(ValueError):
+        flatten_tiered_spreadsheet(df)
 
 @pytest.fixture
 def mock_spreadsheet_data():
