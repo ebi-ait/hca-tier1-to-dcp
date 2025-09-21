@@ -3,6 +3,9 @@ import re
 from pathlib import Path
 import pandas as pd
 
+BOLD_START = '\033[1m'
+BOLD_END = '\033[0;0m'
+
 def get_label(filename: str) -> str:
     label = Path(filename).stem  # strip extension
     label = re.sub(r'hca[_\s-]*tier[_\s-]*1[_\s-]*metadata', '', label, flags=re.I)

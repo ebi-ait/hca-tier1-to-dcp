@@ -4,10 +4,8 @@ import requests
 import pandas as pd
 
 from helper_files.constants.tier1_mapping import tier1, tier1_list
-from helper_files.utils import filename_suffixed
+from helper_files.utils import filename_suffixed, BOLD_START, BOLD_END
 
-BOLD_START = '\033[1m'
-BOLD_END = '\033[0;0m'
 CXG_API = 'https://api.cellxgene.cziscience.com/curation/v1'
 DEFAULT_CHUNK = 1024 * 1024
 
