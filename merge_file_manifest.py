@@ -32,30 +32,30 @@ def define_parse():
                         help="Directory for the output files")
     return parser
 
-def main(file_manifest, dt_spreadsheet, tier1_spreadsheet, output_path):
+def main(file_manifest, dt_spreadsheet, tier1_spreadsheet, output_dir):
 
     file_manifest = open_spreadsheet(spreadsheet_path=file_manifest, tab_name="File_manifest")
-    dt_spreadsheet = open_spreadsheet(dt_spreadsheet)
-    if 'Sequence file' in dt_spreadsheet:
-        del dt_spreadsheet['Sequence file']
+    dt_df = open_spreadsheet(dt_spreadsheet)
+    if 'Sequence file' in dt_df:
+        del dt_df['Sequence file']
     tier1_spreadsheet = open_spreadsheet(tier1_spreadsheet)
     tier1_spreadsheet = flatten_tiered_spreadsheet(tier1_spreadsheet)
 
-    dt_spreadsheet = merge_file_manifest(dt_spreadsheet, file_manifest, FILE_MANIFEST_MAPPING)
-    dt_spreadsheet = add_standard_fields(dt_spreadsheet, FASTQ_STANDARD_FIELDS)
-    dt_spreadsheet = add_tier1_fields(dt_spreadsheet, tier1_spreadsheet, TIER_1_MAPPING)
-    perform_checks(dt_spreadsheet)
+    dt_df = merge_file_manifest(dt_df, file_manifest, FILE_MANIFEST_MAPPING)
+    dt_df = add_standard_fields(dt_df, FASTQ_STANDARD_FIELDS)
+    dt_df = add_tier1_fields(dt_df, tier1_spreadsheet, TIER_1_MAPPING)
+    perform_checks(dt_df)
 
     output_filename = os.path.basename(dt_spreadsheet).replace(".xlsx", "_fastqed.xlsx")
-    with pd.ExcelWriter(os.path.join(output_path, output_filename), engine='openpyxl') as writer:
-        for tab_name, df in dt_spreadsheet.items():
+    with pd.ExcelWriter(os.path.join(output_dir, output_filename), engine='openpyxl') as writer:
+        for tab_name, df in dt_df.items():
             # add empty row for "FILL OUT INFORMATION BELOW THIS ROW" row
             df = df.reindex(index=[-1] + list(df.index)).reset_index(drop=True)
             df.to_excel(writer, sheet_name=tab_name, index=False, startrow=3)
 
-    print(f"File metadata has been added to {os.path.join(output_path, output_filename)}.")
+    print(f"File metadata has been added to {os.path.join(output_dir, output_filename)}.")
 
 if __name__ == "__main__":
     args = define_parse().parse_args()
     main(file_manifest=args.file_manifest, dt_spreadsheet=args.dt_spreadsheet,
-         tier1_spreadsheet=args.tier1_spreadsheet, output_path=args.output_path)
+         tier1_spreadsheet=args.tier1_spreadsheet, output_dir=args.output_dir)

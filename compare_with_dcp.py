@@ -39,13 +39,13 @@ def define_parser():
 def main(tier1_spreadsheet, wrangled_spreadsheet, unequal_comparisson=False):
     report_dict = init_report_dict()
 
-    tier1_spreadsheet = open_spreadsheet(tier1_spreadsheet)
-    wrangled_spreadsheet = open_spreadsheet(wrangled_spreadsheet)
     label = get_label(tier1_spreadsheet)
+    tier1_df = open_spreadsheet(tier1_spreadsheet)
+    wrangled_df = open_spreadsheet(wrangled_spreadsheet)
     
     # Compare number of tabs
     print(f"{BOLD_START}____COMPARE TABS____{BOLD_END}")
-    report_dict = compare_n_tabs(tier1_spreadsheet, wrangled_spreadsheet, report_dict)
+    report_dict = compare_n_tabs(tier1_df, wrangled_df, report_dict)
 
     # compare number and values of ids for intersect tabs
     print(f"{BOLD_START}____COMPARE IDs____{BOLD_END}")
@@ -54,10 +54,10 @@ def main(tier1_spreadsheet, wrangled_spreadsheet, unequal_comparisson=False):
             # skip project or file tabs since info is not fully recorded in the CxG collection
             continue
             
-        if check_tab_id(tab, wrangled_spreadsheet, tier1_spreadsheet):
+        if check_tab_id(tab, wrangled_df, tier1_df):
             continue
         # compare Number and Values of ids per tab
-        report_dict = compare_n_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet, label, unequal_comparisson)
+        report_dict = compare_n_ids(tab, report_dict, tier1_df, wrangled_df, label, unequal_comparisson)
         if not report_dict:
             return
         # Value of ids
@@ -65,7 +65,7 @@ def main(tier1_spreadsheet, wrangled_spreadsheet, unequal_comparisson=False):
             # for protocol we don't care about matching IDs with tier 1
             continue
         print(f"{BOLD_START}Comparing {tab} IDs:{BOLD_END}")
-        report_dict = compare_v_ids(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet)
+        report_dict = compare_v_ids(tab, report_dict, tier1_df, wrangled_df)
 
     # compare values
     print(f"{BOLD_START}____COMPARE VALUES____{BOLD_END}")
@@ -73,7 +73,7 @@ def main(tier1_spreadsheet, wrangled_spreadsheet, unequal_comparisson=False):
         if tab not in report_dict['tabs']['intersect'] or tab in entity_types['project'] + entity_types['file']:
             continue
         print(f"{BOLD_START}Comparing {tab} values:{BOLD_END}")
-        report_dict = compare_filled_fields(tab, report_dict, tier1_spreadsheet, wrangled_spreadsheet)
+        report_dict = compare_filled_fields(tab, report_dict, tier1_df, wrangled_df)
 
     export_report_json(label, report_dict)
 

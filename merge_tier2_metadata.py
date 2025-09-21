@@ -31,38 +31,33 @@ def define_parse():
                         help="Directory for the output files")
     return parser
 
-def main():
-    parser = define_parse()
-    args = parser.parse_args()
-
-    tier2_spreadsheet_path = args.tier2_spreadsheet
-    dt_spreadsheet_path = args.dt_spreadsheet
-    output_path = args.output_path
-
+def main(tier2_spreadsheet, dt_spreadsheet, output_dir='metadata'):
+    
     all_tier2 = {**TIER2_TO_DCP, **TIER2_TO_DCP_UPDATE}
 
-    tier2_excel = open_spreadsheet(tier2_spreadsheet_path)
-    dt_spreadsheet = open_spreadsheet(dt_spreadsheet_path)
+    tier2_df = open_spreadsheet(tier2_spreadsheet)
+    dt_df = open_spreadsheet(dt_spreadsheet)
 
-    tier2_df = flatten_tiered_spreadsheet(tier2_excel, merge_type='outer')
-    tier2_df = manual_fixes(tier2_df)
-    tier2_df = rename_tier2_columns(tier2_df, all_tier2)
+    tier2_flat = flatten_tiered_spreadsheet(tier2_df, merge_type='outer')
+    tier2_flat = manual_fixes(tier2_flat)
+    tier2_flat = rename_tier2_columns(tier2_flat, all_tier2)
     print('\nPull ontology ids from fields:')
-    tier2_df = fill_missing_ontology_ids(tier2_df)
+    tier2_flat = fill_missing_ontology_ids(tier2_flat)
     print('\nPull ontology labels from fields:')
-    tier2_df = fill_ontology_labels(tier2_df)
+    tier2_flat = fill_ontology_labels(tier2_flat)
 
-    merged_df = merge_tier2_with_dcp(tier2_df, dt_spreadsheet)
-    merged_df = add_protocol_targets(tier2_df, merged_df)
+    merged_df = merge_tier2_with_dcp(tier2_flat, dt_df)
+    merged_df = add_protocol_targets(tier2_flat, merged_df)
     check_dcp_required_fields(merged_df)
 
-    output_filename = os.path.basename(dt_spreadsheet_path).replace(".xlsx", "_Tier2.xlsx")
-    with pd.ExcelWriter(os.path.join(output_path, output_filename), engine='openpyxl') as writer:
+    output_filename = os.path.basename(dt_spreadsheet).replace(".xlsx", "_Tier2.xlsx")
+    with pd.ExcelWriter(os.path.join(output_dir, output_filename), engine='openpyxl') as writer:
         for tab_name, df in merged_df.items():
             # add empty row for "FILL OUT INFORMATION BELOW THIS ROW" row
             df = df.reindex(index=[-1] + list(df.index)).reset_index(drop=True)
             df.to_excel(writer, sheet_name=tab_name, index=False, startrow=3)
-    print(f"Tier 2 metadata has been added to {os.path.join(output_path, output_filename)}.")
+    print(f"Tier 2 metadata has been added to {os.path.join(output_dir, output_filename)}.")
 
 if __name__ == "__main__":
-    main()
+    args = define_parse().parse_args()
+    main(tier2_spreadsheet=args.tier2_spreadsheet, dt_spreadsheet=args.dt_spreadsheet, output_dir=args.output_dir)
