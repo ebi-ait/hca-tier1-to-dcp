@@ -6,7 +6,7 @@ import pandas as pd
 import requests
 import anndata
 
-from helper_files.tier1_mapping import tier1, tier1_list
+from helper_files.constants.tier1_mapping import tier1, tier1_list
 from helper_files.file_io import filename_suffixed
 
 BOLD_START = '\033[1m'
@@ -23,7 +23,7 @@ def define_parser():
                         dest="dataset_id", type=str, required=False, help="Dataset id")
     parser.add_argument("-l", "--dataset-label", type=str, action="store",
                         dest="label", help="Label to use instead of collection/ dataset ids")
-    parser.add_argument("-o", "--output_dir", type=str, action="store",
+    parser.add_argument("-o", "--output_dir", type=str, action="store", default='metadata',
                         dest="output_dir", help="Directory for the output files")
     parser.add_argument("-t", "--ingest_token", action="store",
                         dest='token', type=str, required=False,

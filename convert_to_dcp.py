@@ -1,15 +1,14 @@
 import argparse
 import os
 import re
-import sys
 import requests
 
 import pandas as pd
 from numpy import nan
 from packaging.version import parse as parse_version
 
-from helper_files.tier1_mapping import tier1_to_dcp, collection_dict, prot_def_field, tier1_enum, dev_to_age_dict, age_to_dev_dict
-from helper_files.required_fields import required_fields
+from helper_files.constants.tier1_mapping import tier1_to_dcp, collection_dict, prot_def_field, tier1_enum, dev_to_age_dict, age_to_dev_dict
+from helper_files.constants.required_fields import required_fields
 from helper_files.file_io import get_label, filename_suffixed
 
 
@@ -339,7 +338,7 @@ def edit_lib_prep_protocol(sample_metadata):
     """If assay info is in CxG (either as label or ontology_id),
        and if assay is in cheatsheet
        add all lib_prep fields we have in cheatsheet"""
-    cheatsheet = pd.read_csv('helper_files/lib_prep_cheatsheet.csv')
+    cheatsheet = pd.read_csv('helper_files/constants/lib_prep_cheatsheet.csv')
     field_map = {
         'assay_ontology_term_id': 'library_preparation_protocol.library_construction_method.ontology',
         'assay': 'library_preparation_protocol.library_construction_method.ontology_label'

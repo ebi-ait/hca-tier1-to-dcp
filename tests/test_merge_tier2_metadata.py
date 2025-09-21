@@ -10,7 +10,7 @@ from merge_tier2_metadata import (
     merge_tier2_with_dcp
 )
 
-from helper_files.tier2_mapping import TIER2_TO_DCP
+from helper_files.constants.tier2_mapping import TIER2_TO_DCP
 
 
 def test_rename_positive():

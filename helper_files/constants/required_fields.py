@@ -1,4 +1,4 @@
-from helper_files.tier1_mapping import entity_types
+from helper_files.constants.tier1_mapping import entity_types
 
 required_fields = {
     "project":
@@ -147,7 +147,7 @@ required_fields = {
         "donor_organism.death.cause_of_death"
     ],
     "timecourse":
-    [biomaterial.replace(" ", "_").lower() + '.biomaterial_core.' + timecourse for biomaterial in entity_types['biomaterial'] for timecourse in ['timecourse.value', 'timecourse.unit.text']],
+        [biomaterial.replace(" ", "_").lower() + '.biomaterial_core.' + timecourse for biomaterial in entity_types['biomaterial'] for timecourse in ['timecourse.value', 'timecourse.unit.text']],
     "barcode":
     [
         'library_preparation_protocol.cell_barcode.barcode_read', 
@@ -156,32 +156,32 @@ required_fields = {
         'library_preparation_protocol.umi_barcode.barcode_read', 
         'library_preparation_protocol.umi_barcode.barcode_offset', 
         'library_preparation_protocol.umi_barcode.barcode_length'
+    ],
+    "channel":
+    [
+        "channel.channel_id",
+        "channel.excitation_wavelength",
+        "channel.filter_range",
+        "channel.multiplexed",
+        "channel.exposure_time"
+    ],
+    "probe":
+    [
+        "probe.probe_label",
+        "probe.target_label",
+        "probe.assay_type"
+    ],
+    "contributors":
+    [
+        "contributors.name",
+        "contributors.institution"
+    ],
+    "insdc_experiment_accession":
+    [
+        "insdc_experiment_accession"
+    ],
+    "plate_based_sequencing":
+    [
+        "plate_based_sequencing.plate_label"
     ]
-    # "channel":
-    # [
-    #     "channel.channel_id",
-    #     "channel.excitation_wavelength",
-    #     "channel.filter_range",
-    #     "channel.multiplexed",
-    #     "channel.exposure_time"
-    # ],
-    # "probe":
-    # [
-    #     "probe.probe_label",
-    #     "probe.target_label",
-    #     "probe.assay_type"
-    # ],
-    # "contributors":
-    # [
-    #     "contributors.name",
-    #     "contributors.institution"
-    # ],
-    # "insdc_experiment_accession":
-    # [
-    #     "insdc_experiment_accession"
-    # ],
-    # "plate_based_sequencing":
-    # [
-    #     "plate_based_sequencing.plate_label"
-    # ]
 }

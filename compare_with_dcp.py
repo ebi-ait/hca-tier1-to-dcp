@@ -5,7 +5,7 @@ import sys
 import select
 import json
 
-from helper_files.tier1_mapping import entity_types, all_entities
+from helper_files.constants.tier1_mapping import entity_types, all_entities
 from helper_files.file_io import open_spreadsheet, get_label
 
 # Open cellxgene spreadsheet
