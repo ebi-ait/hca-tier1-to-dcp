@@ -54,4 +54,4 @@ def test_main_integration_real_extract(mock_all, tmp_path):
 
     assert "library_id" in content
     assert content.loc[0, "tissue_free_text"]
-    assert label == f'cid_ds1'
+    assert label == 'cid_ds1'
