@@ -375,11 +375,11 @@ def create_protocol_ids(dcp_spreadsheet, dcp_flat):
     for protocol in protocols:
         if dcp_flat.filter(like=protocol).empty:
             continue
-        protocol_df = dcp_flat.filter(like=protocol).replace('na', nan).dropna(axis=1).drop_duplicates()
+        protocol_df = dcp_flat.filter(like=protocol).replace('na', nan).dropna(axis=1, how='all').drop_duplicates()
         protocol_id_col = protocol + '.protocol_core.protocol_id'
         if protocol in prot_def_field and \
-           prot_def_field[protocol] in protocol_df and \
-           protocol_df[prot_def_field[protocol]].is_unique:
+            prot_def_field[protocol] in protocol_df and \
+            protocol_df[prot_def_field[protocol]].is_unique:
             protocol_df[protocol_id_col] = [make_protocol_name(value) for value in protocol_df[prot_def_field[protocol]].values]
         else:
             protocol_df[protocol_id_col] = [protocol + "_" + str(n + 1) for n in range(len(protocol_df))]
@@ -482,7 +482,7 @@ def fill_missing_ontology_ids(dcp_flat):
     xml_keys = get_xml_keys()
     for field in fields:
         print(field, end='; ', flush=True)
-        ont_dict = {value: fill_ontology_ids(value, field, xml_keys, silent=True) for value in dcp_flat[field].unique() if value}
+        ont_dict = {value: fill_ontology_ids(value, field, xml_keys, silent=True) for value in dcp_flat[field].unique() if value is not nan}
         dcp_flat[field.replace('text','ontology')] = dcp_flat[field].replace(ont_dict)
     return dcp_flat
 
