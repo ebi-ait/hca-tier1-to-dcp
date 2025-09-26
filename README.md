@@ -50,9 +50,11 @@ python3 merge_tier2_metadata.py -t2 <tier2_metadata> -dt <dt_spreadsheet>
 python3 merge_file_manifest.py -fm <file_manifest> -dt <dt_spreadsheet> -t1 <tier1_spreadsheet>
 ```
 
-Alternatively, you can use the [wrapper_3c.py](wrapper_3c.py) script to run 3 scripts at once (**c**ollect, **c**onvert, **c**ompare) for multiple collections, using a separate csv file for the IDs & wrangled spreadsheets path. #Need to update wrapper
+Alternatively, you can use the [hca-tier1-to-dcp.py](hca-tier1-to-dcp.py) script to run all scripts at once (**c**ollect, **c**onvert, **c**ompare, **m**erge tier 2, **m**erge file manifest). There is also the functionality to run for multiple collections, using a separate csv file for the IDs & wrangled spreadsheets path.
 ```bash
-python3 wrapper_3c.py -i input_spreadsheet.tsv
+python3 wrapper_3c.py -l test -t1 tier1.xlsx
+or
+python3 wrapper_3c.py -l test -t1 tier1.xlsx -fm file_manifest.xlsx -t2 tier2.xlsx -w pre-wrangled.xlsx
 ```
 
 ### Arguments
