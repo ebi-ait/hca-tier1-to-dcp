@@ -3,6 +3,8 @@ import re
 from pathlib import Path
 import pandas as pd
 
+from helper_files.constants.tier1_mapping import KEY_COLS
+
 BOLD_START = '\033[1m'
 BOLD_END = '\033[0;0m'
 
@@ -41,7 +43,9 @@ def detect_excel_format(spreadsheet_path, tab_name=None):
     if df[tab_name].iloc[3].str.match(donor_field).any():
         return [0, 1, 2, 4]
     # Gut format
-    if df[tab_name].iloc[3].str.len().sum() == 0 and df[tab_name].iloc[0].str.match(donor_field).any():
+    if df[tab_name].iloc[0].str.match(donor_field).any() and \
+        (df[tab_name].iloc[3,0] == 'FILL OUT INFORMATION BELLOW THIS ROW' or \
+         df[tab_name].iloc[3].str.len().sum() == 0):
         return [1, 2, 3, 4]
     # dcp-to-tier1 format
     # df[tab_name].iloc[3].str.match(donor_field).any()
@@ -53,19 +57,38 @@ def drop_empty_cols(df):
     df = df.drop(columns=index_like_cols, errors='ignore')
     return df
 
+def check_empty_sheet(df):
+    if isinstance(df, pd.DataFrame):
+        return df.empty
+    return any(tab.empty for tab in df.values())
+
+def merge_same_key_tabs(df):
+    # check if two donor level tabs and merge (for T2 metadata)
+    for key in KEY_COLS:
+        col = key.replace('_id', '')
+        tab_keys_match = [tab for tab in df.keys() if col.lower() in tab.lower()]
+        if len(tab_keys_match) <= 1:
+            continue
+        for tab in tab_keys_match[1:]:
+            df[tab_keys_match[0]] = df[tab_keys_match[0]].merge(df[tab], how='inner', on=key)
+            df.pop(tab)
+    return df
+
+
 def open_spreadsheet(spreadsheet_path, tab_name=None):
     if not os.path.exists(spreadsheet_path):
         raise FileNotFoundError(f"File not found at {spreadsheet_path}")
     skiprows = detect_excel_format(spreadsheet_path)
-    try:
-        df = pd.read_excel(
-            spreadsheet_path,
-            sheet_name=tab_name,
-            skiprows=skiprows,
-            index_col=None
-        )
-        return drop_empty_cols(df) if tab_name else {k: drop_empty_cols(d) for k, d in df.items()}
-    except Exception as e:
-        raise ValueError(
-            f"Error reading spreadsheet file: {e} for {spreadsheet_path}"
-        ) from e
+    df = pd.read_excel(
+        spreadsheet_path,
+        sheet_name=tab_name,
+        skiprows=skiprows,
+        index_col=None
+    )
+    if not tab_name and 'Donor organism' not in df:
+        df = merge_same_key_tabs(df)
+    if 'validation_sheet' in df:
+        df.pop('validation_sheet')
+    if check_empty_sheet(df):
+        raise ValueError(f'Spreadsheet {spreadsheet_path} has empty sheet')
+    return drop_empty_cols(df) if tab_name else {k: drop_empty_cols(d) for k, d in df.items() if not d.empty}
