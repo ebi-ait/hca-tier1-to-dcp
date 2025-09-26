@@ -80,7 +80,7 @@ def test_download_h5ad_file(mock_get, tmp_path):
 
 
 @mock.patch("anndata.read_h5ad")
-def test_extract_and_save_metadata(mock_read, tmp_path, dummy_collection):
+def test_extract_and_save_metadata(mock_read, tmp_path):
     # Mock AnnData object
     obs_df = pd.DataFrame({
         "library_id": ["lib1"],
@@ -92,7 +92,7 @@ def test_extract_and_save_metadata(mock_read, tmp_path, dummy_collection):
 
     mock_read.return_value = adata
 
-    extract_and_save_metadata(adata, "cid", "ds1", output_dir=str(tmp_path))
+    extract_and_save_metadata(adata, label="cid_ds1", output_dir=str(tmp_path))
     files = os.listdir(tmp_path)
     assert any("metadata" in f for f in files)
     assert any("cell_obs" in f for f in files)

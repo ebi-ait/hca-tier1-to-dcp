@@ -73,7 +73,7 @@ def download_h5ad_file(h5ad_url, output_file):
             print("Local " + output_file + " and remote file, has same size.")
 
 
-def extract_and_save_metadata(adata, collection_id, dataset_id, label=None, output_dir='metadata'):
+def extract_and_save_metadata(adata, label=None, output_dir='metadata'):
     """Extracts and saves metadata from the AnnData object."""
     print(f"{BOLD_START}EXTRACT METADATA:{BOLD_END}")
     tier1_in_object = [key for key in adata.obs.keys() if key in tier1_list]
@@ -81,13 +81,13 @@ def extract_and_save_metadata(adata, collection_id, dataset_id, label=None, outp
     # Save essential metadata
     if 'library_id' in adata.obs:
         pd.DataFrame(adata.obs[tier1_in_object].drop_duplicates()).set_index('library_id')\
-            .to_csv(filename_suffixed(output_dir, f"{collection_id}_{dataset_id}" if not label else label, 'metadata'))
+            .to_csv(filename_suffixed(output_dir, label, 'metadata'))
     else:
         print("No library_id information. Saving tier 1 with donor_id index.\n")
         pd.DataFrame(adata.obs[tier1_in_object].drop_duplicates()).set_index('donor_id')\
-            .to_csv(filename_suffixed(output_dir, f"{collection_id}_{dataset_id}" if not label else label, 'metadata'))
+            .to_csv(filename_suffixed(output_dir, label, 'metadata'))
     # Save full cell observations
-    pd.DataFrame(adata.obs).to_csv(filename_suffixed(output_dir, f"{collection_id}_{dataset_id}" if not label else label, 'cell_obs'))
+    pd.DataFrame(adata.obs).to_csv(filename_suffixed(output_dir, label, 'cell_obs'))
 
     # Check for missing fields
     missing_must_fields = [must for must in tier1['obs']

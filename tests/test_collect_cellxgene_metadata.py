@@ -38,7 +38,7 @@ def mock_all(mocker, dummy_collection):
 
 def test_main_integration_real_extract(mock_all, tmp_path):
     # Run main with mocked dependencies
-    collect_cellxgene_metadata.main(
+    label = collect_cellxgene_metadata.main(
         collection_id="cid", dataset_id="ds1", output_dir=str(tmp_path)
     )
 
@@ -54,3 +54,4 @@ def test_main_integration_real_extract(mock_all, tmp_path):
 
     assert "library_id" in content
     assert content.loc[0, "tissue_free_text"]
+    assert label == f'cid_ds1'

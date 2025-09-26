@@ -33,7 +33,7 @@ def define_parser():
                         dest="output_dir", type=str, required=False, default='metadata',
                         help="Directory for the output files")
     parser.add_argument("-t", "--ingest_token", action="store",
-                        dest='token', type=str, required=False,
+                        dest="token", type=str, required=False,
                         help="Ingest token to query for existing projects with same DOI")
     return parser
 
@@ -51,7 +51,7 @@ def main(collection_id, dataset_id=None, label=None, output_dir="metadata", toke
     os.makedirs(output_dir, exist_ok=True)
     pd.DataFrame(coll_report, index=[0]).transpose()\
         .rename({'name': 'title', 'contact_name': 'study_pi'})\
-        .to_csv(filename_suffixed(output_dir, f"{collection_id}_{dataset_id}" if not label else label, 'study_metadata'), header=None)
+        .to_csv(filename_suffixed(output_dir, label, 'study_metadata'), header=None)
         
     # Download the H5AD file
     mx_file = f'h5ads/{collection_id}_{dataset_id}.h5ad'
@@ -69,9 +69,10 @@ def main(collection_id, dataset_id=None, label=None, output_dir="metadata", toke
     else:
         print("H5AD URL not found for the selected dataset.")
 
+    label = f"{collection_id}_{dataset_id}" if not label else label
     # Extract metadata from the AnnData file
     adata = anndata.read_h5ad(mx_file, backed='r')
-    extract_and_save_metadata(adata, collection_id, dataset_id, label, output_dir)
+    extract_and_save_metadata(adata, label, output_dir)
 
     print(f"{BOLD_START}ADDITIONAL INFO:{BOLD_END}")
     # Check if doi exists in ingest
@@ -84,7 +85,9 @@ def main(collection_id, dataset_id=None, label=None, output_dir="metadata", toke
         else:
             print(f"No sequencer info. See {collection['collection_url']} for more.")
 
-    print(f'Output {filename_suffixed(output_dir, f"{collection_id}_{dataset_id}" if not label else label, suffix=None,ext=None)}')
+    print(f'Output {filename_suffixed(output_dir, label, suffix=None,ext=None)}')
+
+    return label
 
 if __name__ == "__main__":
     args = define_parser().parse_args()
