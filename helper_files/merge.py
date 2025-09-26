@@ -179,6 +179,7 @@ def merge_tier2_with_dcp(tier2_df, wrangled_spreadsheet):
     for tab_name, field_list in fields_per_tab.items():
         # do checks
         is_protocol = tab_is_protocol(tab_name)
+        # TODO if protocol does not exist in wrangled, add it
         check_tab_in_spreadsheet(tab_name, wrangled_spreadsheet)
         if len(field_list) == 1 and field_is_id(field_list[0]):
             continue
