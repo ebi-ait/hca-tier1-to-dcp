@@ -8,21 +8,9 @@ from helper_files.convert import (
     add_doi,
     add_title,
     add_process_locations,
-    edit_collection_relative,
-    edit_collection_method,
-    edit_ncbitaxon,
-    edit_sex,
-    edit_ethnicity,
-    edit_sample_source,
-    edit_hardy_scale,
-    edit_sampled_site,
-    edit_alignment_software,
-    edit_dev_stage,
-    edit_lib_prep_protocol,
-    edit_suspension_type,
+    edit_all_sample_metadata,
     create_protocol_ids,
-    fill_ontology_labels,
-    fill_missing_ontology_ids,
+    fill_ontologies,
     check_enum_values,
     populate_spreadsheet,
     add_analysis_file,
@@ -56,30 +44,15 @@ def main(flat_tier1_spreadsheet, output_dir, local_template=None):
     
     # Edit conditionally mapped fields
     print(f"{BOLD_START}CONVERTING METADATA{BOLD_END}")
-    sample_metadata = edit_collection_relative(sample_metadata)
-    sample_metadata = edit_ncbitaxon(sample_metadata)
-    sample_metadata = edit_sex(sample_metadata)
-    sample_metadata = edit_ethnicity(sample_metadata)
-    sample_metadata = edit_sample_source(sample_metadata)
-    sample_metadata = edit_hardy_scale(sample_metadata)
-    sample_metadata = edit_sampled_site(sample_metadata)
-    sample_metadata = edit_alignment_software(sample_metadata)
-    sample_metadata = edit_lib_prep_protocol(sample_metadata)
-    sample_metadata = edit_suspension_type(sample_metadata)
-    # sample_metadata = edit_cell_enrichment(sample_metadata) # not yet functional
-    sample_metadata = edit_dev_stage(sample_metadata)
-    sample_metadata = edit_collection_method(sample_metadata, collection_dict)
+    sample_metadata = edit_all_sample_metadata(sample_metadata, collection_dict)
+    print(f'\nConverted {"; ".join([col for col in sample_metadata if col in tier1_to_dcp])}')
 
     # Rename directly mapped fields
-    print(f'\nConverted {"; ".join([col for col in sample_metadata if col in tier1_to_dcp])}')
     dcp_flat = sample_metadata.rename(columns=tier1_to_dcp)
     check_enum_values(dcp_flat)
     
     # Add ontology id and labels
-    print('\nPull ontology ids from fields:')
-    dcp_flat = fill_missing_ontology_ids(dcp_flat)
-    print('\nPull ontology labels from fields:')
-    dcp_flat = fill_ontology_labels(dcp_flat)
+    dcp_flat = fill_ontologies(dcp_flat)
     
     # Generate spreadsheet
     dcp_spreadsheet = get_dcp_template(local_template)

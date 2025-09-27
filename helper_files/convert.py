@@ -486,6 +486,11 @@ def fill_missing_ontology_ids(dcp_flat):
         dcp_flat[field.replace('text','ontology')] = dcp_flat[field].replace(ont_dict)
     return dcp_flat
 
+def fill_ontologies(dcp_flat):
+    dcp_flat = fill_missing_ontology_ids(dcp_flat)
+    dcp_flat = fill_ontology_labels(dcp_flat)
+    return dcp_flat
+
 def check_enum_values(dcp_flat):
     xml_keys = get_xml_keys()
     for field in tier1_enum:
@@ -593,3 +598,20 @@ def flatten_tiered_spreadsheet(tiered_spreadsheet, merge_type='inner', drop_na=T
     if drop_na:
         flat_df = flat_df.dropna(axis=1, how="all")
     return flat_df
+
+def edit_all_sample_metadata(sample_metadata, collection_dict):
+    sample_metadata = edit_collection_relative(sample_metadata)
+    sample_metadata = edit_ncbitaxon(sample_metadata)
+    sample_metadata = edit_sex(sample_metadata)
+    sample_metadata = edit_ethnicity(sample_metadata)
+    sample_metadata = edit_sample_source(sample_metadata)
+    sample_metadata = edit_hardy_scale(sample_metadata)
+    sample_metadata = edit_sampled_site(sample_metadata)
+    sample_metadata = edit_alignment_software(sample_metadata)
+    sample_metadata = edit_lib_prep_protocol(sample_metadata)
+    sample_metadata = edit_suspension_type(sample_metadata)
+    # sample_metadata = edit_cell_enrichment(sample_metadata) # not yet functional
+    sample_metadata = edit_dev_stage(sample_metadata)
+    sample_metadata = edit_collection_method(sample_metadata, collection_dict)
+    return sample_metadata
+
