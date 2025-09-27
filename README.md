@@ -12,18 +12,18 @@ This proces is done in 5 steps.
     1. Given a Tier 1 spreadsheet, pull label from filename
     1. Flatten the tier 1 metadata into a csv in `metadata` dir with `<label>_metadata.csv`
 1. Convert to DCP spreadsheet [convert_to_dcp.py](convert_to_dcp.py)
-    1. Given a collection_id & dataset_id pull metadata from metadata dir
+    1. Given a spreadsheet path, pull metadata & extract filename label used.
     1. Based on [hca_template.xlsx](https://github.com/ebi-ait/geo_to_hca/raw/master/template/hca_template.xlsx), using the [mapping](helper_files/tier1_mapping.py) convert to dcp flat metadata file with dcp programmatic fields
     1. Based on the field programmatic name, the dcp spreadsheet is populated
     1. Exported into an xlsx file in `metadata` dir to `<label>_dcp.csv` filename
 1. Compare previously wrangled spreadsheet vs tier 1 [compare_with_dcp.py](compare_with_dcp.py)
-    1. Open cellxgene and previously wrangled DCP spreadsheet
+    1. Open converted and previously wrangled DCP spreadsheet
     1. Compare number of tabs, use intersection
     1. On each common tab 
         1. Compare number of entites per tab
         1. Compare ids per tab, for intersection
         1. Compare values of entities with same IDs (except protocols)
-    1. Export all comparison in a report json file in `report_compare` dir to `<collection_id>_<dataset_id>_compare.json` filename
+    1. Export all comparison in a report json file in `report_compare` dir to `<label>_compare.json` filename
 1. Merge Tier 2 metadata into pre-filled DCP spreadsheet [merge_tier2_metadata.py](merge_tier2_metadata.py)
     1. Open Tier 2 spreadsheet and wrangled DCP spreadsheet
     1. Flatten Tier 2 spreadsheet into a single denormalised tab
