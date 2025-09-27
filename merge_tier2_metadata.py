@@ -6,13 +6,12 @@ import pandas as pd
 from helper_files.constants.tier2_mapping import TIER2_TO_DCP, TIER2_TO_DCP_UPDATE
 from helper_files.utils import open_spreadsheet
 from helper_files.convert import (
-    fill_missing_ontology_ids,
-    fill_ontology_labels,
+    fill_ontologies,
     flatten_tiered_spreadsheet
 )
 from helper_files.merge import (
     manual_fixes,
-    rename_tier2_columns, 
+    rename_tier2_columns,
     merge_tier2_with_dcp,
     add_protocol_targets,
     check_dcp_required_fields
@@ -41,11 +40,8 @@ def main(tier2_spreadsheet, dt_spreadsheet, output_dir='metadata'):
     tier2_flat = flatten_tiered_spreadsheet(tier2_df, merge_type='outer')
     tier2_flat = manual_fixes(tier2_flat)
     tier2_flat = rename_tier2_columns(tier2_flat, all_tier2)
-    print('\nPull ontology ids from fields:')
-    tier2_flat = fill_missing_ontology_ids(tier2_flat)
-    print('\nPull ontology labels from fields:')
-    tier2_flat = fill_ontology_labels(tier2_flat)
-
+    tier2_flat = fill_ontologies(tier2_flat)
+    
     merged_df = merge_tier2_with_dcp(tier2_flat, dt_df)
     merged_df = add_protocol_targets(tier2_flat, merged_df)
     check_dcp_required_fields(merged_df)
