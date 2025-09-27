@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 from pathlib import Path
-from helper_files.file_io import open_spreadsheet, drop_empty_cols, detect_excel_format, get_label
+from helper_files.utils import open_spreadsheet, drop_empty_cols, detect_excel_format, get_label
 
 @pytest.mark.parametrize(
     "filename,expected",

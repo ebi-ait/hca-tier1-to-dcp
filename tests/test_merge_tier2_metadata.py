@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import pytest
-from merge_tier2_metadata import (
+from helper_files.merge import (
     tab_is_protocol,
     rename_tier2_columns,
     flatten_tier2_spreadsheet,
@@ -10,7 +10,7 @@ from merge_tier2_metadata import (
     merge_tier2_with_dcp
 )
 
-from helper_files.tier2_mapping import TIER2_TO_DCP
+from helper_files.constants.tier2_mapping import TIER2_TO_DCP
 
 
 def test_rename_positive():

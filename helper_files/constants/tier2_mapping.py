@@ -109,6 +109,16 @@ TIER2_TO_DCP_UPDATE = {
     "sample_collection_time_point": "specimen_from_organism.collection_time",
     "gold_abe_assessment": "donor_organism.medical_history.copd_gold_abe_assessment",
     "mmrc_grade": "donor_organism.disease_profile.copd_mmrc_grade",
+    #gut 
+    "disease_ontology_term": "donor_organism.diseases.text",
+    "disease_ontology_term_id": "donor_organism.diseases.ontology",
+    "known_gut_related_disease": "donor_organism.diseases.text",
+    "disease_location": "donor_organism.disease_location",
+    "macroscopic_appearance": "specimen_from_organism.state_of_specimen.gross_description",
+    "radial_tissue_term": "donor_organism.radial_tissue",
+    "procedure": "collection_protocol.procedure",
+    "indication_for_sampling": "collection_protocol.indication",
+    "diet_specific": "donor_organism.medical_history.diet_specific",
 }
 
 restrictions_tier2 = {

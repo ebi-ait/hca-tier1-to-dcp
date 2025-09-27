@@ -241,3 +241,4 @@ dev_to_age_dict = {
 }
 
 age_to_dev_dict = {v: k for k, v in dev_to_age_dict.items()}
+KEY_COLS = ["donor_id", "sample_id", "dataset_id", "library_id"]
