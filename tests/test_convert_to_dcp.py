@@ -15,18 +15,9 @@ def mock_all(mocker):
     mocker.patch.object(convert_to_dcp, "get_label", return_value="fake_label")
     mocker.patch.object(convert_to_dcp, "read_sample_metadata", return_value=fake_sample_metadata)
     mocker.patch.object(convert_to_dcp, "read_study_metadata", return_value=fake_study_metadata)
-
-    for fn in [
-        "edit_collection_relative", "edit_ncbitaxon", "edit_sex", "edit_ethnicity",
-        "edit_sample_source", "edit_hardy_scale", "edit_sampled_site",
-        "edit_alignment_software", "edit_lib_prep_protocol", "edit_suspension_type",
-        "edit_dev_stage", "edit_collection_method"
-    ]:
-        mocker.patch.object(convert_to_dcp, fn, return_value=fake_sample_metadata)
-
+    mocker.patch.object(convert_to_dcp, "edit_all_sample_metadata", return_value=fake_sample_metadata)
     mocker.patch.object(convert_to_dcp, "check_enum_values")
-    mocker.patch.object(convert_to_dcp, "fill_missing_ontology_ids", return_value=fake_dcp_flat)
-    mocker.patch.object(convert_to_dcp, "fill_ontology_labels", return_value=fake_dcp_flat)
+    mocker.patch.object(convert_to_dcp, "fill_ontologies", return_value=fake_dcp_flat)
     mocker.patch.object(convert_to_dcp, "get_dcp_template", return_value=fake_dcp_template)
     mocker.patch.object(convert_to_dcp, "add_doi", return_value=fake_spreadsheet)
     mocker.patch.object(convert_to_dcp, "add_title", return_value=fake_spreadsheet)
