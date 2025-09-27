@@ -10,7 +10,7 @@ def define_parser():
                         dest="tier1_spreadsheet", type=str, required=True,
                         help="Submitted tier 1 spreadsheet file path")
     parser.add_argument("-o", "--output_dir", action="store",
-                        dest="output_dir", type=str, required=False, default='metadata',
+                        dest="output_dir", type=str, required=False, default='metadata/t1/',
                         help="Directory for the output files")
     return parser
 

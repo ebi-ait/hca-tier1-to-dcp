@@ -40,7 +40,7 @@ def define_parser():
                         dest="flat_tier1_spreadsheet", type=str, required=True,
                         help="Flattened tier 1 spreadsheet path")
     parser.add_argument("-o", "--output_dir", action="store",
-                        dest="output_dir", type=str, required=False, default='metadata',
+                        dest="output_dir", type=str, required=False, default='metadata/dt/',
                         help="Directory for the output files")
     parser.add_argument("-lt", "--local_template", action="store",
                         dest="local_template", type=str, required=False,

@@ -30,14 +30,14 @@ def define_parser():
                         dest="label", type=str, required=False,
                         help="Label to use instead of collection/ dataset ids")
     parser.add_argument("-o", "--output_dir", action="store",
-                        dest="output_dir", type=str, required=False, default='metadata',
+                        dest="output_dir", type=str, required=False, default='metadata/t1/',
                         help="Directory for the output files")
     parser.add_argument("-t", "--ingest_token", action="store",
                         dest="token", type=str, required=False,
                         help="Ingest token to query for existing projects with same DOI")
     return parser
 
-def main(collection_id, dataset_id=None, label=None, output_dir="metadata", token=None):
+def main(collection_id, dataset_id=None, label=None, output_dir="metadata/t1/", token=None):
 
     # Query collection data
     collection = get_collection_data(collection_id)

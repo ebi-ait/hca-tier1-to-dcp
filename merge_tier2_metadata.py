@@ -27,7 +27,7 @@ def define_parse():
                         dest="dt_spreadsheet", type=str, required=True,
                         help="DCP formeted tier 1 spreadsheet path")
     parser.add_argument("-o", "--output_dir", action="store",
-                        dest="output_dir", type=str, required=False, default='metadata',
+                        dest="output_dir", type=str, required=False, default='metadata/t2/',
                         help="Directory for the output files")
     return parser
 

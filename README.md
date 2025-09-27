@@ -66,7 +66,7 @@ python3 hca-tier1-to-dcp.py -l test -t1 tier1.xlsx -fm file_manifest.xlsx -t2 ti
 - `--tier1_spreadsheet` or `-t1`: Submitted tier 1 spreadsheet file path
 - `--flat_tier1_path` or `-ft`: Flattened tier 1 spreadsheet path
 - `--local_template` or `-lt`: Local path of the [hca_template.xlsx](https://github.com/ebi-ait/geo_to_hca/raw/master/template/hca_template.xlsx)
-- `--dcp-tier1-spreadsheet` or `-dt`: DCP formeted tier 1 spreadsheet path
+- `--dcp-tier1-spreadsheet` or `-dt`: DCP formated tier 1 spreadsheet path
 - `--wrangled_spreadsheet` or `-w`: Previously wrangled project spreadsheet path
 - `--unequal_comparisson` or `-u`: Automaticly continue comparing even if biomaterials are not equal
 - `--file_manifest` or `-fm`: File manifest path

@@ -11,9 +11,10 @@ import merge_file_manifest
 from helper_files.collect import selection_of_dataset, get_collection_data
 from helper_files.utils import filename_suffixed, get_label, BOLD_START, BOLD_END
 
-TEMP_DIR = 'metadata'
-os.makedirs(TEMP_DIR, exist_ok=True)
-
+output_dirs = {'t1': os.path.join('metadata', 't1'), 
+               'dt': os.path.join('metadata', 'dt'), 
+               'fm': os.path.join('metadata', 'fm'), 
+               't2': os.path.join('metadata', 't2')}
 
 def define_parser():
     """Defines and returns the argument parser."""
@@ -42,9 +43,6 @@ def define_parser():
     parser.add_argument("-w", "--wrangled_spreadsheet", action="store",
                         dest="wrangled_spreadsheet", type=str, required=False,
                         help="Previously wrangled project spreadsheet path")
-    parser.add_argument("-o", "--output_dir", action="store",
-                        dest="output_dir", type=str, required=False, default='metadata',
-                        help="Directory for the output files")
     parser.add_argument("-t", "--ingest_token", action="store",
                         dest="token", type=str, required=False,
                         help="Ingest token to query for existing projects with same DOI")
@@ -75,7 +73,7 @@ def read_input_spreadsheet(input_path):
 def run_all_scripts(collection_id, dataset_id, label,
                     tier1_spreadsheet, tier2_spreadsheet,
                     file_manifest, wrangled_spreadsheet,
-                    token, local_template, unequal_comparisson, output_dir):
+                    token, local_template, unequal_comparisson):
 
     if collection_id and dataset_id:
         print(f"{BOLD_START}===C: {collection_id} D: {dataset_id}===={BOLD_END}")
@@ -84,20 +82,20 @@ def run_all_scripts(collection_id, dataset_id, label,
         label = collect_cellxgene_metadata.main(collection_id=collection_id,
                                                 dataset_id=dataset_id,
                                                 label=label,
-                                                output_dir=TEMP_DIR,
+                                                output_dir=output_dirs["t1"],
                                                 token=token)
     elif tier1_spreadsheet:
         label = get_label(tier1_spreadsheet)
         print(f"{BOLD_START}===L: {label}===={BOLD_END}")
         label = collect_spreadsheet_metadata.main(
             tier1_spreadsheet=tier1_spreadsheet,
-            output_dir=TEMP_DIR)
-    flat_tier1_spreadsheet = filename_suffixed(TEMP_DIR, label, 'metadata')
+            output_dir=output_dirs["t1"])
+    flat_tier1_spreadsheet = filename_suffixed(output_dirs["t1"], label, 'metadata')
     convert_to_dcp.main(flat_tier1_spreadsheet,
-                        output_dir=TEMP_DIR,
+                        output_dir=output_dirs["dt"],
                         local_template=local_template)
     dcp_tier1_spreadsheet = filename_suffixed(
-        TEMP_DIR, label, "dcp", ext="xlsx")
+        output_dirs["dt"], label, "dcp", ext="xlsx")
     if wrangled_spreadsheet:
         compare_with_dcp.main(tier1_spreadsheet=dcp_tier1_spreadsheet,
                               wrangled_spreadsheet=wrangled_spreadsheet,
@@ -108,7 +106,7 @@ def run_all_scripts(collection_id, dataset_id, label,
     if tier2_spreadsheet:
         merge_tier2_metadata.main(tier2_spreadsheet=tier2_spreadsheet,
                                   dt_spreadsheet=dcp_tier1_spreadsheet,
-                                  output_dir=output_dir)
+                                  output_dir=output_dirs["t2"])
     else:
         print(
             f"Tier 2 metadata file not provided for dataset {label}. Skipping Tier 2 merging.")
@@ -116,7 +114,7 @@ def run_all_scripts(collection_id, dataset_id, label,
         merge_file_manifest.main(file_manifest=file_manifest,
                                  dt_spreadsheet=dcp_tier1_spreadsheet,
                                  tier1_spreadsheet=tier1_spreadsheet,
-                                 output_dir=output_dir)
+                                 output_dir=output_dirs["fm"])
     else:
         print(
             f"File manifest not provided for dataset {label}. Skipping file manifest merging.")
@@ -124,11 +122,11 @@ def run_all_scripts(collection_id, dataset_id, label,
 
 def main(input_spreadsheet, collection_id, dataset_id, label,
          tier1_spreadsheet, tier2_spreadsheet, file_manifest, wrangled_spreadsheet,
-         local_template, output_dir, token, unequal_comparisson):
+         local_template, token, unequal_comparisson):
     if collection_id or tier1_spreadsheet:
         run_all_scripts(collection_id, dataset_id, label, tier1_spreadsheet,
                         tier2_spreadsheet, file_manifest, wrangled_spreadsheet,
-                        token, local_template, unequal_comparisson, output_dir)
+                        token, local_template, unequal_comparisson)
         return
     input_df = read_input_spreadsheet(input_spreadsheet)
     for index, row in input_df.iterrows():
@@ -139,12 +137,11 @@ def main(input_spreadsheet, collection_id, dataset_id, label,
                         row['tier1_spreadsheet'], row['tier2_spreadsheet'],
                         row['file_manifest'], row['wrangled_spreadsheet'],
                         row['token'], row['local_template'],
-                        row['unequal_comparisson'], row['output_dir'])
+                        row['unequal_comparisson'])
 
 
 if __name__ == "__main__":
     args = define_parser().parse_args()
     main(args.input_spreadsheet, args.collection_id, args.dataset_id, args.label,
          args.tier1_spreadsheet, args.tier2_spreadsheet, args.file_manifest,
-         args.wrangled_spreadsheet, args.local_template, args.output_dir,
-         args.token, args.unequal_comparisson)
+         args.wrangled_spreadsheet, args.local_template, args.token, args.unequal_comparisson)
