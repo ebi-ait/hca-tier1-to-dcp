@@ -73,9 +73,6 @@ def main(flat_tier1_spreadsheet, output_dir, local_template=None):
     print(f"{BOLD_START}EXPORTING SPREADSHEET{BOLD_END}")
     export_to_excel(dcp_spreadsheet, output_dir, label, local_template)
 
-BOLD_START = '\033[1m'
-BOLD_END = '\033[0;0m'
-
 if __name__ == "__main__":
     args = define_parser().parse_args()
     main(flat_tier1_spreadsheet=args.flat_tier1_spreadsheet, output_dir=args.output_dir, local_template=args.local_template)
