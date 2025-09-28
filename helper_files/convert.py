@@ -571,9 +571,9 @@ def check_required_fields(dcp_spreadsheet):
     for key, values in missing_dict.items():
         print(f"\t{key}:\t{', '.join(values)}")
 
-def export_to_excel(dcp_spreadsheet, dir_name, label, local_template):
+def export_to_excel(dcp_spreadsheet, dir_name, label, local_template, t2=False):
     dcp_headers = get_dcp_headers(local_template)
-    output_path = filename_suffixed(dir_name, label, "dcp", ext="xlsx")
+    output_path = filename_suffixed(dir_name, label, "full" if t2 else "dcp", ext="xlsx")
     with pd.ExcelWriter(output_path) as writer:
         for tab_name, data in dcp_spreadsheet.items():
             if not data.empty:

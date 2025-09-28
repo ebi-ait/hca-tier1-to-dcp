@@ -16,10 +16,16 @@ from helper_files.convert import (
     add_analysis_file,
     check_required_fields,
     export_to_excel,
+    flatten_tiered_spreadsheet
+)
+from helper_files.merge import (
+    manual_fixes,
+    rename_tier2_columns
 )
 
-from helper_files.utils import get_label, BOLD_END, BOLD_START
-from helper_files.constants.tier1_mapping import tier1_to_dcp, collection_dict
+from helper_files.utils import get_label, BOLD_END, BOLD_START, open_spreadsheet
+from helper_files.constants.tier1_mapping import tier1_to_dcp, collection_dict, KEY_COLS
+from helper_files.constants.tier2_mapping import TIER2_TO_DCP, TIER2_TO_DCP_UPDATE
 
 def define_parser():
     """Defines and returns the argument parser."""
@@ -27,6 +33,9 @@ def define_parser():
     parser.add_argument("-ft", "--flat_tier1_spreadsheet", action="store",
                         dest="flat_tier1_spreadsheet", type=str, required=True,
                         help="Flattened tier 1 spreadsheet path")
+    parser.add_argument("-t2", "--tier2_spreadsheet", action="store",
+                        dest="tier2_spreadsheet", type=str, required=False,
+                        help="Tier 2 spreadsheet path")
     parser.add_argument("-o", "--output_dir", action="store",
                         dest="output_dir", type=str, required=False, default='metadata/dt/',
                         help="Directory for the output files")
@@ -35,7 +44,7 @@ def define_parser():
                         help="Local path of the HCA spreadsheet template")
     return parser
 
-def main(flat_tier1_spreadsheet, output_dir, local_template=None):
+def main(flat_tier1_spreadsheet, tier2_spreadsheet=None, output_dir='metadata/dt/', local_template=None):
     label = get_label(flat_tier1_spreadsheet)
     input_dir = os.path.dirname(flat_tier1_spreadsheet)
     print(f"{BOLD_START}READING FILES{BOLD_END}")
@@ -51,6 +60,16 @@ def main(flat_tier1_spreadsheet, output_dir, local_template=None):
     dcp_flat = sample_metadata.rename(columns=tier1_to_dcp)
     check_enum_values(dcp_flat)
     
+    # flatten t2
+    if tier2_spreadsheet:
+        tier2_df = open_spreadsheet(tier2_spreadsheet)
+        
+        all_tier2 = {**TIER2_TO_DCP, **TIER2_TO_DCP_UPDATE}
+        tier2_flat = flatten_tiered_spreadsheet(tier2_df, merge_type='outer')
+        tier2_low_key = tier1_to_dcp[next(id for id in KEY_COLS if id in tier2_flat.columns)]
+        tier2_flat = manual_fixes(tier2_flat)
+        tier2_flat = rename_tier2_columns(tier2_flat, all_tier2)
+        dcp_flat = dcp_flat.merge(tier2_flat, how='outer', on=tier2_low_key, suffixes=('_dcp', ''))
     # Add ontology id and labels
     dcp_flat = fill_ontologies(dcp_flat)
     
@@ -71,8 +90,11 @@ def main(flat_tier1_spreadsheet, output_dir, local_template=None):
     check_required_fields(dcp_spreadsheet)
 
     print(f"{BOLD_START}EXPORTING SPREADSHEET{BOLD_END}")
-    export_to_excel(dcp_spreadsheet, output_dir, label, local_template)
+    export_to_excel(dcp_spreadsheet, output_dir, label, local_template, t2=bool(tier2_spreadsheet))
 
 if __name__ == "__main__":
     args = define_parser().parse_args()
-    main(flat_tier1_spreadsheet=args.flat_tier1_spreadsheet, output_dir=args.output_dir, local_template=args.local_template)
+    main(flat_tier1_spreadsheet=args.flat_tier1_spreadsheet, 
+         tier2_spreadsheet=args.tier2_spreadsheet, 
+         output_dir=args.output_dir, 
+         local_template=args.local_template)
