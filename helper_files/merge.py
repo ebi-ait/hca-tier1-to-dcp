@@ -4,7 +4,8 @@ from numpy import nan
 import pandas as pd
 
 from helper_files.utils import open_spreadsheet
-from helper_files.constants.tier2_mapping import LUNG_DIGESTION, TIER2_MANUAL_FIX
+from helper_files.constants.tier1_mapping import KEY_COLS
+from helper_files.constants.tier2_mapping import LUNG_DIGESTION, TIER2_MANUAL_FIX, TIER2_TO_DCP, TIER2_TO_DCP_UPDATE
 from helper_files.constants.dcp_required import dcp_required_entities
 from helper_files.convert import flatten_tiered_spreadsheet
 
@@ -273,3 +274,16 @@ def check_dcp_required_fields(df):
         # if req_mod:
         #     print(f"Missing DCP required module field(s) {'; '.join(req_mod)}")
 
+def merge_tier2_with_flat_dcp(tier2_spreadsheet, dcp_flat, tier1_to_dcp):
+    tier2_df = open_spreadsheet(tier2_spreadsheet)
+    
+    all_tier2 = {**TIER2_TO_DCP, **TIER2_TO_DCP_UPDATE}
+    tier2_flat = flatten_tiered_spreadsheet(tier2_df, merge_type='outer')
+    tier2_low_key = tier1_to_dcp[next(id for id in KEY_COLS if id in tier2_flat.columns)]
+    tier2_flat = manual_fixes(tier2_flat)
+    print(f'\nConverting {"; ".join([col for col in tier2_flat])} tier 2 values')
+    tier2_flat = rename_tier2_columns(tier2_flat, all_tier2)
+    dcp_flat = dcp_flat.merge(tier2_flat, how='outer', on=tier2_low_key, suffixes=('_dcp', ''))
+    if dcp_flat.filter(like='_dcp').shape[1]:
+        print(f"Conflicts between tier 1 and tier 2 for {'; '.join(dcp_flat.filter(like='_dcp').columns.tolist())}. Kept tier 2 values.")
+    return dcp_flat.drop(columns=dcp_flat.filter(like='_dcp').columns, errors='ignore')
