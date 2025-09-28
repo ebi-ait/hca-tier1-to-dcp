@@ -1,5 +1,6 @@
 import re
 from collections import defaultdict
+from numpy import nan
 import pandas as pd
 
 from helper_files.utils import open_spreadsheet
@@ -110,7 +111,7 @@ def split_lung_dissociation(tier2_df, lung_digest_dict):
         return tier2_df
     all_diss_fields = set().union(*[lung_digest_dict[prot].keys() for prot in tier2_df['protocol_tissue_dissociation'].unique()])
     for diss in all_diss_fields:
-        tier2_df[diss] = pd.NA
+        tier2_df[diss] = nan
     for i, row in tier2_df.iterrows():
         prot = row['protocol_tissue_dissociation']
         if pd.isna(prot):
@@ -118,7 +119,7 @@ def split_lung_dissociation(tier2_df, lung_digest_dict):
         if prot not in lung_digest_dict:
             raise ValueError(f"Digestion protocol {prot} not in pre-defined enum. Should be under `protocol_tissue_dissociation`")
         for diss in all_diss_fields:
-            tier2_df.loc[i, diss] = lung_digest_dict[prot].get(diss, pd.NA)
+            tier2_df.loc[i, diss] = lung_digest_dict[prot].get(diss, nan)
     del tier2_df['protocol_tissue_dissociation']
     return tier2_df
 
