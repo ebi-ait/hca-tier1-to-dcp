@@ -158,7 +158,7 @@ def edit_collection_method(sample_metadata, collection_dict):
     if 'sample_collection_method' in sample_metadata:
         collect_fields = [field for field in ['sample_collection_method', 'manner_of_death', 'tissue_ontology_term_id'] if field in sample_metadata]
         sample_metadata['collection_protocol.method.text'] = sample_metadata\
-        .apply(lambda x: x['sample_collection_method'] \
+            .apply(lambda x: x['sample_collection_method'] \
             if x['sample_collection_method'] not in collection_dict else None, axis=1)
         no_collect_comb = sample_metadata.loc[\
             sample_metadata['sample_collection_method'].isin(collection_dict), ['sample_id'] + collect_fields]\
@@ -192,7 +192,8 @@ def edit_ncbitaxon(sample_metadata):
 
 def edit_sex(sample_metadata):
     if 'sex_ontology_term_id' in sample_metadata:
-        sample_metadata['donor_organism.sex'] = sample_metadata['sex_ontology_term_id'].apply(ols_label).fillna('unknown')
+        sex_dict = {key: ols_label(key) for key in sample_metadata['sex_ontology_term_id'].unique() if key is not nan}
+        sample_metadata['donor_organism.sex'] = sample_metadata['sex_ontology_term_id'].replace(sex_dict).fillna('unknown')
         allowed_sex_values = ['female', 'male', 'mixed', 'unknown']
         bool_sex_values = sample_metadata['donor_organism.sex'].isin(allowed_sex_values)
         if not bool_sex_values.all():
@@ -278,9 +279,10 @@ def edit_cell_enrichment(sample_metadata):
         if sample_metadata['cell_enrichment'] == "na":
             return 
         sample_metadata['cell_enrichment_cell_type'] = sample_metadata['cell_enrichment'].str[:-1]
-        sample_metadata['enrichment_protocol.markers'] = sample_metadata['cell_enrichment_cell_type'].apply(ols_label)
+        enrich_dict = {key: ols_label(key) for key in sample_metadata['cell_enrichment_cell_type'].unique() if key is not nan}
+        sample_metadata['cell_enrichment_cell_type'] = sample_metadata['cell_enrichment_cell_type'].replace(enrich_dict)
         sample_metadata['cell_suspension.selected_cell_types.ontology'] = sample_metadata['cell_enrichment_cell_type']
-        sample_metadata['cell_suspension.selected_cell_types.ontology_label'] = sample_metadata['cell_enrichment_cell_type'].apply(ols_label)
+        sample_metadata['cell_suspension.selected_cell_types.ontology_label'] = sample_metadata['cell_enrichment_cell_type'].replace(enrich_dict)
         print('`cell_enrichment`', end='; ', flush=True)
     return sample_metadata
 
@@ -310,10 +312,10 @@ def dev_label(ontology):
 
 def edit_dev_stage(sample_metadata):   
     if 'development_stage_ontology_term_id' in sample_metadata and sample_metadata['development_stage_ontology_term_id'].notna().any():
+        dev_dict = {key: dev_label(key) for key in sample_metadata['development_stage_ontology_term_id'].unique() if key is not nan}
         sample_metadata[['donor_organism.organism_age', 'donor_organism.organism_age_unit.text']] = \
             sample_metadata['development_stage_ontology_term_id']\
-                .apply(lambda x: dev_to_age_dict[x] if x in dev_to_age_dict else dev_label(x))\
-                .str.split(' ', expand=True)
+                .replace(dev_dict).str.split(' ', expand=True)
         print('`development_stage`', end='; ', flush=True)
     elif 'donor_organism.organism_age' in sample_metadata and sample_metadata['donor_organism.organism_age'].notna().any():
         sample_metadata[['donor_organism.organism_age', 'donor_organism.organism_age_unit.text']] = \
