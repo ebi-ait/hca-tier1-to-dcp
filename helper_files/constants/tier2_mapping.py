@@ -131,21 +131,21 @@ restrictions_tier2 = {
 
 LUNG_DIGESTION = {
     "Collagenase D + DNAse": {
-        "dissociation_protocol.protocol_core.protocol_id": "Collagenase_D_DNAse",
+        # "dissociation_protocol.protocol_core.protocol_id": "Collagenase_D_DNAse",
         "dissociation_protocol.method.text": "enzymatic dissociation",
         "dissociation_protocol.method.ontology": "EFO:0009129",
         "dissociation_protocol.method.ontology_label": "enzymatic dissociation",
         "dissociation_protocol.digestion_solution": "Collagenase D||DNAse",
     },
     "Dispase + collagenase": {
-        "dissociation_protocol.protocol_core.protocol_id": "Dispase_collagenase",
+        # "dissociation_protocol.protocol_core.protocol_id": "Dispase_collagenase",
         "dissociation_protocol.method.text": "enzymatic dissociation",
         "dissociation_protocol.method.ontology": "EFO:0009129",
         "dissociation_protocol.method.ontology_label": "enzymatic dissociation",
         "dissociation_protocol.digestion_solution": "Dispase||Collagenase",
     },
     "Cold protease 1h": {
-        "dissociation_protocol.protocol_core.protocol_id": "Cold_protease_1h",
+        # "dissociation_protocol.protocol_core.protocol_id": "Cold_protease_1h",
         "dissociation_protocol.method.text": "enzymatic dissociation",
         "dissociation_protocol.method.ontology": "EFO:0009129",
         "dissociation_protocol.method.ontology_label": "enzymatic dissociation",
@@ -155,14 +155,14 @@ LUNG_DIGESTION = {
         "dissociation_protocol.digestion_time_unit": "hour",
     },
     "Collagenase + Elastase + DNAse": {
-        "dissociation_protocol.protocol_core.protocol_id": "Collagenase_Elastase_DNAse",
+        # "dissociation_protocol.protocol_core.protocol_id": "Collagenase_Elastase_DNAse",
         "dissociation_protocol.method.text": "enzymatic dissociation",
         "dissociation_protocol.method.ontology": "EFO:0009129",
         "dissociation_protocol.method.ontology_label": "enzymatic dissociation",
         "dissociation_protocol.digestion_solution": "Collagenase||Elastase||DNAse",
     },
     "Cold protease overnight": {
-        "dissociation_protocol.protocol_core.protocol_id": "Cold_protease_overnight",
+        # "dissociation_protocol.protocol_core.protocol_id": "Cold_protease_overnight",
         "dissociation_protocol.method.text": "enzymatic dissociation",
         "dissociation_protocol.method.ontology": "EFO:0009129",
         "dissociation_protocol.method.ontology_label": "enzymatic dissociation",
@@ -172,14 +172,14 @@ LUNG_DIGESTION = {
         "dissociation_protocol.digestion_time_unit": "hour",
     },
     "Collagenase A + DNAse": {
-        "dissociation_protocol.protocol_core.protocol_id": "Collagenase_A_DNAse",
+        # "dissociation_protocol.protocol_core.protocol_id": "Collagenase_A_DNAse",
         "dissociation_protocol.method.text": "enzymatic dissociation",
         "dissociation_protocol.method.ontology": "EFO:0009129",
         "dissociation_protocol.method.ontology_label": "enzymatic dissociation",
         "dissociation_protocol.digestion_solution": "Collagenase A||DNAse",
     },
     "Mechanical dissociation (chilled) + detergent-based nuclei isolation": {
-        "dissociation_protocol.protocol_core.protocol_id": "Mechanical_dissociation_detergent-based_nuclei_isolation",
+        # "dissociation_protocol.protocol_core.protocol_id": "Mechanical_dissociation_detergent-based_nuclei_isolation",
         "dissociation_protocol.method.text": "mechanical dissociation||enzyme-free chemical dissociation",
         "dissociation_protocol.method.ontology": "EFO:0009129||EFO:0011026",
         "dissociation_protocol.method.ontology_label": "mechanical dissociation||enzyme-free chemical dissociation",
@@ -187,7 +187,7 @@ LUNG_DIGESTION = {
         "dissociation_protocol.digestion_temperature": 8,
     },
     "Mechanical dissociation (frozen) + citric-acid based nuclei isolation": {
-        "dissociation_protocol.protocol_core.protocol_id": "Mechanical_dissociation_citric-acid_based_nuclei_isolation",
+        # "dissociation_protocol.protocol_core.protocol_id": "Mechanical_dissociation_citric-acid_based_nuclei_isolation",
         "dissociation_protocol.method.text": "mechanical dissociation||enzyme-free chemical dissociation",
         "dissociation_protocol.method.ontology": "EFO:0009129||EFO:0011026",
         "dissociation_protocol.method.ontology_label": "mechanical dissociation||enzyme-free chemical dissociation",
@@ -199,7 +199,7 @@ LUNG_DIGESTION = {
 TIER2_MANUAL_FIX = {
     "tier2": ["protocol_tissue_dissociation", "protocol_tissue_dissociation_free_text"],
     "dcp": [
-        "dissociation_protocol.protocol_core.protocol_id",
+        # "dissociation_protocol.protocol_core.protocol_id",
         "dissociation_protocol.method.text",
         "dissociation_protocol.method.ontology",
         "dissociation_protocol.method.ontology_label",

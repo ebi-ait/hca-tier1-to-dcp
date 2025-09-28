@@ -384,7 +384,7 @@ def create_protocol_ids(dcp_spreadsheet, dcp_flat):
             protocol_df[protocol_id_col] = [make_protocol_name(value) for value in protocol_df[prot_def_field[protocol]].values]
         else:
             protocol_df[protocol_id_col] = [protocol + "_" + str(n + 1) for n in range(len(protocol_df))]
-        dcp_flat = dcp_flat.merge(protocol_df,  how='left', on=list(protocol_df.columns.values[:-1]))
+        dcp_flat = dcp_flat.merge(protocol_df,  how='left', on=list(protocol_df.drop(columns=protocol_id_col).columns))
     return dcp_flat
 
 def not_text(col, dcp_flat):
