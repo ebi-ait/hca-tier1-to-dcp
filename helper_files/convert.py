@@ -1,3 +1,4 @@
+import os
 import re
 import requests
 
@@ -5,34 +6,34 @@ import pandas as pd
 from numpy import nan
 from packaging.version import parse as parse_version
 
-from helper_files.constants.tier1_mapping import collection_dict, prot_def_field, tier1_enum, dev_to_age_dict, age_to_dev_dict
+from helper_files.constants.tier1_mapping import collection_dict, prot_def_field, tier1_enum, dev_to_age_dict, age_to_dev_dict, tier1
 from helper_files.constants.required_fields import required_fields
 from helper_files.utils import filename_suffixed, BOLD_START, BOLD_END
 
 KEY_COLS = ["donor_id", "sample_id", "dataset_id", "library_id"]
 
 def read_sample_metadata(label, dir_name):
-    try:
-        sample_metadata_path = filename_suffixed(dir_name, label, "metadata")
-        print(f"Tier 1 obs spreadsheet found in {sample_metadata_path}")
+    sample_metadata_path = filename_suffixed(dir_name, label, "metadata")
+    tier1_metadata_path = filename_suffixed(dir_name, label, "tier1_metadata")
+    if os.path.exists(sample_metadata_path):
         return pd.read_csv(sample_metadata_path)
-    except FileNotFoundError:
-        print(f"File not found: {sample_metadata_path}")
-        return pd.DataFrame()
-    except pd.errors.EmptyDataError:
-        print(f"Empty file: {sample_metadata_path}")
-        return pd.DataFrame()
+    if os.path.exists(tier1_metadata_path):
+        metadata = pd.read_csv(tier1_metadata_path, header=0)
+        study_metadata_keys = tier1['uns']['MUST'] + tier1['uns']['RECOMMENDED']
+        return metadata[[key for key in metadata.columns if key not in study_metadata_keys]]
+    raise FileNotFoundError(f"File not found: {sample_metadata_path} nor {tier1_metadata_path}")
 
 def read_study_metadata(label, dir_name):
-    try:
-        metadata_path = filename_suffixed(dir_name, label, "study_metadata")
-        metadata = pd.read_csv(metadata_path, header=None).T
-        metadata.columns = metadata.iloc[0]
-        print(f"Tier 1 uns spreadsheet found in {metadata_path}")
-        return metadata.drop(0, axis=0)
-    except FileNotFoundError:
-        print(f"File not found: {metadata_path}")
-        return pd.DataFrame()
+    study_metadata_path = filename_suffixed(dir_name, label, "study_metadata")
+    metadata_path = filename_suffixed(dir_name, label, "tier1_metadata")
+    if os.path.exists(study_metadata_path):
+        return pd.read_csv(study_metadata_path, header=None, index_col=0).T
+    if os.path.exists(metadata_path):
+        metadata = pd.read_csv(metadata_path, header=0)
+        study_metadata_keys = tier1['uns']['MUST'] + tier1['uns']['RECOMMENDED']
+        return metadata[[key for key in study_metadata_keys if key in metadata.columns]].drop_duplicates()
+    
+    return pd.DataFrame()
 
 def get_dcp_template(local_path=None):
     # if no internet connection, provide local path
