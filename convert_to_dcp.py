@@ -62,15 +62,20 @@ def main(flat_tier1_spreadsheet, tier2_spreadsheet=None, output_dir='metadata/dt
     
     # flatten t2
     if tier2_spreadsheet:
+        print(f"{BOLD_START}MERGING TIER 2 METADATA{BOLD_END}")
         tier2_df = open_spreadsheet(tier2_spreadsheet)
         
         all_tier2 = {**TIER2_TO_DCP, **TIER2_TO_DCP_UPDATE}
         tier2_flat = flatten_tiered_spreadsheet(tier2_df, merge_type='outer')
         tier2_low_key = tier1_to_dcp[next(id for id in KEY_COLS if id in tier2_flat.columns)]
         tier2_flat = manual_fixes(tier2_flat)
+        print(f'\nConverting {"; ".join([col for col in tier2_flat])} tier 2 values')
         tier2_flat = rename_tier2_columns(tier2_flat, all_tier2)
         dcp_flat = dcp_flat.merge(tier2_flat, how='outer', on=tier2_low_key, suffixes=('_dcp', ''))
+        if dcp_flat.filter(like='_dcp').shape[1]:
+            print(f"Conflicts between tier 1 and tier 2 for {'; '.join(dcp_flat.filter(like='_dcp').columns.tolist())}. Kept tier 2 values.")
     # Add ontology id and labels
+    print(f"{BOLD_START}FILLING ONTOLOGIES{BOLD_END}")
     dcp_flat = fill_ontologies(dcp_flat)
     
     # Generate spreadsheet
