@@ -152,7 +152,7 @@ LUNG_DIGESTION = {
         "dissociation_protocol.digestion_solution": "Protease",
         "dissociation_protocol.digestion_temperature": "cold",
         "dissociation_protocol.digestion_time": 1,
-        "dissociation_protocol.digestion_time_unit": "hour",
+        "dissociation_protocol.digestion_time_unit.text": "hour",
     },
     "Collagenase + Elastase + DNAse": {
         # "dissociation_protocol.protocol_core.protocol_id": "Collagenase_Elastase_DNAse",
@@ -169,7 +169,7 @@ LUNG_DIGESTION = {
         "dissociation_protocol.digestion_solution": "Protease",
         "dissociation_protocol.digestion_temperature": "cold",
         "dissociation_protocol.digestion_time": 16,
-        "dissociation_protocol.digestion_time_unit": "hour",
+        "dissociation_protocol.digestion_time_unit.text": "hour",
     },
     "Collagenase A + DNAse": {
         # "dissociation_protocol.protocol_core.protocol_id": "Collagenase_A_DNAse",
@@ -206,6 +206,6 @@ TIER2_MANUAL_FIX = {
         "dissociation_protocol.digestion_solution",
         "dissociation_protocol.digestion_temperature",
         "dissociation_protocol.digestion_time",
-        "dissociation_protocol.digestion_time_unit",
+        "dissociation_protocol.digestion_time_unit.text",
     ],
 }
