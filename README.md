@@ -4,43 +4,59 @@ Convert Human Cell Atlas Tier 1 metadata extracted out of an anndata object of a
 ## Algorithm
 ```mermaid
 flowchart TD
-    A[CxG <a href='https://cellxgene.cziscience.com/collections'> public database</a>]
-    B[Tier 1 from tracker - xlsx]
-    C[Tier 1 - csv]
-    D[Tier 1 - dcp spreadsheet]
-    E[previously wrangled - spreadsheet] 
-    F[Tier 2 - xlsx/ csv]
-    G[File manifest]
-    H[Full metadata - dcp spreadsheet]
-    I[Compare report]
+    %% Nodes: files (parallelograms), scripts (rectangles), outputs (hexagons)
+
+    %% Data sources
+    A[/CxG public database/]
+    B[/Tier 1 tracker - xlsx/]
+    C[/Tier 1 metadata - csv/]
+    D[/DCP spreadsheet/]
+    E[/Previously wrangled spreadsheet/]
+    F[/Tier 2 metadata - xlsx/]
+    G[/File manifest/]
+    H{{Compare report - json}}
+
+    %% Scripts
+    S1[collect_cellxgene_metadata.py]
+    S2[collect_spreadsheet_metadata.py]
+    S3[convert_to_dcp.py]
+    S4[compare_with_dcp.py]
+    S5[merge_tier2_metadata.py]
+    S6[merge_file_manifest.py]
+
+    %% Flows
+    A --> S1 --> C
+    B --> S2 --> C
+    C --> S3 --> D
+    F -->|direct conversion| S3
+    G -->|direct conversion| S3
+    E --> S4 --> H
+    D --> S4
+    F -->|merge to dcp| S5
+    G -->|merge to dcp| S6
+    D --> S5
+    D --> S6
     
-    A --> |<a href='https://github.com/ebi-ait/hca-tier1-to-dcp/blob/main/collect_cellxgene_metadata.py'>collection</a>| C
-    B --> |<a href='https://github.com/ebi-ait/hca-tier1-to-dcp/blob/main/collect_spreadsheet_metadata.py'>collection</a>| C
-    C --> |<a href='https://github.com/ebi-ait/hca-tier1-to-dcp/blob/main/convert_to_dcp.py'>DCP mapping</a>| D
-    F --> |if tier 2 available| D
-    G --> |if file manifest available| D
-    C --> |If previously wrangled| H
-    E --> |<a href='https://github.com/ebi-ait/hca-tier1-to-dcp/blob/main/compare_with_dcp.py'>Compare</a>| H
-    H --> I
-    D --> H
-    F --> |<a href='https://github.com/ebi-ait/hca-tier1-to-dcp/blob/main/merge_tier2_metadata.py'>Merge tier 2 after tier 1 conversion</a>| H
-    G --> |<a href='https://github.com/ebi-ait/hca-tier1-to-dcp/blob/main/merge_tier2_metadata.py'>Merge tier 2 after tier 1 conversion</a>| H
-    G --> H
-    
-    subgraph collection
-    A
-    B
+    %% Grouping
+    subgraph Collection
+        A
+        B
+        S1
+        S2
+        C
     end
-    subgraph conversion
-    C
-    D
+    subgraph Conversion
+        S3
+        D
     end
-    subgraph comparison
-    E
+    subgraph Comparison
+        E
+        S4
+        H
     end
-    subgraph addition
-    F
-    G
+    subgraph Merge
+    S5
+    S6    
     end
 ```
 
