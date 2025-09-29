@@ -54,7 +54,7 @@ This proces is done in the following steps.
     1. Flatten the tier 1 metadata into a csv in `metadata` dir with `<label>_metadata.csv`
 1. Convert to DCP spreadsheet [convert_to_dcp.py](convert_to_dcp.py)
     1. Given a spreadsheet path, pull metadata & extract filename label used.
-    1. Based on [hca_template.xlsx](https://github.com/ebi-ait/geo_to_hca/raw/master/template/hca_template.xlsx), using the [mapping](helper_files/tier1_mapping.py) convert to dcp flat metadata file with dcp programmatic fields
+    1. Based on [hca_template.xlsx](https://github.com/ebi-ait/geo_to_hca/raw/master/template/hca_template.xlsx), using the [mapping](helper_files/constants/tier1_mapping.py) convert to dcp flat metadata file with dcp programmatic fields
     1. Based on the field programmatic name, the dcp spreadsheet is populated
     1. If tier 2 and/ or file manifest is given, produce result via dcp_flat
     1. Exported into an xlsx file in `metadata` dir to `<label>_dcp.csv` filename
@@ -69,14 +69,14 @@ This proces is done in the following steps.
 1. Merge Tier 2 metadata into pre-filled DCP spreadsheet [merge_tier2_metadata.py](merge_tier2_metadata.py)
     1. Open Tier 2 spreadsheet and wrangled DCP spreadsheet
     1. Flatten Tier 2 spreadsheet into a single denormalised tab
-    1. Rename columns using [tier 2 mapping](helper_files/tier2_mapping.py)
+    1. Rename columns using [tier 2 mapping](helper_files/constants/tier2_mapping.py)
     1. Merge tier 2 metadata in corresponding tabs/entities of dcp spreadsheet.
     1. Export into an xlsx file in `metadata` dir to `<label>_tier2.xlsx`
 1. Merge File metadata into pre-filled DCP spreadsheet [merge_file_manifest.py](merge_file_manifest.py)
     1. Open File metadata tab, Tier 1 metadata and wrangled DCP spreadsheet
-    1. Merge File metadata tab into wrangled spreadsheet `Sequence tab` (remove existing & use [FILE_MANIFEST_MAPPING](helper_files/file_mapping.py))
-    1. Add standard FASTQ fields [FASTQ_STANDARD_FIELDS](helper_files/file_mapping.py)
-    1. Use Tier 1 metadata to assign sequqnce and library prep protocols, and other [TIER_1_MAPPING](helper_files/file_mapping.py) fields
+    1. Merge File metadata tab into wrangled spreadsheet `Sequence tab` (remove existing & use [FILE_MANIFEST_MAPPING](helper_files/constants/file_mapping.py))
+    1. Add standard FASTQ fields [FASTQ_STANDARD_FIELDS](helper_files/constants/file_mapping.py)
+    1. Use Tier 1 metadata to assign sequqnce and library prep protocols, and other [TIER_1_MAPPING](helper_files/constants/file_mapping.py) fields
     1. Export into an xlsx file in `metadata` dir to `<label>_fastqed.xlsx`
 
 
