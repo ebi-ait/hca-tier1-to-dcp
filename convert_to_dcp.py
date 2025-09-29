@@ -1,6 +1,7 @@
 import argparse
 import os
 
+from helper_files.constants.file_mapping import FILE_MANIFEST_MAPPING
 from helper_files.convert import (
     read_sample_metadata,
     read_study_metadata,
@@ -17,7 +18,7 @@ from helper_files.convert import (
     check_required_fields,
     export_to_excel
 )
-from helper_files.merge import merge_tier2_with_flat_dcp
+from helper_files.merge import merge_file_manifest_with_flat_dcp, merge_tier2_with_flat_dcp
 
 from helper_files.utils import get_label, BOLD_END, BOLD_START
 from helper_files.constants.tier1_mapping import tier1_to_dcp, collection_dict
@@ -31,6 +32,9 @@ def define_parser():
     parser.add_argument("-t2", "--tier2_spreadsheet", action="store",
                         dest="tier2_spreadsheet", type=str, required=False,
                         help="Tier 2 spreadsheet path")
+    parser.add_argument("-fm", "--file_manifest", action='store', 
+                        dest="file_manifest", type=str, required=False,
+                        help="File manifest path")
     parser.add_argument("-o", "--output_dir", action="store",
                         dest="output_dir", type=str, required=False, default='metadata/dt/',
                         help="Directory for the output files")
@@ -39,7 +43,7 @@ def define_parser():
                         help="Local path of the HCA spreadsheet template")
     return parser
 
-def main(flat_tier1_spreadsheet, tier2_spreadsheet=None, output_dir='metadata/dt/', local_template=None):
+def main(flat_tier1_spreadsheet, tier2_spreadsheet=None, file_manifest=None, output_dir='metadata/dt/', local_template=None):
     label = get_label(flat_tier1_spreadsheet)
     input_dir = os.path.dirname(flat_tier1_spreadsheet)
     print(f"{BOLD_START}READING FILES{BOLD_END}")
@@ -55,10 +59,14 @@ def main(flat_tier1_spreadsheet, tier2_spreadsheet=None, output_dir='metadata/dt
     dcp_flat = sample_metadata.rename(columns=tier1_to_dcp)
     check_enum_values(dcp_flat)
     
-    # flatten t2
+    # add t2
     if tier2_spreadsheet:
         print(f"{BOLD_START}MERGING TIER 2 METADATA{BOLD_END}")
         dcp_flat = merge_tier2_with_flat_dcp(tier2_spreadsheet, dcp_flat, tier1_to_dcp)
+    # file manifest
+    if file_manifest:
+        print(f"{BOLD_START}MERGING FILE MANIFEST METADATA{BOLD_END}")
+        dcp_flat = merge_file_manifest_with_flat_dcp(dcp_flat, file_manifest, FILE_MANIFEST_MAPPING)
     # Add ontology id and labels
     print(f"{BOLD_START}FILLING ONTOLOGIES{BOLD_END}")
     dcp_flat = fill_ontologies(dcp_flat)
@@ -86,5 +94,6 @@ if __name__ == "__main__":
     args = define_parser().parse_args()
     main(flat_tier1_spreadsheet=args.flat_tier1_spreadsheet, 
          tier2_spreadsheet=args.tier2_spreadsheet, 
+         file_manifest=args.file_manifest,
          output_dir=args.output_dir, 
          local_template=args.local_template)

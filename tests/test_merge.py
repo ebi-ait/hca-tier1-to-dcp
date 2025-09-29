@@ -78,7 +78,7 @@ def wrangled_spreadsheet(std_dcp_keys):
                                                     'specimen_from_organism.organ.text': ['lung', 'blood']}),
             "Cell suspension": pd.DataFrame({std_dcp_keys['library_id']: ['l1', 'l2'], 
                                              std_dcp_keys['sample_id']: ['S1', 'S2']}),
-            "Sequence file": pd.DataFrame({std_dcp_keys['file_name']: ['l1', 'l2'], 
+            "Sequence file": pd.DataFrame({std_dcp_keys['file_name']: ['l1.fastq.gz', 'l2.fastq.gz'], 
                                            std_dcp_keys['library_id']: ['S1', 'S2']}),
             }
 
@@ -97,19 +97,21 @@ def test_get_fastq_ext_invalid(filename):
 
 def test_merge_file_manifest(file_manifest, wrangled_spreadsheet):
     mapping = {"file_name": "sequence_file.file_core.file_name", "library_id": LAST_BIOMATERIAL}
-    merged = merge_file_manifest(wrangled_spreadsheet.copy(), file_manifest, mapping)
-    assert "Sequence file" in merged
-    assert set(merged["Sequence file"].columns) == set(mapping.values())
+    del wrangled_spreadsheet['Sequence file']['sequence_file.file_core.file_name']
+    merged = merge_file_manifest(wrangled_spreadsheet['Sequence file'], file_manifest, mapping)
+    assert set(merged.columns) == set(mapping.values())
 
 
 def test_add_standard_fields(file_manifest, wrangled_spreadsheet):
     mapping = {"file_name": "sequence_file.file_core.file_name", "library_id": LAST_BIOMATERIAL}
-    ws = merge_file_manifest(wrangled_spreadsheet.copy(), file_manifest, mapping)
+
+    file_manifest = file_manifest.rename(columns=mapping)
+    wrangled_spreadsheet['Sequence file'] = merge_overlap(wrangled_spreadsheet['Sequence file'], file_manifest, list(file_manifest.columns), key='sequence_file.file_core.file_name', suffix='fm')
     # add a format column so get_fastq_ext applies
     standard_fields = {"sequence_file.content_description.text": "DNA sequence"}
-    ws2 = add_standard_fields(ws, standard_fields)
-    assert all(ws2["Sequence file"]["sequence_file.content_description.text"] == "DNA sequence")
-    assert all(ws2["Sequence file"]["sequence_file.file_core.format"] == "fastq.gz")
+    wrangled_spreadsheet['Sequence file'] = add_standard_fields(wrangled_spreadsheet['Sequence file'], standard_fields)
+    assert all(wrangled_spreadsheet["Sequence file"]["sequence_file.content_description.text"] == "DNA sequence")
+    assert all(wrangled_spreadsheet["Sequence file"]["sequence_file.file_core.format"] == "fastq.gz")
 
 def test_get_protocol_id():
     key = "random_protocol.protocol_type.text"
