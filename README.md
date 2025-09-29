@@ -60,7 +60,7 @@ flowchart TD
     end
 ```
 
-This proces is done in the following steps.
+This process is done in the following steps (user only calls the scripts, detailed steps are there to explain the under the hood processes).
 1. Pull data from CxG [collect_cellxgene_metadata.py](collect_cellxgene_metadata.py) or spreadsheet [collect_spreadsheet_metadata.py](collect_spreadsheet_metadata.py)
     - from CxG
     1. Given a collection_id, select dataset and download h5ad
@@ -103,7 +103,7 @@ Tested in python3.9. To run scripts you can run:
 python3 -m pip install -r requirements.txt
 python3 collect_cellxgene_metadata.py -c <collection_id> -t <ingest-token>
 python3 collect_spreadsheet_metadata.py -t1 <tier1_spreadsheet>
-python3 convert_to_dcp.py -ft <flat_tier1_spreadsheet> -t2 <tier2_metadata> -fm <file_manifest>
+python3 convert_to_dcp.py -ft <flat_tier1_spreadsheet> (-t2 <tier2_metadata>) (-fm <file_manifest>)
 python3 compare_with_dcp.py -dt <dcp_tier1_spreadsheet> -w <wrangled_spreadsheet>
 python3 merge_tier2_metadata.py -t2 <tier2_metadata> -dt <dt_spreadsheet>
 python3 merge_file_manifest.py -fm <file_manifest> -dt <dt_spreadsheet> -t1 <tier1_spreadsheet>
