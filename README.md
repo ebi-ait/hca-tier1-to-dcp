@@ -2,7 +2,48 @@
 Convert Human Cell Atlas Tier 1 metadata extracted out of an anndata object of a published CELLxGENE dataset,into [HCA DCP metadata schema](https://github.com/HumanCellAtlas/metadata-schema/tree/master/json_schema) ingestible [spreadsheet](https://github.com/ebi-ait/geo_to_hca/tree/master/template).
 
 ## Algorithm
-This proces is done in 5 steps.
+```mermaid
+flowchart TD
+    A[CxG <a href='https://cellxgene.cziscience.com/collections'> public database</a>]
+    B[Tier 1 from tracker - xlsx]
+    C[Tier 1 - csv]
+    D[Tier 1 - dcp spreadsheet]
+    E[previously wrangled - spreadsheet] 
+    F[Tier 2 - xlsx/ csv]
+    G[File manifest]
+    H[Full metadata - dcp spreadsheet]
+    I[Compare report]
+    
+    A --> |<a href='https://github.com/ebi-ait/hca-tier1-to-dcp/blob/main/collect_cellxgene_metadata.py'>collection</a>| C
+    B --> |<a href='https://github.com/ebi-ait/hca-tier1-to-dcp/blob/main/collect_spreadsheet_metadata.py'>collection</a>| C
+    C --> |<a href='https://github.com/ebi-ait/hca-tier1-to-dcp/blob/main/convert_to_dcp.py'>DCP mapping</a>| D
+    F --> |if tier 2 available| D
+    G --> |if file manifest available| D
+    C --> |If previously wrangled| H
+    E --> |<a href='https://github.com/ebi-ait/hca-tier1-to-dcp/blob/main/compare_with_dcp.py'>Compare</a>| H
+    H --> I
+    D --> H
+    F --> |<a href='https://github.com/ebi-ait/hca-tier1-to-dcp/blob/main/merge_tier2_metadata.py'>Merge tier 2 after tier 1 conversion</a>| H
+    G --> |<a href='https://github.com/ebi-ait/hca-tier1-to-dcp/blob/main/merge_tier2_metadata.py'>Merge tier 2 after tier 1 conversion</a>| H
+    G --> H
+    
+    subgraph collection
+    A
+    B
+    end
+    subgraph conversion
+    C
+    end
+    subgraph comparison
+    E
+    end
+    subgraph addition
+    F
+    G
+    end
+```
+
+This proces is done in the following steps.
 1. Pull data from CxG [collect_cellxgene_metadata.py](collect_cellxgene_metadata.py) or spreadsheet [collect_spreadsheet_metadata.py](collect_spreadsheet_metadata.py)
     - from CxG
     1. Given a collection_id, select dataset and download h5ad
