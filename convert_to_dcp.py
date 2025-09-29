@@ -16,7 +16,8 @@ from helper_files.convert import (
     populate_spreadsheet,
     add_analysis_file,
     check_required_fields,
-    export_to_excel
+    export_to_excel,
+    tiered_suffix
 )
 from helper_files.merge import merge_file_manifest_with_flat_dcp, merge_tier2_with_flat_dcp
 
@@ -88,12 +89,13 @@ def main(flat_tier1_spreadsheet, tier2_spreadsheet=None, file_manifest=None, out
     check_required_fields(dcp_spreadsheet)
 
     print(f"{BOLD_START}EXPORTING SPREADSHEET{BOLD_END}")
-    export_to_excel(dcp_spreadsheet, output_dir, label, local_template, t2=bool(tier2_spreadsheet))
+    export_to_excel(dcp_spreadsheet, output_dir, label, local_template, 
+                    suffix=tiered_suffix(tier2_spreadsheet, file_manifest))
 
 if __name__ == "__main__":
     args = define_parser().parse_args()
-    main(flat_tier1_spreadsheet=args.flat_tier1_spreadsheet, 
-         tier2_spreadsheet=args.tier2_spreadsheet, 
+    main(flat_tier1_spreadsheet=args.flat_tier1_spreadsheet,
+         tier2_spreadsheet=args.tier2_spreadsheet,
          file_manifest=args.file_manifest,
-         output_dir=args.output_dir, 
+         output_dir=args.output_dir,
          local_template=args.local_template)

@@ -31,7 +31,7 @@ This proces is done in 5 steps.
     1. Rename columns using [tier 2 mapping](helper_files/tier2_mapping.py)
     1. Merge tier 2 metadata in corresponding tabs/entities of dcp spreadsheet.
     1. Export into an xlsx file in `metadata` dir to `<label>_tier2.xlsx`
-1. Merge File metadata
+1. Merge File metadata into pre-filled DCP spreadsheet [merge_file_manifest.py](merge_file_manifest.py)
     1. Open File metadata tab, Tier 1 metadata and wrangled DCP spreadsheet
     1. Merge File metadata tab into wrangled spreadsheet `Sequence tab` (remove existing & use [FILE_MANIFEST_MAPPING](helper_files/file_mapping.py))
     1. Add standard FASTQ fields [FASTQ_STANDARD_FIELDS](helper_files/file_mapping.py)
