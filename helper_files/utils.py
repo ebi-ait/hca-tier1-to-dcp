@@ -11,9 +11,9 @@ BOLD_END = '\033[0;0m'
 def get_label(filename: str) -> str:
     label = Path(filename).stem  # strip extension
     label = re.sub(r'hca[_\s-]*tier[_\s-]*1[_\s-]*metadata', '', label, flags=re.I)
-    label = re.sub(r'_dcp|_cell_obs|_study_metadata', '', label, flags=re.I)
+    label = re.sub(r'_dcp|_tier1|_cell_obs|_study_metadata', '', label, flags=re.I)
     label = re.sub(r'[_\s-]*metadata([_\s-]*\d{1,2}[_\s-]*\d{1,2}[_\s-]*\d{2,4})?$', '', label, flags=re.I)
-    label = re.sub(r'[_\s-]+', '_', label)
+    label = re.sub(r'[_\s]+', '_', label)
     return label.strip('_')
 
 def filename_suffixed(

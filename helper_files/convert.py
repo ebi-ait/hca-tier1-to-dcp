@@ -1,3 +1,4 @@
+import os
 import re
 import requests
 
@@ -5,34 +6,34 @@ import pandas as pd
 from numpy import nan
 from packaging.version import parse as parse_version
 
-from helper_files.constants.tier1_mapping import collection_dict, prot_def_field, tier1_enum, dev_to_age_dict, age_to_dev_dict
+from helper_files.constants.tier1_mapping import collection_dict, prot_def_field, tier1_enum, dev_to_age_dict, age_to_dev_dict, tier1
 from helper_files.constants.required_fields import required_fields
 from helper_files.utils import filename_suffixed, BOLD_START, BOLD_END
 
 KEY_COLS = ["donor_id", "sample_id", "dataset_id", "library_id"]
 
 def read_sample_metadata(label, dir_name):
-    try:
-        sample_metadata_path = filename_suffixed(dir_name, label, "metadata")
-        print(f"Tier 1 obs spreadsheet found in {sample_metadata_path}")
+    sample_metadata_path = filename_suffixed(dir_name, label, "metadata")
+    tier1_metadata_path = filename_suffixed(dir_name, label, "tier1_metadata")
+    if os.path.exists(sample_metadata_path):
         return pd.read_csv(sample_metadata_path)
-    except FileNotFoundError:
-        print(f"File not found: {sample_metadata_path}")
-        return pd.DataFrame()
-    except pd.errors.EmptyDataError:
-        print(f"Empty file: {sample_metadata_path}")
-        return pd.DataFrame()
+    if os.path.exists(tier1_metadata_path):
+        metadata = pd.read_csv(tier1_metadata_path, header=0)
+        study_metadata_keys = tier1['uns']['MUST'] + tier1['uns']['RECOMMENDED']
+        return metadata[[key for key in metadata.columns if key not in study_metadata_keys]]
+    raise FileNotFoundError(f"File not found: {sample_metadata_path} nor {tier1_metadata_path}")
 
 def read_study_metadata(label, dir_name):
-    try:
-        metadata_path = filename_suffixed(dir_name, label, "study_metadata")
-        metadata = pd.read_csv(metadata_path, header=None).T
-        metadata.columns = metadata.iloc[0]
-        print(f"Tier 1 uns spreadsheet found in {metadata_path}")
-        return metadata.drop(0, axis=0)
-    except FileNotFoundError:
-        print(f"File not found: {metadata_path}")
-        return pd.DataFrame()
+    study_metadata_path = filename_suffixed(dir_name, label, "study_metadata")
+    metadata_path = filename_suffixed(dir_name, label, "tier1_metadata")
+    if os.path.exists(study_metadata_path):
+        return pd.read_csv(study_metadata_path, header=None, index_col=0).T
+    if os.path.exists(metadata_path):
+        metadata = pd.read_csv(metadata_path, header=0)
+        study_metadata_keys = tier1['uns']['MUST'] + tier1['uns']['RECOMMENDED']
+        return metadata[[key for key in study_metadata_keys if key in metadata.columns]].drop_duplicates()
+    
+    return pd.DataFrame()
 
 def get_dcp_template(local_path=None):
     # if no internet connection, provide local path
@@ -157,7 +158,7 @@ def edit_collection_method(sample_metadata, collection_dict):
     if 'sample_collection_method' in sample_metadata:
         collect_fields = [field for field in ['sample_collection_method', 'manner_of_death', 'tissue_ontology_term_id'] if field in sample_metadata]
         sample_metadata['collection_protocol.method.text'] = sample_metadata\
-        .apply(lambda x: x['sample_collection_method'] \
+            .apply(lambda x: x['sample_collection_method'] \
             if x['sample_collection_method'] not in collection_dict else None, axis=1)
         no_collect_comb = sample_metadata.loc[\
             sample_metadata['sample_collection_method'].isin(collection_dict), ['sample_id'] + collect_fields]\
@@ -191,7 +192,8 @@ def edit_ncbitaxon(sample_metadata):
 
 def edit_sex(sample_metadata):
     if 'sex_ontology_term_id' in sample_metadata:
-        sample_metadata['donor_organism.sex'] = sample_metadata['sex_ontology_term_id'].apply(ols_label).fillna('unknown')
+        sex_dict = {key: ols_label(key) for key in sample_metadata['sex_ontology_term_id'].unique() if key is not nan}
+        sample_metadata['donor_organism.sex'] = sample_metadata['sex_ontology_term_id'].replace(sex_dict).fillna('unknown')
         allowed_sex_values = ['female', 'male', 'mixed', 'unknown']
         bool_sex_values = sample_metadata['donor_organism.sex'].isin(allowed_sex_values)
         if not bool_sex_values.all():
@@ -277,9 +279,10 @@ def edit_cell_enrichment(sample_metadata):
         if sample_metadata['cell_enrichment'] == "na":
             return 
         sample_metadata['cell_enrichment_cell_type'] = sample_metadata['cell_enrichment'].str[:-1]
-        sample_metadata['enrichment_protocol.markers'] = sample_metadata['cell_enrichment_cell_type'].apply(ols_label)
+        enrich_dict = {key: ols_label(key) for key in sample_metadata['cell_enrichment_cell_type'].unique() if key is not nan}
+        sample_metadata['cell_enrichment_cell_type'] = sample_metadata['cell_enrichment_cell_type'].replace(enrich_dict)
         sample_metadata['cell_suspension.selected_cell_types.ontology'] = sample_metadata['cell_enrichment_cell_type']
-        sample_metadata['cell_suspension.selected_cell_types.ontology_label'] = sample_metadata['cell_enrichment_cell_type'].apply(ols_label)
+        sample_metadata['cell_suspension.selected_cell_types.ontology_label'] = sample_metadata['cell_enrichment_cell_type'].replace(enrich_dict)
         print('`cell_enrichment`', end='; ', flush=True)
     return sample_metadata
 
@@ -309,10 +312,10 @@ def dev_label(ontology):
 
 def edit_dev_stage(sample_metadata):   
     if 'development_stage_ontology_term_id' in sample_metadata and sample_metadata['development_stage_ontology_term_id'].notna().any():
+        dev_dict = {key: dev_label(key) for key in sample_metadata['development_stage_ontology_term_id'].unique() if key is not nan}
         sample_metadata[['donor_organism.organism_age', 'donor_organism.organism_age_unit.text']] = \
             sample_metadata['development_stage_ontology_term_id']\
-                .apply(lambda x: dev_to_age_dict[x] if x in dev_to_age_dict else dev_label(x))\
-                .str.split(' ', expand=True)
+                .replace(dev_dict).str.split(' ', expand=True)
         print('`development_stage`', end='; ', flush=True)
     elif 'donor_organism.organism_age' in sample_metadata and sample_metadata['donor_organism.organism_age'].notna().any():
         sample_metadata[['donor_organism.organism_age', 'donor_organism.organism_age_unit.text']] = \
@@ -383,7 +386,7 @@ def create_protocol_ids(dcp_spreadsheet, dcp_flat):
             protocol_df[protocol_id_col] = [make_protocol_name(value) for value in protocol_df[prot_def_field[protocol]].values]
         else:
             protocol_df[protocol_id_col] = [protocol + "_" + str(n + 1) for n in range(len(protocol_df))]
-        dcp_flat = dcp_flat.merge(protocol_df,  how='left', on=list(protocol_df.columns.values[:-1]))
+        dcp_flat = dcp_flat.merge(protocol_df,  how='left', on=list(protocol_df.drop(columns=protocol_id_col).columns))
     return dcp_flat
 
 def not_text(col, dcp_flat):
@@ -570,9 +573,19 @@ def check_required_fields(dcp_spreadsheet):
     for key, values in missing_dict.items():
         print(f"\t{key}:\t{', '.join(values)}")
 
-def export_to_excel(dcp_spreadsheet, dir_name, label, local_template):
+def tiered_suffix(tier2_spreadsheet, file_manifest):
+    if tier2_spreadsheet and file_manifest:
+        return 'full_dcp'
+    elif tier2_spreadsheet and not file_manifest:
+        return 'tier1_2_dcp'
+    elif not tier2_spreadsheet and file_manifest:
+        return 'tier1_file_dcp'
+    else:
+        return 'dcp'
+
+def export_to_excel(dcp_spreadsheet, dir_name, label, local_template, suffix='dcp'):
     dcp_headers = get_dcp_headers(local_template)
-    output_path = filename_suffixed(dir_name, label, "dcp", ext="xlsx")
+    output_path = filename_suffixed(dir_name, label, suffix, ext="xlsx")
     with pd.ExcelWriter(output_path) as writer:
         for tab_name, data in dcp_spreadsheet.items():
             if not data.empty:

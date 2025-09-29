@@ -8,6 +8,7 @@ from helper_files.constants.file_mapping import (
     FASTQ_STANDARD_FIELDS
 )
 from helper_files.merge import (
+    merge_overlap,
     open_spreadsheet,
     flatten_tiered_spreadsheet,
     merge_file_manifest,
@@ -36,14 +37,15 @@ def main(file_manifest, dt_spreadsheet, tier1_spreadsheet, output_dir):
 
     file_manifest = open_spreadsheet(spreadsheet_path=file_manifest, tab_name="File_manifest")
     dt_df = open_spreadsheet(dt_spreadsheet)
-    if 'Sequence file' in dt_df:
-        del dt_df['Sequence file']
+    # if 'Sequence file' in dt_df:
+    #     del dt_df['Sequence file']
     tier1_spreadsheet = open_spreadsheet(tier1_spreadsheet)
     tier1_spreadsheet = flatten_tiered_spreadsheet(tier1_spreadsheet)
 
-    dt_df = merge_file_manifest(dt_df, file_manifest, FILE_MANIFEST_MAPPING)
-    dt_df = add_standard_fields(dt_df, FASTQ_STANDARD_FIELDS)
-    dt_df = add_tier1_fields(dt_df, tier1_spreadsheet, TIER_1_MAPPING)
+    file_manifest = file_manifest.rename(columns=FILE_MANIFEST_MAPPING)
+    dt_df['Sequence file'] = merge_overlap(dt_df['Sequence file'], file_manifest, list(file_manifest.columns), key='sequence_file.file_core.file_name', suffix='fm')
+    dt_df['Sequence file'] = add_standard_fields(dt_df['Sequence file'], FASTQ_STANDARD_FIELDS)
+    dt_df['Sequence file'] = add_tier1_fields(dt_df, tier1_spreadsheet, TIER_1_MAPPING)
     perform_checks(dt_df)
 
     output_filename = os.path.basename(dt_spreadsheet).replace(".xlsx", "_fastqed.xlsx")

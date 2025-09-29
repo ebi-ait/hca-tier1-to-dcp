@@ -10,7 +10,7 @@ from helper_files.utils import open_spreadsheet, drop_empty_cols, detect_excel_f
         ("sample_HCA-Tier_1_metadata.xlsx", "sample"),
         ("metadata_09_19_2025.xlsx", ""),
         ("experiment_metadata.xlsx", "experiment"),
-        ("my-file.xlsx", "my_file"),
+        ("my-file.xlsx", "my-file"),
     ]
 )
 def test_get_label(filename, expected):
@@ -42,9 +42,6 @@ def test_open_spreadsheet_multisheet(tmp_path):
     assert 'Donor' in sheets and 'Sample' in sheets
     assert sheets['Donor'].shape == (2, 2)
     assert sheets['Sample'].shape == (1, 2)
-
-def test_detect_excel_format_dcp(tmp_path):
-    df1 = pd.DataFrame({'donor_organism.biomaterial_core.biomaterial_id': [donor]})
 
 def test_drop_empty_cols_basic():
     df = pd.DataFrame({

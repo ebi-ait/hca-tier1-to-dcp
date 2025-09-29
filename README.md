@@ -15,6 +15,7 @@ This proces is done in 5 steps.
     1. Given a spreadsheet path, pull metadata & extract filename label used.
     1. Based on [hca_template.xlsx](https://github.com/ebi-ait/geo_to_hca/raw/master/template/hca_template.xlsx), using the [mapping](helper_files/tier1_mapping.py) convert to dcp flat metadata file with dcp programmatic fields
     1. Based on the field programmatic name, the dcp spreadsheet is populated
+    1. If tier 2 and/ or file manifest is given, produce result via dcp_flat
     1. Exported into an xlsx file in `metadata` dir to `<label>_dcp.csv` filename
 1. Compare previously wrangled spreadsheet vs tier 1 [compare_with_dcp.py](compare_with_dcp.py)
     1. Open converted and previously wrangled DCP spreadsheet
@@ -30,7 +31,7 @@ This proces is done in 5 steps.
     1. Rename columns using [tier 2 mapping](helper_files/tier2_mapping.py)
     1. Merge tier 2 metadata in corresponding tabs/entities of dcp spreadsheet.
     1. Export into an xlsx file in `metadata` dir to `<label>_tier2.xlsx`
-1. Merge File metadata
+1. Merge File metadata into pre-filled DCP spreadsheet [merge_file_manifest.py](merge_file_manifest.py)
     1. Open File metadata tab, Tier 1 metadata and wrangled DCP spreadsheet
     1. Merge File metadata tab into wrangled spreadsheet `Sequence tab` (remove existing & use [FILE_MANIFEST_MAPPING](helper_files/file_mapping.py))
     1. Add standard FASTQ fields [FASTQ_STANDARD_FIELDS](helper_files/file_mapping.py)
@@ -44,7 +45,7 @@ Tested in python3.9. To run scripts you can run:
 python3 -m pip install -r requirements.txt
 python3 collect_cellxgene_metadata.py -c <collection_id> -t <ingest-token>
 python3 collect_spreadsheet_metadata.py -t1 <tier1_spreadsheet>
-python3 convert_to_dcp.py -ft <flat_tier1_spreadsheet>
+python3 convert_to_dcp.py -ft <flat_tier1_spreadsheet> -t2 <tier2_metadata> -fm <file_manifest>
 python3 compare_with_dcp.py -dt <dcp_tier1_spreadsheet> -w <wrangled_spreadsheet>
 python3 merge_tier2_metadata.py -t2 <tier2_metadata> -dt <dt_spreadsheet>
 python3 merge_file_manifest.py -fm <file_manifest> -dt <dt_spreadsheet> -t1 <tier1_spreadsheet>
@@ -88,5 +89,5 @@ python3 hca-tier1-to-dcp.py -l test -t1 tier1.xlsx -fm file_manifest.xlsx -t2 ti
 | `--dcp-tier1-spreadsheet`, `-dt` |  |  |  | R | R | R
 | `--wrangled_spreadsheet`, `-w` |  |  |  | R |  | 
 | `--unequal_comparisson`, `-u` |  |  |  | o |  | 
-| `--file_manifest`, `-fm` |  |  |  |  |  | R
-| `--tier2_metadata`, `-t2` |  |  |  |  | R | 
+| `--file_manifest`, `-fm` |  |  | o |  |  | R
+| `--tier2_metadata`, `-t2` |  |  | o |  | R | 

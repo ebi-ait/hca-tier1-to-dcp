@@ -1,18 +1,21 @@
 import re
 from collections import defaultdict
+from numpy import nan
 import pandas as pd
 
+from helper_files.constants.file_mapping import FASTQ_STANDARD_FIELDS
 from helper_files.utils import open_spreadsheet
-from helper_files.constants.tier2_mapping import LUNG_DIGESTION, TIER2_MANUAL_FIX
+from helper_files.constants.tier1_mapping import KEY_COLS
+from helper_files.constants.tier2_mapping import LUNG_DIGESTION, TIER2_MANUAL_FIX, TIER2_TO_DCP, TIER2_TO_DCP_UPDATE
 from helper_files.constants.dcp_required import dcp_required_entities
 from helper_files.convert import flatten_tiered_spreadsheet
 
 LAST_BIOMATERIAL = 'cell_suspension.biomaterial_core.biomaterial_id'
-def merge_file_manifest(wrangled_spreadsheet, file_manifest, file_mapping_dictionary):
+def merge_file_manifest(wrangled_seq_tab, file_manifest, file_mapping_dictionary):
     """Merge file manifest tab into wrangled spreadsheet and return wrangled_spreadsheet"""
     file_manifest = file_manifest[file_mapping_dictionary.keys()].rename(columns=file_mapping_dictionary)
-    wrangled_spreadsheet['Sequence file'] = file_manifest
-    return wrangled_spreadsheet
+    wrangled_seq_tab = wrangled_seq_tab.merge(file_manifest, on='cell_suspension.biomaterial_core.biomaterial_id', how='left')
+    return wrangled_seq_tab
 
 def get_fastq_ext(row):
     for suffix in ['fastq.gz', 'fastq', 'fq.gz', 'fq']:
@@ -20,12 +23,13 @@ def get_fastq_ext(row):
             return suffix 
     raise KeyError(f'filename {row} does not have known extension [`fastq.gz`, `fastq`, `fq.gz`, `fq`] for fastq file.')
 
-def add_standard_fields(wrangled_spreadsheet, standard_values_dictionary):
+def add_standard_fields(wrangled_seq_tab, standard_values_dictionary):
     """Add standard fields like content description which for fastqs will always be DNA sequence"""
-    wrangled_spreadsheet['Sequence file']['sequence_file.file_core.format'] = wrangled_spreadsheet['Sequence file']['sequence_file.file_core.file_name'].apply(get_fastq_ext)
+    if 'sequence_file.file_core.format' not in wrangled_seq_tab:
+        wrangled_seq_tab['sequence_file.file_core.format'] = wrangled_seq_tab['sequence_file.file_core.file_name'].apply(get_fastq_ext)
     for key, value in standard_values_dictionary.items():
-        wrangled_spreadsheet['Sequence file'][key] = value
-    return wrangled_spreadsheet
+        wrangled_seq_tab[key] = value
+    return wrangled_seq_tab
 
 
 def add_tier1_fields(wrangled_spreadsheet, tier1_spreadsheet, tier1_to_file_dictionary):
@@ -34,10 +38,10 @@ def add_tier1_fields(wrangled_spreadsheet, tier1_spreadsheet, tier1_to_file_dict
         raise KeyError(f'Did not find {[key for key in tier1_to_file_dictionary.keys() if key not in tier1_spreadsheet]} in tier 1 spreadsheet')
     tier1_mapped = tier1_spreadsheet[tier1_to_file_dictionary.keys()].rename(columns=tier1_to_file_dictionary)
     tier1_mapped = get_dcp_protocol_ids(tier1_mapped, wrangled_spreadsheet)
-    wrangled_spreadsheet['Sequence file'] = wrangled_spreadsheet['Sequence file'].merge(tier1_mapped,
-                                                    on=LAST_BIOMATERIAL,
-                                                    how='left')
-    return wrangled_spreadsheet
+    wrangled_spreadsheet['Sequence file'] = merge_overlap(wrangled_spreadsheet['Sequence file'], tier1_mapped,
+                                                    key=LAST_BIOMATERIAL, field_list=list(tier1_mapped.columns),
+                                                    suffix='t1')
+    return wrangled_spreadsheet['Sequence file']
 
 
 def get_dcp_protocol_ids(tier1_spreadsheet, wrangled_spreadsheet):
@@ -110,7 +114,7 @@ def split_lung_dissociation(tier2_df, lung_digest_dict):
         return tier2_df
     all_diss_fields = set().union(*[lung_digest_dict[prot].keys() for prot in tier2_df['protocol_tissue_dissociation'].unique()])
     for diss in all_diss_fields:
-        tier2_df[diss] = pd.NA
+        tier2_df[diss] = nan
     for i, row in tier2_df.iterrows():
         prot = row['protocol_tissue_dissociation']
         if pd.isna(prot):
@@ -118,7 +122,7 @@ def split_lung_dissociation(tier2_df, lung_digest_dict):
         if prot not in lung_digest_dict:
             raise ValueError(f"Digestion protocol {prot} not in pre-defined enum. Should be under `protocol_tissue_dissociation`")
         for diss in all_diss_fields:
-            tier2_df.loc[i, diss] = lung_digest_dict[prot].get(diss, pd.NA)
+            tier2_df.loc[i, diss] = lung_digest_dict[prot].get(diss, nan)
     del tier2_df['protocol_tissue_dissociation']
     return tier2_df
 
@@ -146,16 +150,16 @@ def flatten_tier2_spreadsheet(tier2_excel, drop_na=True):
         return flat_t2_df.dropna(axis=1, how='all')
     return flat_t2_df
 
-def merge_overlap(wrangled_tab, tier2_fields, field_list, key):
+def merge_overlap(wrangled_tab, tier2_fields, field_list, key, suffix = 't2'):
     merged_df = pd.merge(
             wrangled_tab,
             tier2_fields.drop_duplicates(),
-            on=key, how='outer', suffixes=('', '_t2')
+            on=key, how='outer', suffixes=('', f'_{suffix}')
         )
     common_cols = set(wrangled_tab.columns) & set(field_list) - {key}
     for col in common_cols:
-        merged_df[col] = merged_df[f"{col}_t2"].combine_first(merged_df[col])
-        merged_df = merged_df.drop([f"{col}_t2"], axis=1)
+        merged_df[col] = merged_df[f"{col}_{suffix}"].combine_first(merged_df[col])
+        merged_df = merged_df.drop([f"{col}_{suffix}"], axis=1)
     return merged_df
 
 def merge_sheets(wrangled_spreadsheet, tier2_df, tab_name, field_list, key, is_protocol):
@@ -272,3 +276,22 @@ def check_dcp_required_fields(df):
         # if req_mod:
         #     print(f"Missing DCP required module field(s) {'; '.join(req_mod)}")
 
+def merge_tier2_with_flat_dcp(tier2_spreadsheet, dcp_flat, tier1_to_dcp):
+    tier2_df = open_spreadsheet(tier2_spreadsheet)
+    
+    all_tier2 = {**TIER2_TO_DCP, **TIER2_TO_DCP_UPDATE}
+    tier2_flat = flatten_tiered_spreadsheet(tier2_df, merge_type='outer')
+    tier2_low_key = tier1_to_dcp[next(id for id in KEY_COLS if id in tier2_flat.columns)]
+    tier2_flat = manual_fixes(tier2_flat)
+    print(f'\nConverting {"; ".join([col for col in tier2_flat])} tier 2 values')
+    tier2_flat = rename_tier2_columns(tier2_flat, all_tier2)
+    dcp_flat = dcp_flat.merge(tier2_flat, how='outer', on=tier2_low_key, suffixes=('_dcp', ''))
+    if dcp_flat.filter(like='_dcp').shape[1]:
+        print(f"Conflicts between tier 1 and tier 2 for {'; '.join(dcp_flat.filter(like='_dcp').columns.tolist())}. Kept tier 2 values.")
+    return dcp_flat.drop(columns=dcp_flat.filter(like='_dcp').columns, errors='ignore')
+
+def merge_file_manifest_with_flat_dcp(dcp_flat, file_manifest, file_mapping_dictionary):
+    file_manifest = open_spreadsheet(spreadsheet_path=file_manifest, tab_name="File_manifest")
+    dcp_flat = merge_file_manifest(dcp_flat, file_manifest, file_mapping_dictionary)
+    dcp_flat = add_standard_fields(dcp_flat, FASTQ_STANDARD_FIELDS)
+    return dcp_flat
