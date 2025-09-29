@@ -93,6 +93,8 @@ def run_all_scripts(collection_id, dataset_id, label,
     flat_tier1_spreadsheet = filename_suffixed(output_dirs["t1"], label, 'metadata')
     convert_to_dcp.main(flat_tier1_spreadsheet,
                         output_dir=output_dirs["dt"],
+                        tier2_spreadsheet=tier2_spreadsheet,
+                        file_manifest=file_manifest,
                         local_template=local_template)
     dcp_tier1_spreadsheet = filename_suffixed(
         output_dirs["dt"], label, "dcp", ext="xlsx")
@@ -103,19 +105,10 @@ def run_all_scripts(collection_id, dataset_id, label,
     else:
         print(
             f"Previously wrangled file not provided for dataset {label}. Skipping comparisson.")
-    if tier2_spreadsheet:
-        merge_tier2_metadata.main(tier2_spreadsheet=tier2_spreadsheet,
-                                  dt_spreadsheet=dcp_tier1_spreadsheet,
-                                  output_dir=output_dirs["t2"])
-    else:
+    if not tier2_spreadsheet:
         print(
             f"Tier 2 metadata file not provided for dataset {label}. Skipping Tier 2 merging.")
-    if file_manifest:
-        merge_file_manifest.main(file_manifest=file_manifest,
-                                 dt_spreadsheet=dcp_tier1_spreadsheet,
-                                 tier1_spreadsheet=tier1_spreadsheet,
-                                 output_dir=output_dirs["fm"])
-    else:
+    if not file_manifest:
         print(
             f"File manifest not provided for dataset {label}. Skipping file manifest merging.")
 
