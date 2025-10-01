@@ -83,7 +83,6 @@ def main(flat_tier1_spreadsheet, tier2_spreadsheet=None, file_manifest=None, out
     # Populate spreadsheet
     print(f"{BOLD_START}POPULATING SPREADSHEET{BOLD_END}")
     dcp_spreadsheet = populate_spreadsheet(dcp_spreadsheet, dcp_flat)
-    dcp_spreadsheet = add_process_locations(sample_metadata, dcp_spreadsheet)
     dcp_spreadsheet = add_analysis_file(dcp_spreadsheet, label)
     
     check_required_fields(dcp_spreadsheet)

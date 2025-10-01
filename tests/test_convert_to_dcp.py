@@ -23,7 +23,6 @@ def mock_all(mocker):
     mocker.patch.object(convert_to_dcp, "add_title", return_value=fake_spreadsheet)
     mocker.patch.object(convert_to_dcp, "create_protocol_ids", return_value=fake_dcp_flat)
     mocker.patch.object(convert_to_dcp, "populate_spreadsheet", return_value=fake_spreadsheet)
-    mocker.patch.object(convert_to_dcp, "add_process_locations", return_value=fake_spreadsheet)
     mocker.patch.object(convert_to_dcp, "add_analysis_file", return_value=fake_spreadsheet)
     mocker.patch.object(convert_to_dcp, "check_required_fields")
     mocker.patch.object(convert_to_dcp, "export_to_excel")
