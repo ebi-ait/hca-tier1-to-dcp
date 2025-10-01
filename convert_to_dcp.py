@@ -8,7 +8,6 @@ from helper_files.convert import (
     get_dcp_template,
     add_doi,
     add_title,
-    add_process_locations,
     edit_all_sample_metadata,
     create_protocol_ids,
     fill_ontologies,
