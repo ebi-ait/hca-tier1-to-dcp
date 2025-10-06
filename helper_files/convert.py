@@ -502,12 +502,14 @@ def populate_spreadsheet(dcp_spreadsheet, dcp_flat):
         # merge the two dataframes
         dcp_spreadsheet[tab] = pd.concat([dcp_spreadsheet[tab],dcp_flat[keys_union]])
         dcp_spreadsheet[tab] = dcp_spreadsheet[tab].dropna(how='all').drop_duplicates()
+        if tab == 'Analysis file':
+            dcp_spreadsheet[tab] = dcp_spreadsheet[tab].groupby('analysis_file.file_core.file_name', as_index=False).agg(collapse_values)
         if tab == 'Project':
             dcp_spreadsheet[tab] = dcp_spreadsheet[tab].drop_duplicates()
     return dcp_spreadsheet
 
 def collapse_values(series):
-    return "||".join(series.unique().astype(str))
+    return "||".join(series.dropna().unique().astype(str))
 
 def add_analysis_file(dcp_flat, label):
     # We chould have 1 only Analysis file with all the CS merged
