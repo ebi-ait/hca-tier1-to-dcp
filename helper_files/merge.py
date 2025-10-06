@@ -12,7 +12,7 @@ from helper_files.convert import flatten_tiered_spreadsheet
 
 LAST_BIOMATERIAL = 'cell_suspension.biomaterial_core.biomaterial_id'
 def merge_file_manifest(wrangled_seq_tab, file_manifest, file_mapping_dictionary):
-    """Merge file manifest tab into wrangled spreadsheet and return wrangled_spreadsheet"""
+    """Merge file manifest tab into dcp spreadsheet and return wrangled_spreadsheet"""
     file_manifest = file_manifest[file_mapping_dictionary.keys()].rename(columns=file_mapping_dictionary)
     wrangled_seq_tab = wrangled_seq_tab.merge(file_manifest, on='cell_suspension.biomaterial_core.biomaterial_id', how='left')
     return wrangled_seq_tab
@@ -51,7 +51,7 @@ def get_dcp_protocol_ids(tier1_spreadsheet, wrangled_spreadsheet):
             continue
         df_dict = map_key_to_id(key, wrangled_spreadsheet)
         if not all(value.isin(df_dict.keys())):
-            raise KeyError(f"Value {value[value.isin(df_dict.keys())].unique()} not found in wrangled spreadsheet, but exist on tier 1")
+            raise KeyError(f"Value {value[value.isin(df_dict.keys())].unique()} not found in dcp spreadsheet, but exist on tier 1")
         id_key = get_protocol_id(key)
         tier1_spreadsheet[id_key] = value.replace(df_dict)
         tier1_spreadsheet = tier1_spreadsheet.drop(columns=key)
@@ -114,7 +114,7 @@ def split_lung_dissociation(tier2_df, lung_digest_dict):
         return tier2_df
     all_diss_fields = set().union(*[lung_digest_dict[prot].keys() for prot in tier2_df['protocol_tissue_dissociation'].unique()])
     for diss in all_diss_fields:
-        tier2_df[diss] = nan
+        tier2_df[diss] = pd.Series([nan] * len(tier2_df), dtype="object")
     for i, row in tier2_df.iterrows():
         prot = row['protocol_tissue_dissociation']
         if pd.isna(prot):
@@ -192,7 +192,7 @@ def merge_tier2_with_dcp(tier2_df, wrangled_spreadsheet):
             removed_fields = {check_field_already_in_spreadsheet(field, tab_name, wrangled_spreadsheet) for field in field_list}
             removed_fields.remove(None)
         if removed_fields:
-            print(f'Fields exist in both spreadsheets. Overwritting previously wrangled metadata with tier 2:\n{"; ".join(removed_fields)}')
+            print(f'Fields exist in both spreadsheets. Overwritting dcp metadata with tier 2:\n{"; ".join(removed_fields)}')
         key = get_tab_id(tab_name)
         # perform merge
         wrangled_spreadsheet[tab_name] = merge_sheets(wrangled_spreadsheet, tier2_df, tab_name, field_list, key, is_protocol)
@@ -249,7 +249,7 @@ def tab_is_protocol(tab_name):
 # Checks
 def check_tab_in_spreadsheet(tab_name, spreadsheet):
         if tab_name not in spreadsheet:
-            raise ValueError(f"Tab {tab_name} from Tier 2 metadata not found in spreadsheet.")
+            raise ValueError(f"Tab {tab_name} from Tier 2 metadata not found in dcp spreadsheet.")
 
 def check_field_already_in_spreadsheet(field_name, tab_name, spreadsheet):
     if field_name in spreadsheet[tab_name].columns and not field_is_id(field_name):
@@ -258,11 +258,11 @@ def check_field_already_in_spreadsheet(field_name, tab_name, spreadsheet):
 
 def check_key_in_spreadsheet(key, spreadsheet):
     if key not in spreadsheet.columns:
-        raise ValueError(f"Key column {key} not found in spreadsheet.")
+        raise ValueError(f"Key column {key} not found in dcp spreadsheet.")
 
 def check_matching_keys(tier2_df, wrangled_spreadsheet, tab_name, key):
     if not wrangled_spreadsheet[tab_name][key].isin(tier2_df[key]).any():
-        raise ValueError(f"No matching keys found between Tier 2 metadata and wrangled spreadsheet for tab {tab_name} using key {key}.")
+        raise ValueError(f"No matching keys found between Tier 2 metadata and DCP spreadsheet for tab {tab_name}: key {key}.")
     
 def check_dcp_required_fields(df):
     req_ent = []

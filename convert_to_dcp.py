@@ -70,6 +70,7 @@ def main(flat_tier1_spreadsheet, tier2_spreadsheet=None, file_manifest=None, out
     # Add ontology id and labels
     print(f"{BOLD_START}FILLING ONTOLOGIES{BOLD_END}")
     dcp_flat = fill_ontologies(dcp_flat)
+    dcp_flat = add_analysis_file(dcp_flat, label)
     
     # Generate spreadsheet
     dcp_spreadsheet = get_dcp_template(local_template)
@@ -82,7 +83,6 @@ def main(flat_tier1_spreadsheet, tier2_spreadsheet=None, file_manifest=None, out
     # Populate spreadsheet
     print(f"{BOLD_START}POPULATING SPREADSHEET{BOLD_END}")
     dcp_spreadsheet = populate_spreadsheet(dcp_spreadsheet, dcp_flat)
-    dcp_spreadsheet = add_analysis_file(dcp_spreadsheet, label)
     
     check_required_fields(dcp_spreadsheet)
 
