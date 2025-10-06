@@ -509,27 +509,29 @@ def populate_spreadsheet(dcp_spreadsheet, dcp_flat):
 def collapse_values(series):
     return "||".join(series.unique().astype(str))
 
-def add_analysis_file(dcp_spreadsheet, label):
+def add_analysis_file(dcp_flat, label):
     # We chould have 1 only Analysis file with all the CS merged
     analysis_file_metadata = {
-        'analysis_file.file_core.file_name': f'{label}.h5ad',
-        'analysis_file.file_core.content_description.text': 'Count matrix',
-        'analysis_file.file_core.content_description.ontology': 'EDAM:3917',
-        'analysis_file.file_core.content_description.ontology_label': 'Count matrix',
-        'analysis_file.file_core.file_source': 'Contributor',
-        'analysis_file.file_core.format': 'h5ad'
+        # 'analysis_file.file_core.file_name': [f'{label}_tier1.h5ad'],
+        'analysis_file.file_core.content_description.text': ['Count matrix'],
+        'analysis_file.file_core.content_description.ontology': ['EDAM:3917'],
+        'analysis_file.file_core.content_description.ontology_label': ['Count matrix'],
+        'analysis_file.file_core.file_source': ['Contributor'],
+        'analysis_file.file_core.format': ['h5ad'],
+        # 'analysis_file.genome_assembly_version': [nan],
+        # 'analysis_protocol.protocol_core.protocol_id': [nan],
+        # 'library_preparation_protocol.protocol_core.protocol_id': [nan],
+        # 'sequencing_protocol.protocol_core.protocol_id': [nan],
+        # 'cell_suspension.biomaterial_core.biomaterial_id': [nan]
         }
     
-    for key in dcp_spreadsheet['Analysis file']:
-        if key in analysis_file_metadata:
-            dcp_spreadsheet['Analysis file'][key] = analysis_file_metadata[key]
-    
-    dcp_spreadsheet['Analysis file'] = dcp_spreadsheet['Analysis file']\
-        .groupby('analysis_file.file_core.file_name')\
-        .agg(collapse_values)\
-        .reset_index()
+    dcp_flat = dcp_flat.assign(**{key: value*len(dcp_flat) for key, value in analysis_file_metadata.items()})
+    if 'dataset_id' not in dcp_flat:
+        dcp_flat['analysis_file.file_core.file_name'] = f"{label}_tier1.h5ad"
+    else:
+        dcp_flat['analysis_file.file_core.file_name'] = dcp_flat.apply(lambda x: f"{x['dataset_id']}_tier1.h5ad", axis=1)
     print('Added `Analysis file` info')
-    return dcp_spreadsheet
+    return dcp_flat
 
 def check_required_fields(dcp_spreadsheet):
     all_fields = []
