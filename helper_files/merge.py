@@ -114,7 +114,7 @@ def split_lung_dissociation(tier2_df, lung_digest_dict):
         return tier2_df
     all_diss_fields = set().union(*[lung_digest_dict[prot].keys() for prot in tier2_df['protocol_tissue_dissociation'].unique()])
     for diss in all_diss_fields:
-        tier2_df[diss] = nan
+        tier2_df[diss] = pd.Series([nan] * len(tier2_df), dtype="object")
     for i, row in tier2_df.iterrows():
         prot = row['protocol_tissue_dissociation']
         if pd.isna(prot):
