@@ -1,0 +1,7 @@
+collection_id,dataset_id,label,tier1_spreadsheet,tier2_spreadsheet,file_manifest,wrangled_spreadsheet
+8f126edf-5405-4731-8374-b5ce11f53e82,ebc2e1ff-c8f9-466a-acf4-9d291afaf8b3,COMBAT2022,,,,,
+,,,metadata/COMBAT2022_metadata_28-10-2024.xlsx,,,metadata/COMBAT2022_metadata_28-10-2024.xlsx
+,,,metadata/Fujita_tier1.xlsx,metadata/Fujita_tier2.xlsx,metadata/Fujita_file_manifest.tsv,
+b0cf0afa-ec40-4d65-b570-ed4ceacc6813,ed5d841d-6346-47d4-ab2f-7119ad7e3a35,humanBloodCiteSeq2,,,,metadata/humanBloodCiteSeq2_metadata_28-10-2024.xlsx
+4f889ffc-d4bc-4748-905b-8eb9db47a2ed,de2c780c-1747-40bd-9ccf-9588ec186cee,pbmcCov19Flu,,,,
+ed9185e3-5b82-40c7-9824-b2141590c7f0,21d3e683-80a4-4d9b-bc89-ebb2df513dde,covid19PBMCsTCRandCITEseq,,,metadata/covid19PBMCsTCRandCITEseq_metadata_28-10-2024.xlsx,
