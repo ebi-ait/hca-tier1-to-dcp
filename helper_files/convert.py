@@ -218,7 +218,7 @@ def edit_hardy_scale(sample_metadata):
 def sampled_site_to_known_diseases(row):
     if row['sampled_site_condition'] == 'adjacent' and 'disease_ontology_term_id' in row:
         if row['disease_ontology_term_id'] != 'PATO:0000461':
-            print(f"Conflicting metadata {row[['sampled_site_condition', 'disease_ontology_term_id']]}")
+            print(f"\n{BOLD_START}Conflicting metadata{BOLD_END} {row[['sampled_site_condition', 'disease_ontology_term_id']].to_string()}")
         return ['PATO:0000461', row['disease_ontology_term_id']]
     elif row['sampled_site_condition'] in ['healthy', 'diseased'] and 'disease_ontology_term_id' in row:
         return [row['disease_ontology_term_id'], nan]
@@ -561,12 +561,11 @@ def check_required_fields(dcp_spreadsheet):
 def tiered_suffix(tier2_spreadsheet, file_manifest):
     if tier2_spreadsheet and file_manifest:
         return 'full_dcp'
-    elif tier2_spreadsheet and not file_manifest:
+    if tier2_spreadsheet and not file_manifest:
         return 'tier1_2_dcp'
-    elif not tier2_spreadsheet and file_manifest:
+    if not tier2_spreadsheet and file_manifest:
         return 'tier1_file_dcp'
-    else:
-        return 'dcp'
+    return 'dcp'
 
 def export_to_excel(dcp_spreadsheet, dir_name, label, local_template, suffix='dcp'):
     dcp_headers = get_dcp_headers(local_template)

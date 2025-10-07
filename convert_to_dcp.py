@@ -61,11 +61,11 @@ def main(flat_tier1_spreadsheet, tier2_spreadsheet=None, file_manifest=None, out
     check_enum_values(dcp_flat)
     
     # add t2
-    if not pd.isna(tier2_spreadsheet):
+    if pd.notna(tier2_spreadsheet):
         print(f"{BOLD_START}MERGING TIER 2 METADATA{BOLD_END}")
         dcp_flat = merge_tier2_with_flat_dcp(tier2_spreadsheet, dcp_flat, tier1_to_dcp)
     # file manifest
-    if not pd.isna(file_manifest):
+    if pd.notna(file_manifest):
         print(f"{BOLD_START}MERGING FILE MANIFEST METADATA{BOLD_END}")
         dcp_flat = merge_file_manifest_with_flat_dcp(dcp_flat, file_manifest, FILE_MANIFEST_MAPPING)
     # Add ontology id and labels

@@ -92,7 +92,7 @@ def run_all_scripts(collection_id, dataset_id, label,
                         local_template=local_template)
     dcp_tier1_spreadsheet = filename_suffixed(output_dirs["dt"], label, 
                     tiered_suffix(tier2_spreadsheet, file_manifest), ext="xlsx")
-    if wrangled_spreadsheet:
+    if pd.notna(wrangled_spreadsheet):
         compare_with_dcp.main(tier1_spreadsheet=dcp_tier1_spreadsheet,
                               wrangled_spreadsheet=wrangled_spreadsheet,
                               unequal_comparisson=unequal_comparisson)
