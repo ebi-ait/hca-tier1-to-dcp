@@ -273,12 +273,12 @@ def dev_label(ontology):
     result = ols_label(ontology, only_label=False)
     if not 'annotation' in result:
         print(f'Ontology {ontology} does not have annotation')
-        return ontology
+        return ' '
     start_key = [key for key in result['annotation'].keys() if key in start_id]
     if len(start_key) == 0:
         print(f'Ontology {ontology} does not have start annotation')
         return ontology
-    elif len(start_key) > 1:
+    if len(start_key) > 1:
         print(f'\nMultiple start IDs {start_key}. Selecting the smallest value {start_key[0]}')
     unit_time = start_key[0].split(" ")[1].rstrip('s')
     age_range = [str(int(float(result['annotation'][start_key[0]][0])))]
