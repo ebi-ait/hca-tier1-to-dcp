@@ -14,6 +14,9 @@ def get_tab_id(tab, spreadsheet):
     if len(id_field) > 1:
         print("More ID fields than expected: " + id_fields)
         return False
+    if not id_field:
+        print(f"No ID field found for {tab} in {'; '.join(spreadsheet[tab].columns)}")
+        return False
     return id_field[0]
 
 def check_tab_id(tab, wrangled_spreadsheet, tier1_spreadsheet):
@@ -136,6 +139,9 @@ def compare_filled_fields(tab, report_dict, tier1_spreadsheet, wrangled_spreadsh
         print(f"In tab {tab} we have more metadata in Tier 1:\n\t{', '.join(tier1_excess_fields)}")
     tab_id = get_tab_id(tab, tier1_spreadsheet)
     # get clean dfs (identical IDs & columns) to compare
+    if not tab_id:
+        print(f"Skipping comparisson of values for tab {tab} due to missing ID field")
+        return report_dict
     if tab in entity_types['biomaterial']:
         if not all(id in wrangled_spreadsheet[tab][tab_id].values for id in tier1_spreadsheet[tab][tab_id]):
             print(f"{BOLD_START}WARNING{BOLD_END}: Cannot compare entities with not identical IDs")
