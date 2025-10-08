@@ -218,7 +218,7 @@ def edit_hardy_scale(sample_metadata):
 def sampled_site_to_known_diseases(row):
     if row['sampled_site_condition'] == 'adjacent' and 'disease_ontology_term_id' in row:
         if row['disease_ontology_term_id'] != 'PATO:0000461':
-            print(f"Conflicting metadata {row[['sampled_site_condition', 'disease_ontology_term_id']]}")
+            print(f"\n{BOLD_START}Conflicting metadata{BOLD_END} {row[['sampled_site_condition', 'disease_ontology_term_id']].to_string()}")
         return ['PATO:0000461', row['disease_ontology_term_id']]
     elif row['sampled_site_condition'] in ['healthy', 'diseased'] and 'disease_ontology_term_id' in row:
         return [row['disease_ontology_term_id'], nan]
@@ -273,12 +273,12 @@ def dev_label(ontology):
     result = ols_label(ontology, only_label=False)
     if not 'annotation' in result:
         print(f'Ontology {ontology} does not have annotation')
-        return ontology
+        return ' '
     start_key = [key for key in result['annotation'].keys() if key in start_id]
     if len(start_key) == 0:
         print(f'Ontology {ontology} does not have start annotation')
         return ontology
-    elif len(start_key) > 1:
+    if len(start_key) > 1:
         print(f'\nMultiple start IDs {start_key}. Selecting the smallest value {start_key[0]}')
     unit_time = start_key[0].split(" ")[1].rstrip('s')
     age_range = [str(int(float(result['annotation'][start_key[0]][0])))]
@@ -561,12 +561,11 @@ def check_required_fields(dcp_spreadsheet):
 def tiered_suffix(tier2_spreadsheet, file_manifest):
     if tier2_spreadsheet and file_manifest:
         return 'full_dcp'
-    elif tier2_spreadsheet and not file_manifest:
+    if tier2_spreadsheet and not file_manifest:
         return 'tier1_2_dcp'
-    elif not tier2_spreadsheet and file_manifest:
+    if not tier2_spreadsheet and file_manifest:
         return 'tier1_file_dcp'
-    else:
-        return 'dcp'
+    return 'dcp'
 
 def export_to_excel(dcp_spreadsheet, dir_name, label, local_template, suffix='dcp'):
     dcp_headers = get_dcp_headers(local_template)

@@ -6,9 +6,8 @@ import collect_cellxgene_metadata
 import collect_spreadsheet_metadata
 import convert_to_dcp
 import compare_with_dcp
-import merge_tier2_metadata
-import merge_file_manifest
 from helper_files.collect import selection_of_dataset, get_collection_data
+from helper_files.convert import tiered_suffix
 from helper_files.utils import filename_suffixed, get_label, BOLD_START, BOLD_END
 
 output_dirs = {'t1': os.path.join('metadata', 't1'), 
@@ -19,7 +18,7 @@ output_dirs = {'t1': os.path.join('metadata', 't1'),
 def define_parser():
     """Defines and returns the argument parser."""
     parser = argparse.ArgumentParser(description="Parser for the arguments")
-    parser.add_argument("-i", "--input_spreadsheet", action="store", default='input_spreadsheet.tsv',
+    parser.add_argument("-i", "--input_spreadsheet", action="store", default='input_spreadsheet.csv',
                         dest="input_spreadsheet", type=str, required=False,
                         help="Path of spreadsheet with collection_ids, dataset_ids, wrangled_paths, token, local_template")
     parser.add_argument("-c", "--collection_id", action="store",
@@ -56,17 +55,12 @@ def define_parser():
 
 
 def read_input_spreadsheet(input_path):
-    df = pd.read_csv(input_path, sep='\t')
-    columns = ['collection_id', 'dataset_id', 'wrangled_path']
+    df = pd.read_csv(input_path, index_col=False)
+    columns = ['collection_id', 'dataset_id', 'wrangled_spreadsheet', 'label',
+               'tier1_spreadsheet', 'tier2_spreadsheet', 'file_manifest']
     if not all(col in df.columns for col in columns):
         print(
             f"input tsv file should have the following column names: {'; '.join(columns)}. Found the following: {'; '.join(df.columns)}")
-    if 'ingest_token' in df and df['ingest_token'].any():
-        # assume all tokens are identical
-        df['ingest_token'] = df.loc[df['ingest_token'].notna(), 'ingest_token'][0]
-    if 'local_template' in df and df['local_template'].any():
-        df['local_template'] = df.loc[df['local_template'].notna(
-        ), 'local_template'][0]  # assume all paths are identical
     return df.drop_duplicates()
 
 
@@ -96,9 +90,9 @@ def run_all_scripts(collection_id, dataset_id, label,
                         tier2_spreadsheet=tier2_spreadsheet,
                         file_manifest=file_manifest,
                         local_template=local_template)
-    dcp_tier1_spreadsheet = filename_suffixed(
-        output_dirs["dt"], label, "dcp", ext="xlsx")
-    if wrangled_spreadsheet:
+    dcp_tier1_spreadsheet = filename_suffixed(output_dirs["dt"], label, 
+                    tiered_suffix(tier2_spreadsheet, file_manifest), ext="xlsx")
+    if pd.notna(wrangled_spreadsheet):
         compare_with_dcp.main(tier1_spreadsheet=dcp_tier1_spreadsheet,
                               wrangled_spreadsheet=wrangled_spreadsheet,
                               unequal_comparisson=unequal_comparisson)
@@ -129,8 +123,8 @@ def main(input_spreadsheet, collection_id, dataset_id, label,
         run_all_scripts(row['collection_id'], row['dataset_id'], row['label'],
                         row['tier1_spreadsheet'], row['tier2_spreadsheet'],
                         row['file_manifest'], row['wrangled_spreadsheet'],
-                        row['token'], row['local_template'],
-                        row['unequal_comparisson'])
+                        token, local_template,
+                        unequal_comparisson)
 
 
 if __name__ == "__main__":
