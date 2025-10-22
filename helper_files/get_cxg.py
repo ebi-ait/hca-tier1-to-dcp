@@ -46,7 +46,7 @@ def selection_of_collections(collection_ids):
             collection_ids.append(col['collection_id'])
         print(f"Number of collection uuids found: {len(collection_ids)}")
         return collection_ids
-    return [collection_ids] if isinstance(collection_ids, str) else collection_ids
+    return collection_ids
 
 def user_input_collection():
     collection_ids = input("Please provide the collection IDs to fetch. ('all', <uuid>, <list of uuids> separated by comma):\n")
