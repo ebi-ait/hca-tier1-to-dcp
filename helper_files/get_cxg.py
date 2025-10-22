@@ -96,9 +96,11 @@ def selection_of_dataset(collection, auto_download_all=False):
         return dataset_df.loc[0, 'dataset_id']
     
     while True:
-        dataset_ix = input("Please select the index of the dataset to be converted (or type 'all' to download all):\n")
+        dataset_ix = input("Please select the index of the dataset to be converted (or download 'all' or 'skip'):\n")
         if dataset_ix.lower() == 'all':
             return 'all'
+        if dataset_ix.lower() == 'skip':
+            return 'skip'
         if dataset_ix.isdigit() and int(dataset_ix) in dataset_df.index:
             return dataset_df.loc[int(dataset_ix), "dataset_id"]
         print("invalid index")
@@ -155,6 +157,9 @@ def get_h5ad_from_collection(collection_id, output_dir="h5ads", auto_download_al
         
         downloaded_count = 0
         
+        if selected_dataset == 'skip':
+            print(f"Skipped all {len(collection['datasets'])} datasets from collection {collection_id}")
+            return downloaded_count
         # Download all datasets in the collection
         for i, dataset in enumerate(collection['datasets']):
             dataset_id = dataset['dataset_id']
@@ -177,7 +182,7 @@ def get_h5ad_from_collection(collection_id, output_dir="h5ads", auto_download_al
             else:
                 print(f"H5AD URL not found for dataset {dataset_id}")
         
-        print(f"Downloaded {downloaded_count}/{len(collection['datasets'])} datasets from collection {collection_id}")        
+        print(f"Downloaded {downloaded_count}/{len(collection['datasets'])} datasets from collection {collection_id}")
         return downloaded_count
             
     except Exception as e:
