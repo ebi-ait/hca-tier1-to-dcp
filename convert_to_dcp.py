@@ -39,12 +39,15 @@ def define_parser():
     parser.add_argument("-o", "--output_dir", action="store",
                         dest="output_dir", type=str, required=False, default='metadata/dt/',
                         help="Directory for the output files")
+    parser.add_argument("-s", "--skip", action="store_true",
+                        dest="skip", required=False,
+                        help="Skip auto OLS ontology filling step")
     parser.add_argument("-lt", "--local_template", action="store",
                         dest="local_template", type=str, required=False,
                         help="Local path of the HCA spreadsheet template")
     return parser
 
-def main(flat_tier1_spreadsheet, tier2_spreadsheet=None, file_manifest=None, output_dir='metadata/dt/', local_template=None):
+def main(flat_tier1_spreadsheet, tier2_spreadsheet=None, file_manifest=None, output_dir='metadata/dt/', skip=False, local_template=None):
     label = get_label(flat_tier1_spreadsheet)
     input_dir = os.path.dirname(flat_tier1_spreadsheet)
     print(f"{BOLD_START}READING FILES{BOLD_END}")
@@ -69,9 +72,10 @@ def main(flat_tier1_spreadsheet, tier2_spreadsheet=None, file_manifest=None, out
         print(f"{BOLD_START}MERGING FILE MANIFEST METADATA{BOLD_END}")
         dcp_flat = merge_file_manifest_with_flat_dcp(dcp_flat, file_manifest, FILE_MANIFEST_MAPPING)
     # Add ontology id and labels
-    print(f"{BOLD_START}FILLING ONTOLOGIES{BOLD_END}")
-    dcp_flat = fill_ontologies(dcp_flat)
-    dcp_flat = add_analysis_file(dcp_flat, label)
+    if not skip:
+        print(f"{BOLD_START}FILLING ONTOLOGIES{BOLD_END}")
+        dcp_flat = fill_ontologies(dcp_flat)
+        dcp_flat = add_analysis_file(dcp_flat, label)
     
     # Generate spreadsheet
     dcp_spreadsheet = get_dcp_template(local_template)
@@ -97,4 +101,5 @@ if __name__ == "__main__":
          tier2_spreadsheet=args.tier2_spreadsheet,
          file_manifest=args.file_manifest,
          output_dir=args.output_dir,
+         skip=args.skip,
          local_template=args.local_template)
