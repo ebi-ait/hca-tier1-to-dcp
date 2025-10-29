@@ -90,6 +90,7 @@ def entity_to_tab(entity):
 def ols_label(ontology_id, only_label=True, ontology=None):
     if ontology_id is nan:
         return ontology_id
+    ontology_id = ontology_id.strip()
     if re.match(r"\w+_\d+", ontology_id):
         ontology_id = ontology_id.replace("_", ":")
     if not re.match(r"\w+:[\w\d]+", ontology_id):
