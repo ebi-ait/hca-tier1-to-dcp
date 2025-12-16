@@ -115,11 +115,14 @@ TIER2_TO_DCP_UPDATE = {
     "disease_ontology_term": "donor_organism.diseases.text",
     "disease_ontology_term_id": "donor_organism.diseases.ontology",
     "known_gut_related_disease": "donor_organism.diseases.text",
-    "disease_location": "donor_organism.disease_location",
+    "disease_location": "specimen_from_organism.adjacent_disease_location",
+    "previous_surgery": "donor_organism.medical_history.previous_surgeries",
     "macroscopic_appearance": "specimen_from_organism.state_of_specimen.gross_description",
-    "radial_tissue_term": "donor_organism.radial_tissue",
+    "radial_tissue_term": "specimen_from_organism.radial_tissue_term",
     "procedure": "collection_protocol.procedure",
-    "indication_for_sampling": "collection_protocol.indication",
+    "indication_for_sampling": "specimen_from_organism.indication_for_sampling",
+    "nutritional_state": "donor_organism.medical_history.nutritional_state",
+    "defined_diet": "donor_organism.medical_history.defined_diet",
     "diet_specific": "donor_organism.medical_history.diet_specific",
 }
 
@@ -130,6 +133,12 @@ restrictions_tier2 = {
     }
 }
 
+# clinical_activity_score_name for Gut
+GUT_DISEASE_SCORE = {
+    "PCDAI": "donor_organism.disease_profile.PCDAI_score",
+    "wPCDAI": "donor_organism.disease_profile.wPCDAI_score",
+    "PUCAI": "donor_organism.disease_profile.PUCAI_score"
+}
 
 LUNG_DIGESTION = {
     "Collagenase D + DNAse": {
