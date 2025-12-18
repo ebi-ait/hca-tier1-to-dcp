@@ -6,7 +6,7 @@ import pandas as pd
 from helper_files.constants.file_mapping import FASTQ_STANDARD_FIELDS
 from helper_files.utils import open_spreadsheet
 from helper_files.constants.tier1_mapping import KEY_COLS
-from helper_files.constants.tier2_mapping import LUNG_DIGESTION, TIER2_MANUAL_FIX, TIER2_TO_DCP, TIER2_TO_DCP_UPDATE
+from helper_files.constants.tier2_mapping import LUNG_DIGESTION, GUT_DISEASE_SCORE, TIER2_MANUAL_FIX, TIER2_TO_DCP, TIER2_TO_DCP_UPDATE
 from helper_files.constants.dcp_required import dcp_required_entities
 from helper_files.convert import flatten_tiered_spreadsheet
 
@@ -279,7 +279,7 @@ def check_dcp_required_fields(df):
 def merge_tier2_with_flat_dcp(tier2_spreadsheet, dcp_flat, tier1_to_dcp):
     tier2_df = open_spreadsheet(tier2_spreadsheet)
     
-    all_tier2 = {**TIER2_TO_DCP, **TIER2_TO_DCP_UPDATE}
+    all_tier2 = {**TIER2_TO_DCP, **TIER2_TO_DCP_UPDATE, **GUT_DISEASE_SCORE}
     tier2_flat = flatten_tiered_spreadsheet(tier2_df, merge_type='outer')
     tier2_low_key = tier1_to_dcp[next(id for id in KEY_COLS if id in tier2_flat.columns)]
     tier2_flat = manual_fixes(tier2_flat)
