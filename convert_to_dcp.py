@@ -41,7 +41,7 @@ def define_parser():
                         help="Directory for the output files")
     parser.add_argument("-s", "--skip", action="store_true",
                         dest="skip", required=False,
-                        help="Skip auto OLS ontology filling step")
+                        help="Skip auto OLS ontology filling and protocol ID creation")
     parser.add_argument("-lt", "--local_template", action="store",
                         dest="local_template", type=str, required=False,
                         help="Local path of the HCA spreadsheet template")
@@ -83,7 +83,8 @@ def main(flat_tier1_spreadsheet, tier2_spreadsheet=None, file_manifest=None, out
     dcp_spreadsheet = add_doi(study_metadata, dcp_spreadsheet)
     dcp_spreadsheet = add_title(study_metadata, dcp_spreadsheet)
     
-    dcp_flat = create_protocol_ids(dcp_spreadsheet, dcp_flat)
+    if not skip:
+        dcp_flat = create_protocol_ids(dcp_spreadsheet, dcp_flat)
 
     # Populate spreadsheet
     print(f"{BOLD_START}POPULATING SPREADSHEET{BOLD_END}")

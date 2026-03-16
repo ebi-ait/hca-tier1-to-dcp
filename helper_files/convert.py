@@ -37,7 +37,7 @@ def read_study_metadata(label, dir_name):
 
 def get_dcp_template(local_path=None):
     # if no internet connection, provide local path
-    hca_template_url = 'https://github.com/ebi-ait/geo_to_hca/raw/master/template/hca_template.xlsx'
+    hca_template_url = 'https://github.com/ebi-ait/geo_to_hca/raw/master/template/hca_full_template.xlsx'
     path = local_path if local_path else hca_template_url
     try:
         return pd.read_excel(path, sheet_name=None, skiprows=[0, 1, 2, 4])
@@ -50,7 +50,7 @@ def get_dcp_template(local_path=None):
 
 def get_dcp_headers(local_path=None):
     # if no internet connection, provide local path
-    hca_template_url = 'https://github.com/ebi-ait/geo_to_hca/raw/master/template/hca_template.xlsx'
+    hca_template_url = 'https://github.com/ebi-ait/geo_to_hca/raw/master/template/hca_full_template.xlsx'
     path = local_path if local_path else hca_template_url
     try:
         dcp_headers = pd.read_excel(path, sheet_name=None, header=None)
@@ -90,6 +90,7 @@ def entity_to_tab(entity):
 def ols_label(ontology_id, only_label=True, ontology=None):
     if ontology_id is nan:
         return ontology_id
+    ontology_id = ontology_id.strip()
     if re.match(r"\w+_\d+", ontology_id):
         ontology_id = ontology_id.replace("_", ":")
     if not re.match(r"\w+:[\w\d]+", ontology_id):

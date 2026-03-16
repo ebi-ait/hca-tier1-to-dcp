@@ -149,3 +149,9 @@ python3 hca-tier1-to-dcp.py -l test -t1 tier1.xlsx -fm file_manifest.xlsx -t2 ti
 | `--unequal_comparisson`, `-u` |  |  |  | o |  | 
 | `--file_manifest`, `-fm` |  |  | o |  |  | R
 | `--tier2_metadata`, `-t2` |  |  | o |  | R | 
+
+
+## Updating tier 2 mapping
+When more tier 2 values are added, be sure to update the [mapping dictionary](helper_files/constants/tier2_mapping.py) with the tier2 programmatic name and dcp programmatic value. 
+
+Programmatic values should match the values that we find in the [hca_full_template.xlsx](https://github.com/ebi-ait/geo_to_hca/blob/master/template/hca_full_template.xlsx) file from [geo_to_hca](https://github.com/ebi-ait/geo_to_hca) repository which stands as a reference for the hca templates.
