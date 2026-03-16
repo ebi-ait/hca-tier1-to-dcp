@@ -1,5 +1,6 @@
 import os
 import re
+import json
 import argparse
 from os.path import isfile, getsize
 from pathlib import Path
@@ -148,7 +149,9 @@ def get_h5ad_from_collection(collection_id, output_dir="h5ads", auto_download_al
     """Get H5AD file(s) for a specific collection and dataset(s)."""
     try:
         collection = get_collection_data(collection_id)
-        
+        # save collection metadata
+        with open(collection_id+".json", "w") as f:
+            json.dump(collection, f)
         if not collection.get('datasets'):
             print(f"No datasets found in collection {collection_id}")
             return 0
