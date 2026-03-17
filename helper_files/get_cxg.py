@@ -151,7 +151,7 @@ def get_h5ad_from_collection(collection_id, output_dir="h5ads", auto_download_al
     try:
         collection = get_collection_data(collection_id)
         # save collection metadata
-        with open(collection_id+".json", "w") as f:
+        with open(f'{output_dir}/{collection_id}.json', "w") as f:
             json.dump(collection, f)
         if not collection.get('datasets'):
             print(f"No datasets found in collection {collection_id}")
