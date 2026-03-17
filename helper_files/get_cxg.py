@@ -171,6 +171,7 @@ def get_h5ad_from_collection(collection_id, output_dir="h5ads", auto_download_al
                 continue
             h5ad_url = None
             for asset in dataset['assets']:
+                # todo: restore filetype check asset['filetype'] == 'H5AD'
                 h5ad_url = asset['url']
                 break
             
